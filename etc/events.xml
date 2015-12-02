@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Add to Cart -->
+    <event name="checkout_cart_add_product_complete">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\AddToCartObserver" />
+    </event>
+
+    <!-- Remove from Cart -->
+    <event name="sales_quote_remove_item">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\RemoveFromCartObserver" />
+    </event>
+
+    <!-- Start Checkout --> 
+    <event name="controller_action_predispatch_checkout_cart_index">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
+    </event>
+
+    <!-- Conversion --> 
+    <event name="multishipping_checkout_controller_success_action">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
+    </event>
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
+    </event>
+
+    <!-- Admin: Create New Product -->
+    <event name="catalog_product_save_after">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CreateProductTriggerObserver" />
+    </event>
+
+    <!-- Admin: Save Pixlee Configuration -->
+    <event name="admin_system_config_changed_section_pixlee_pixlee">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\ValidateCredentialsObserver" />
+    </event>
+</config>

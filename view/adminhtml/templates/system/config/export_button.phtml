@@ -1,0 +1,36 @@
+<?php
+$jsonHelper = $this->helper('Pixlee\Pixlee\Helper\Data');
+?>
+
+<script>
+require(['prototype'], function () {
+
+    window.exportToPixlee = function(url){
+      console.log(url);
+      if($('pixlee_export_button').hasClassName('disabled')) {
+        return;
+      }
+      
+      $('pixlee_export_button').addClassName('disabled');
+      new Ajax.Request('<?php /* @escapeNotVerified */ echo $block->getAjaxExportUrl() ?>', {
+        // method:    'get',
+        onSuccess: function(response){
+          if (response.responseText){
+            var json = response.responseText.evalJSON(true);
+            
+            if(json.pixlee_remaining_text) {
+              $('pixlee_remaining').update(json.pixlee_remaining_text);
+            }
+            if(json.action == 'continue' && json.url) {
+              $('pixlee_export_button').removeClassName('disabled');
+              exportToPixlee(json.url);
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<?php echo $block->getButtonHtml() ?>
+<p class="note"><span id="pixlee_remaining"><?php echo $jsonHelper->getPixleeRemainingText(); ?></span></p>

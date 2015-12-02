@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2015 Pixlee
+ * @author teemingchew
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+	<system>
+		<!-- Pixlee Tab -->
+		<tab id="pixlee" translate="label" sortOrder="300">
+			<label>Pixlee</label>
+		</tab>
+
+		<section id="pixlee_pixlee" translate="label" type="text" sortOrder="1100" showInDefault="1" showInWebsite="1" showInStore="1">
+			<label>Settings</label>
+			<tab>pixlee</tab>
+			<resource>Pixlee_Pixlee::config_pixlee_pixlee</resource>
+
+			<!-- Account Setting Group -->
+			<group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+				<!-- Group configs -->
+				<label>Account Settings</label>
+				<attribute type="expanded">1</attribute>
+				<comment>Please configure your Pixlee account information.</comment>
+
+				<!-- Module enable -->
+				<field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Enabled</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+					<comment>Enable or disable Pixlee plugin.</comment>
+				</field>
+
+				<!-- User ID -->
+				<field id="user_id" translate="label" type="text" sortOrder="2"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>User ID</label>
+                    <comment>Get your User ID from the Pixlee Dashboard.</comment>
+                </field>
+
+				<!-- API Key -->
+				<field id="api_key" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>API Key</label>
+                    <comment>Get your API key from the Pixlee Dashboard.</comment>
+                </field>
+
+                <!-- Secret Key -->
+				<field id="secret_key" translate="label" type="password" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Secret Key</label>
+                    <comment>Get your Secret key in the Pixlee Dashboard.</comment>
+                </field>
+
+                <!-- Recipe ID -->
+				<field id="recipe_id" translate="label" type="text" sortOrder="5"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Recipe ID</label>
+                    <comment>Get your Recipe ID in the Pixlee Dashboard.</comment>
+                </field>
+
+                <!-- Display Options ID -->
+				<field id="display_options_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Display Options ID</label>
+                    <comment>Get your Display Options ID in the Pixlee Dashboard.</comment>
+                </field>
+
+                <!-- Export Products -->
+                <field id="export_products" translate="label comment" type="button" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Export Products</label>
+                    <frontend_model>Pixlee\Pixlee\Block\Adminhtml\System\Config\Export</frontend_model>
+                </field>
+			</group>
+		</section>
+	</system>
+</config>

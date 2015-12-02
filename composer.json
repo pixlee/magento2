@@ -1,0 +1,26 @@
+{
+    "name": "pixlee/pixlee",
+    "description": "Social commerce platform to collect, curate, and display user-generated content to enhance your Magento store",
+    "require": {
+        "php": "~5.4.11|~5.5.0",
+        "magento/magento-composer-installer": "*"
+    },
+    "type": "magento2-module",
+    "version": "1.0.2",
+    "keywords": [
+        "magento2",
+        "magento 2",
+        "pixlee",
+        "social commerce",
+        "user-generated content",
+        "ugc"
+    ],
+    "extra": {
+        "map": [
+            [
+                "*",
+                "Pixlee/Pixlee"
+            ]
+        ]
+    }
+}
