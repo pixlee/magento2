@@ -23,34 +23,6 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 		parent::__construct($context, $data);
 	}
 
-	// protected function _prepareLayout()
-	// {
-	// 	parent::_prepareLayout();
-	// 	if(!$this->getTemplate()) {
-	// 		$this->setTemplate('system/config/export_button.phtml')
-	// 	}
-	// 	return $this;
-	// }
-
-	// public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
-	// {
-	// 	$element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
-	// 	return parent::render($element);
-	// }
-
-	// protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
-	// {
-	// 	$originalData = $element-> getOriginalData();
-	// 	$buttonLabel = !empty($originalData['button_label']) ? $originalData['button_label'] : $this->_exportButtonLabel;
-	// 	$this->addData(
-	// 		[
-	// 			'button_label' => __($buttonLabel),
-	// 			'html_id' => $element->getHtmlId(),
-	// 			'ajax_url'
-	// 		]
-	// 	);
-	// }
-
 	protected function _construct()
 	{
 		parent::_construct();
@@ -65,7 +37,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 	public function getAjaxExportUrl()
 	{
 		// return $this->_adminhtmlData->getUrl('pixlee_pixlee/export');
-		return $this->getUrl('*/system_config_system_export/product');
+		return $this->getUrl('pixlee_export/product/export');
 	}
 
 	public function getButtonHtml()

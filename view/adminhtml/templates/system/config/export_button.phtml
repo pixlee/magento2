@@ -6,7 +6,6 @@ $jsonHelper = $this->helper('Pixlee\Pixlee\Helper\Data');
 require(['prototype'], function () {
 
     window.exportToPixlee = function(url){
-      console.log(url);
       if($('pixlee_export_button').hasClassName('disabled')) {
         return;
       }
