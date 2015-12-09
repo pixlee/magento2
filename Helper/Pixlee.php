@@ -109,12 +109,12 @@ class Pixlee {
     curl_close($ch);
 
     if( !$this->isBetween( $responseCode, 200, 299 ) ){     
-      throw new Exception("HTTP $responseCode response from API");
+      throw new \Magento\Framework\Exception\LocalizedException(__('You may have entered the wrong credentials. Please check again.'));
     }elseif ( is_null( $theResult->status ) ){
-      throw new Exception('Pixlee did not return a status');
+      throw new \Magento\Framework\Exception\LocalizedException(__('Connection issue with Pixlee API. Please try again later.'));
     }elseif( !$this->isBetween( $theResult->status, 200, 299 ) ){
       $errorMessage   = implode(',', (array)$theResult->message);
-      throw new Exception("$theResult->status - $errorMessage ");
+      throw new \Magento\Framework\Exception\LocalizedException(__('An unknown error has occurred. Please contact Pixlee for help.'));
     }else{
       return $theResult;
     }

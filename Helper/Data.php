@@ -245,6 +245,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
       }
 
+      public function _validateCredentials() {
+        try{
+          $this->_pixleeAPI->getAlbums();
+        }catch(Exception $e){
+          throw new \Magento\Framework\Exception\LocalizedException(__('You may have entered the wrong credentials. Please check again.'));
+        }
+      }
+
       public function _preparePayload($extraData = array()) {
         if(($payload = $this->_getPixleeCookie()) && $this->isActive()) {
             // Append all extra data to the payload
