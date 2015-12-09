@@ -10,7 +10,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
   protected $_catalogProduct;
   protected $_mediaConfig;
   protected $_scopeConfig;
-  protected $_productAlbum;
   protected $_logger;
 
   const ANALYTICS_BASE_URL = 'https://limitless-beyond-4328.herokuapp.com/events/';
@@ -19,18 +18,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 	   /**
      * Config paths
      */
-    const PIXLEE_ACTIVE				      = 'pixlee_pixlee/account_settings/active';
-    const PIXLEE_USER_ID            = 'pixlee_pixlee/account_settings/user_id';
-    const PIXLEE_API_KEY				    = 'pixlee_pixlee/account_settings/api_key';
-    const PIXLEE_SECRET_KEY			    = 'pixlee_pixlee/account_settings/secret_key';
-    const PIXLEE_RECIPE_ID				  = 'pixlee_pixlee/account_settings/recipe_id';
-    const PIXLEE_DISPLAY_OPTIONS_ID	= 'pixlee_pixlee/account_settings/display_options_id';
+     const PIXLEE_ACTIVE				      = 'pixlee_pixlee/account_settings/active';
+     const PIXLEE_USER_ID             = 'pixlee_pixlee/account_settings/user_id';
+     const PIXLEE_API_KEY             = 'pixlee_pixlee/account_settings/api_key';
+     const PIXLEE_SECRET_KEY			    = 'pixlee_pixlee/account_settings/secret_key';
+     const PIXLEE_RECIPE_ID           = 'pixlee_pixlee/account_settings/recipe_id';
+     const PIXLEE_DISPLAY_OPTIONS_ID  = 'pixlee_pixlee/account_settings/display_options_id';
 
-    public function __construct(
+     public function __construct(
       \Magento\Catalog\Model\Product $catalogProduct,
       \Magento\Catalog\Model\Product\Media\Config $mediaConfig,
       \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-      \Pixlee\Pixlee\Model\Product\Album $productAlbum,
       \Psr\Log\LoggerInterface $logger,
       \Magento\Framework\Pricing\Helper\Data $pricingHelper,
       \Magento\Directory\Model\Region $directoryRegion
@@ -43,7 +41,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
       $this->_catalogProduct    = $catalogProduct;
       $this->_mediaConfig       = $mediaConfig;
       $this->_scopeConfig       = $scopeConfig;
-      $this->_productAlbum      = $productAlbum;
       $this->_logger            = $logger;
       $this->_pricingHelper     = $pricingHelper;
       $this->_directoryRegion   = $directoryRegion;
@@ -126,14 +123,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     public function getPixleeRemainingText() {
-      // $c = $this->getUnexportedProducts()->count();
-      // if($this->isInactive()) {
-      //   return "Save your Pixlee API access information before exporting your products.";
-      // } elseif($c > 0) {
-      //   return "Export your products to Pixlee and start collecting photos. There ". (($c > 1) ? 'are' : 'is') ." <strong>". $c ." ". (($c > 1) ? 'products' : 'product') ."</strong> to export to Pixlee.";
-      // } else {
-      //   return "All your products have been exported to Pixlee. Congratulations!";
-      // }
       if($this->isInactive()) {
         return "Save your Pixlee API access information before exporting your products.";
       } else {
@@ -150,27 +139,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if($product->getVisibility() != 1) { // Make sure the product is visible in search or catalog
           $product_mediaurl = $this->_mediaConfig->getMediaUrl($product->getImage());
           $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl);
-          // try {
-          //   $albumId = 0;
-          //   if(isset($response->data->album->id)) {
-          //     $albumId = $response->data->album->id;
-          //   } else if(isset($response->data->product->album_id)) {
-          //     $albumId = $response->data->product->album_id;
-          //   }
-
-          //   if($albumId) {
-          //     $this->_logPixleeMsg("PIXLEE ERROR1: " . $albumId);
-          //     $album = $this->_productAlbum;
-          //     $album->setProductId($product->getId())->setPixleeAlbumId($albumId);
-          //     $album->save();
-          //     $this->_logPixleeMsg("PIXLEE ERROR2: " . $albumId);
-          //   } else {
-          //     return false;
-          //   }
-          // } catch (Exception $e) {
-          //   $this->_logPixleeMsg("PIXLEE ERROR: " . $e->getMessage());
-          //   return false;
-          // }
         }
 
         return true;
