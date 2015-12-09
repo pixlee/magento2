@@ -14,7 +14,7 @@ class ValidateCredentialsObserver implements ObserverInterface
     protected $messageManager;
 
 	public function __construct(
-        \Pixlee\Pixlee\Helper\data $pixleeData,
+        \Pixlee\Pixlee\Helper\Data $pixleeData,
         ManagerInterface $messageManager,
         \Psr\Log\LoggerInterface $logger
     ) {

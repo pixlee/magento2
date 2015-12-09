@@ -15,7 +15,7 @@ class CheckoutSuccessObserver implements ObserverInterface
     public function __construct(
         \Magento\Sales\Model\ResourceModel\Order\Collection $collection,
         \Magento\Checkout\Model\Session $checkoutSession,
-        \Pixlee\Pixlee\Helper\data $pixleeData,
+        \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
     ) {
         $this->_collection = $collection;

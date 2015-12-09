@@ -8,7 +8,7 @@ use Magento\Framework\Event\ObserverInterface;
 class AddToCartObserver implements ObserverInterface
 {
     public function __construct(
-        \Pixlee\Pixlee\Helper\data $pixleeData,
+        \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
     ) {
         $this->_pixleeData  = $pixleeData;
