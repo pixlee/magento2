@@ -46,7 +46,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Product_ID'
                 )
                 ->addColumn(
-                    'Pixlee_Album_ID',
+                    'pixlee_album_id',
                     Table::TYPE_INTEGER,
                     null,
                     [
