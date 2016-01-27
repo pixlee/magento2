@@ -60,7 +60,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $installer->getConnection()->createTable($table);
 
             $installer->getConnection()
-                ->addKey(
+                ->addIndex(
                   $installer->getTable($tableName),
                   'IDX_PX_PRODUCT_ID',
                   'product_id'
