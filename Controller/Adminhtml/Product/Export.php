@@ -15,15 +15,15 @@ class Export extends \Magento\Backend\App\Action
   protected $_logger;
 
   public function __construct(
-      \Magento\Backend\App\Action\Context $context,
-      JsonFactory $resultJsonFactory,
-      \Pixlee\Pixlee\Helper\Data $pixleeData,
-      \Psr\Log\LoggerInterface $logger
+    \Magento\Backend\App\Action\Context $context,
+    JsonFactory $resultJsonFactory,
+    \Pixlee\Pixlee\Helper\Data $pixleeData,
+    \Psr\Log\LoggerInterface $logger
   ) {
-      parent::__construct($context);
-      $this->resultJsonFactory  = $resultJsonFactory;
-      $this->_pixleeData        = $pixleeData;
-      $this->_logger            = $logger;
+    parent::__construct($context);
+    $this->resultJsonFactory  = $resultJsonFactory;
+    $this->_pixleeData        = $pixleeData;
+    $this->_logger            = $logger;
   }
 
   public function saveProductLocally($product, $response)
@@ -68,12 +68,13 @@ class Export extends \Magento\Backend\App\Action
 
       $resultJson = $this->resultJsonFactory->create();
       return $resultJson->setData([
-          'message' => 'Success!',
+        'message' => 'Success!',
       ]);
     }
   }
 
-  private function _logPixleeMsg($message){
+  private function _logPixleeMsg($message)
+  {
     $this->_logger->addInfo("[Pixlee] :: ".$message);
   }
 }
