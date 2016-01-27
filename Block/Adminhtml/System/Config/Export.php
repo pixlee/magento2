@@ -16,7 +16,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 		\Magento\Backend\Helper\Data $adminhtmlData,
 		\Pixlee\Pixlee\Helper\Data $pixleeData,
 		\Magento\Backend\Block\Template\Context $context,
-        array $data = []
+    array $data = []
 	) {
 		$this->_adminhtmlData = $adminhtmlData;
 		$this->_pixleeData  = $pixleeData;
@@ -30,9 +30,9 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 	}
 
 	protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
-    {
-        return $this->_toHtml();
-    }
+  {
+      return $this->_toHtml();
+  }
 
 	public function getAjaxExportUrl()
 	{
@@ -51,9 +51,8 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 		if($this->_pixleeData->isInactive() || $this->_pixleeData->getUnexportedProducts()->count() == 0){
 			$buttonData['class'] = 'disabled';
 		}
-		
-		$button = $this->getLayout()->createBlock('Magento\Backend\Block\Widget\Button')->setData($buttonData);
 
+		$button = $this->getLayout()->createBlock('Magento\Backend\Block\Widget\Button')->setData($buttonData);
 		return $button->toHtml();
 	}
 
