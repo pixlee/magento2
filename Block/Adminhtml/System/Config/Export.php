@@ -40,6 +40,11 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 		return $this->getUrl('pixlee_export/product/export');
 	}
 
+	public function getAPIKey()
+  {
+      return $this->_pixleeData->getApiKey();
+  }
+
 	public function getButtonHtml()
 	{
 		$buttonData = array(
