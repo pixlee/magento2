@@ -13,7 +13,8 @@ class Album extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb {
 		parent::__construct($context, $resourcePrefix);
 	}
 
-	public function _construct() {
-    $this->_init('px_product_albums', 'id');
+	public function _construct() 
+	{
+    	$this->_init('px_product_albums', 'id');
 	}
 }

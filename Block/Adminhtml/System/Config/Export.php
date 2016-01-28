@@ -30,9 +30,9 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 	}
 
 	protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
-  {
-      return $this->_toHtml();
-  }
+	{
+	  return $this->_toHtml();
+	}
 
 	public function getAjaxExportUrl()
 	{
@@ -41,9 +41,9 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 	}
 
 	public function getAPIKey()
-  {
-      return $this->_pixleeData->getApiKey();
-  }
+	{
+	  return $this->_pixleeData->getApiKey();
+	}
 
 	public function getButtonHtml()
 	{
