@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
+	<head>
+		<script src="Pixlee_Pixlee::keen.js"/>
+    </head>
+    	
+    <body>
+    	<referenceContainer name="main">
+            <block class="Pixlee\Pixlee\Block\Adminhtml\System\Config\Export" template="dropCookie.phtml"/>
+        </referenceContainer>
+    </body>
+    
+    <head>
+    	<script src="Pixlee_Pixlee::dropCookie.js"/>
+    </head>
+</page>
