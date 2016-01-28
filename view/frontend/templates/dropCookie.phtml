@@ -1,4 +1,10 @@
 <?php
-	$pixleeKey = $block->getAPIKey();
-	echo "<script>API_KEY = '$pixleeKey';</script>";
+		$pixleeKey = $block->getAPIKey();
+		echo "<script>API_KEY = '$pixleeKey';</script>";
 ?>
+
+<script type="text/javascript">
+		require(["keen", "jquery"], function(Keen, $){
+			$.getScript('http://limitless-beyond-4328.herokuapp.com/analytics_cookie_linker');
+		});
+</script>
