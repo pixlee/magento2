@@ -8,10 +8,11 @@ use Magento\Framework\Event\ObserverInterface;
 class CheckoutStartObserver implements ObserverInterface
 {
     public function __construct(
+        \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
     ) {
         // $this->_checkoutCart = $checkoutCart;
-        // $this->_pixleeData  = $pixleeData;
+        $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
     }
 
@@ -19,12 +20,13 @@ class CheckoutStartObserver implements ObserverInterface
     {
         $this->_logger->addInfo("[Pixlee] :: start of checkoutStart");
 
-        // $quote = $this->_checkoutCart->getQuote();
-        // $cartData = $this->_pixleeData->_extractCart($quote);
-        // $payload = array('cart' => $cartData);
-        // $payload = $this->_pixleeData->_preparePayload($payload);
-        // $this->_pixleeData->_sendPayload('checkoutStart', $payload);
+        $quote = $this->_checkoutCart->getQuote();
+        $this->_logger->addInfo($quote);
+        $cartData = $this->_pixleeData->_extractCart($quote);
+        $payload = array('cart' => $cartData);
+        $payload = $this->_pixleeData->_preparePayload($payload);
+        $this->_pixleeData->_sendPayload('checkoutStart', $payload);
 
-        // $this->_logger->addInfo("[Pixlee] :: checkoutStart ".json_encode($payload));
+        $this->_logger->addInfo("[Pixlee] :: checkoutStart ".json_encode($payload));
     }
 }
