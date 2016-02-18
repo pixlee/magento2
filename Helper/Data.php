@@ -54,7 +54,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $pixleeSecret = $this->getSecretKey();
         $pixleeUserId = $this->getUserId();
 
-        $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecret, $pixleeUserId);
+        $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecret, $pixleeUserId, $this->_logger);
     }
 
     private function _logPixleeMsg($message)

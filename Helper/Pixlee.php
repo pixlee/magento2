@@ -10,11 +10,16 @@ class Pixlee
     private $baseURL;
 
     // Constructor
-    public function __construct($apiKey, $secretKey, $userID)
+    public function __construct($apiKey, $secretKey, $userID, $logger)
     {
+        // YUNFAN NOTE: This check prevents me from reaching the page where I would
+        // fill in the very things it's checking for...which is very Catch-22
+        /*
         if( is_null( $apiKey ) || is_null( $secretKey ) || is_null( $userID )){
             throw new Exception("An API Key, API secret, and User ID are required");
         }
+        */
+        $this->_logger  = $logger;
         $this->apiKey   = $apiKey;
         $this->secretKey= $secretKey;
         $this->userID   = $userID;

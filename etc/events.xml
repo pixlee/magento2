@@ -23,7 +23,7 @@
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
     </event>
 
-    <!-- Admin: Create New Product -->
+    <!-- Admin: Create/Update Product -->
     <event name="catalog_product_save_after">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CreateProductTriggerObserver" />
     </event>
