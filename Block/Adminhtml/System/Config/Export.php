@@ -16,10 +16,12 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 		\Magento\Backend\Helper\Data $adminhtmlData,
 		\Pixlee\Pixlee\Helper\Data $pixleeData,
 		\Magento\Backend\Block\Template\Context $context,
-    array $data = []
+		\Psr\Log\LoggerInterface $logger,
+		array $data = []
 	) {
 		$this->_adminhtmlData = $adminhtmlData;
 		$this->_pixleeData  = $pixleeData;
+		$this->_logger = $logger;
 		parent::__construct($context, $data);
 	}
 

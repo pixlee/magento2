@@ -17,27 +17,13 @@ class CreateProductTriggerObserver implements ObserverInterface
 
     public function execute(EventObserver $observer)
     {
-        $this->_logger->addInfo('CREATE PRODUCT EXECUTE');
         $product = $observer->getEvent()->getProduct();
-        $this->_logger->addInfo(json_encode($product));
-        $productData = array('product' => $this->_pixleeData->_extractProduct($product));
-        $this->_logger->addInfo(json_encode($productData));
-        $payload = $this->_pixleeData->_preparePayload($productData);
-        $this->_logger->addInfo(json_encode($payload));
-        //$this->_pixleeData->_sendPayload('addToCart', $payload);
 
+        // Both for consistency with the rest of the Pixlee Observers, and because
+        // it seems something's catching any exceptions coming back from the
+        // exportProductToPixlee function before bubbling up to me, gonna just
+        // leave this call as-is, without wrapping in a try/catch
         $this->_pixleeData->exportProductToPixlee($product);
-        //$this->_logger->addInfo("[Pixlee] :: addToCart ".json_encode($payload));
-        /*
-        try{
-            $this->_logger->addInfo('Trying to export Product');
-            $pixleeData->exportProductToPixlee($product);
-        } catch (Exception $e) {
-            //Mage::getSingleton("adminhtml/session")->addWarning("Pixlee Magento - You may not have the right API credentials. Please check the plugin configuration.");
-            //Mage::log("PIXLEE ERROR: " . $e->getMessage());
-            $this->_logger->addInfo('FUCK');
-            $this->_logger->addInfo($e->getMessage());
-        }
-        */
+        $this->_logger->addInfo("[Pixlee] :: createProduct ".json_encode($product));
     }
 }
