@@ -15,7 +15,10 @@
         "AFL-3.0"
     ],
     "autoload": {
-        "files": [ "registration.php" ]
+        "files": [ "registration.php" ],
+        "psr-4": {
+            "Pixlee\\Pixlee\\": ""
+        }
     },
     "keywords": [
         "magento2",
@@ -24,13 +27,5 @@
         "social commerce",
         "user-generated content",
         "ugc"
-    ],
-    "extra": {
-        "map": [
-            [
-                "*",
-                "Pixlee/Pixlee"
-            ]
-        ]
-    }
+    ]
 }
