@@ -39,9 +39,6 @@
     };
 
     function createPixleeAnalyticsCookie() {
-      // If pixlee_analytics_cookie does not exist then, there are 2 possibilities:
-        // 1. The user came to this page from a tap2shop domain. In which case we query into keen.io to conform this.
-        // 2. The user came here via some other link that is not related to Pixlee. In which case we only assign them a distinct_user_hash
       if (!getCookie('pixlee_analytics_cookie')) {
         var iframe = document.createElement('iframe');
         iframe.style.display = "none";
