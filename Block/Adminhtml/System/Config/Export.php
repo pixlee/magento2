@@ -64,7 +64,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 	}
 
 	public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
-    {
+	{
         // Remove scope label
         $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
         return parent::render($element);
