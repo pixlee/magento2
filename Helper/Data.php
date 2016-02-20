@@ -34,7 +34,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\ObjectManager\ObjectManager $objectManager,
         \Magento\Framework\View\Result\PageFactory $pageFactory,
         \Magento\Framework\Pricing\Helper\Data $pricingHelper,
-        \Magento\Directory\Model\Region $directoryRegion
+        \Magento\Directory\Model\Region $directoryRegion,
+        \Pixlee\Pixlee\Helper\CookieManager $CookieManager
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -49,6 +50,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_pageFactory       = $pageFactory;
         $this->_pricingHelper     = $pricingHelper;
         $this->_directoryRegion   = $directoryRegion;
+        $this->_cookieManager     = $CookieManager;
 
         $pixleeKey = $this->getApiKey();
         $pixleeSecret = $this->getSecretKey();
@@ -250,9 +252,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
               // Required key/value pairs not in the payload by default.
             $payload['API_KEY']= $this->getApiKey();
-            $payload['uid'] = $payload['CURRENT_PIXLEE_USER_ID'];
-            $payload['pixlee_album_photos_timestamps'] = $payload['CURRENT_PIXLEE_ALBUM_PHOTOS_TIMESTAMP'];
-            $payload['pixlee_album_photos'] = $payload['CURRENT_PIXLEE_ALBUM_PHOTOS'];
+            $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
 
             return http_build_query($payload);
         }
@@ -261,12 +261,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     protected function _getPixleeCookie() {
-        if(isset($_COOKIE['pixlee_analytics_cookie'])){
-            if($cookie = $_COOKIE['pixlee_analytics_cookie']) {
-                // Return the decoded cookie as an associative array, not a PHP object
-                // as json_decode prefers.
-                return json_decode($cookie, true);
-            }
+        $cookie = $this->_cookieManager->get();
+        if (isset($cookie)) {
+            return json_decode($cookie, true);
         }
         return false;
     }
