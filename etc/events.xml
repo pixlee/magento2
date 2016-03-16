@@ -10,9 +10,9 @@
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\RemoveFromCartObserver" />
     </event>
 
-    <!-- Start Checkout
-    <event name="controller_action_predispatch_checkout_cart_index">
-        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
+    <!-- Start Checkout -->
+    <!-- <event name="sales_quote_address_collect_totals_after">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutStartObserver" />
     </event> -->
 
     <!-- Conversion -->

@@ -13,7 +13,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
   protected $_objectManager;
   protected $_logger;
 
-  const ANALYTICS_BASE_URL = 'https://limitless-beyond-4328.herokuapp.com/events/';
+  const ANALYTICS_BASE_URL = 'https://analytics-inbound-staging.herokuapp.com/events/';
   protected $_urls = array();
 
 	   /**
@@ -104,7 +104,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
        );
     }
 
-    public function isActive($store = null) 
+    public function isActive($store = null)
     {
     	if($this->_scopeConfig->isSetFlag(self::PIXLEE_ACTIVE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store)){
     		$pixleeUserId = $this->getUserId();
@@ -119,7 +119,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
     }
 
-    public function isInactive() 
+    public function isInactive()
     {
     	return !$this->isActive();
     }
@@ -133,7 +133,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $collection;
     }
 
-    public function getPixleeRemainingText() 
+    public function getPixleeRemainingText()
     {
         if($this->isInactive()) {
             return "Save your Pixlee API access information before exporting your products.";
@@ -142,7 +142,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function exportProductToPixlee($product) 
+    public function exportProductToPixlee($product)
     {
         $productName = $product->getName();
         if($this->isInactive() || !isset($productName)) {
@@ -158,7 +158,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function _sendPayload($event, $payload) 
+    public function _sendPayload($event, $payload)
     {
         if($payload && isset($this->_urls[$event])) {
             $ch = curl_init($this->_urls[$event]);
@@ -166,7 +166,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/x-www-form-urlencoded'));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
 
             $response   = curl_exec($ch);
             $responseInfo   = curl_getinfo($ch);
@@ -189,49 +189,68 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
     }
 
-    public function _extractProduct($product) 
+    public function _extractProduct($product)
     {
         $productData = array();
-        $productData['quantity'] = $product->getQty();
 
-        if($product->getId()) {
-            $productData['id']    = $product->getId();
-            $productData['name']  = $product->getName();
-            $productData['sku']   = $product->getSku();
+        if($product->getId() && is_a($product, '\Magento\Catalog\Model\Product\Interceptor')) {
+            // Add to Cart and Remove from Cart
+            $productData['product_id']    = (int) $product->getId();
+            $productData['product_sku']   = $product->getData('sku');
+            $productData['variant_id']    = (int) $product->getIdBySku($product->getSku());
+            $productData['variant_sku']   = $product->getSku();
             $productData['price'] = $this->_pricingHelper->currency($product->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
-      }
+            $productData['quantity'] = (int) $product->getQty();
+        } elseif ($product->getId() && is_a($product, '\Magento\Sales\Model\Order\Item')) {
+            // Checkout Start and Conversion
+            // $productData['variant_id'] = $product->getIdBySku($product->getSku());  Returns null, other methods don't return the correct variant_id either
+            $productData['variant_sku']   = $product->getSku();
+            $productData['quantity'] = (int) $product->getQtyToInvoice();
+            $productData['price'] = $this->_pricingHelper->currency($product->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
+
+            $product = $product->getProduct();
+
+            $productData['product_id']    = $product->getId();
+            $productData['product_sku']   = $product->getData('sku');
+        }
 
         return $productData;
     }
 
-    public function _extractCart($quote) 
-    {
-        if(is_a($quote, '\Magento\Sales\Model\Quote') || is_a($quote, '\Magento\Sales\Model\Order')) {
-            $cartData = array('products' => array());
-            foreach ($quote->getAllItems() as $item) {
-                $cartData['products'][] = $this->_extractProduct($item);
-            }
-            $cartData['total'] = $quote->getGrandTotal();
-            return $cartData;
-        }
-        return false;
-    }
-
-    public function _extractCustomer($quote) 
+    public function _extractCart($quote)
     {
         if(is_a($quote, '\Magento\Sales\Model\Order')) {
-            return array(
-                'name'      => $quote->getShippingAddress()->getName(),
-                'email'     => $quote->getShippingAddress()->getEmail(),
-                'city'      => $quote->getShippingAddress()->getCity(),
-                'state'     => $this->_directoryRegion->load($quote->getShippingAddress()->getRegionId())->getName(),
-                'country'   => $quote->getShippingAddress()->getCountry()
-            );
+            foreach ($quote->getAllVisibleItems() as $item) {
+                $cartData['cart_contents'][] = $this->_extractProduct($item);
+            }
+            $cartData['cart_total'] = $quote->getGrandTotal();
+            $cartData['email'] = $quote->getCustomerEmail();
+            $cartData['cart_type'] = "magento_2";
+            $cartData['cart_total_quantity'] = (int) $quote->getData('total_qty_ordered');
+            $cartData['billing_address'] = $this->_extractAddress($quote->getBillingAddress());
+            $cartData['shipping_address'] = $this->_extractAddress($quote->getShippingAddress());
+            $cartData['order_id'] = (int) $quote->getData('entity_id');
+            $cartData['currency'] = $quote->getData('base_currency_code');
+            $this->_logger->addInfo(json_encode($cartData));
+            return $cartData;
         }
+
         return false;
     }
 
-    public function _validateCredentials() 
+    public function _extractAddress($address)
+    {
+      $sortedAddress = array(
+        'street'    => $address->getStreet(),
+        'city'      => $address->getCity(),
+        'state'     => $address->getRegion(),
+        'country'   => $address->getCountryId(),
+        'zipcode'   => $address->getPostcode()
+      );
+      return json_encode($sortedAddress);
+    }
+
+    public function _validateCredentials()
     {
         try{
             $this->_pixleeAPI->getAlbums();
@@ -240,7 +259,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function _preparePayload($extraData = array()) 
+    public function _preparePayload($extraData = array())
     {
         if(($payload = $this->_getPixleeCookie()) && $this->isActive()) {
             // Append all extra data to the payload
@@ -253,11 +272,26 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
               // Required key/value pairs not in the payload by default.
             $payload['API_KEY']= $this->getApiKey();
             $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
-
-            return http_build_query($payload);
+            $payload['ecommerce_platform'] = 'magento_2';
+            $payload['ecommerce_platform_version'] = '2.0.0';
+            $payload['version_hash'] = $this->_getVersionHash();
+            return json_encode($payload);
         }
         $this->_logger->addInfo("Analytics event not sent because the cookie wasn't found");
         return false; // No cookie exists,
+    }
+
+    protected function _getVersionHash() {
+        $version_hash = file_get_contents($this->_module_dir('Pixlee_Pixlee').'/version.txt');
+        $version_hash = str_replace(array("\r", "\n"), '', $version_hash);
+        return $version_hash;
+    }
+
+    function _module_dir($moduleName, $type = '')
+    {
+    	$om = \Magento\Framework\App\ObjectManager::getInstance();
+    	$reader = $om->get('Magento\Framework\Module\Dir\Reader');
+    	return $reader->getModuleDir($type, $moduleName);
     }
 
     protected function _getPixleeCookie() {
@@ -268,7 +302,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return false;
     }
 
-    protected function isBetween($theNum, $low, $high) 
+    protected function isBetween($theNum, $low, $high)
     {
         if($theNum >= $low && $theNum <= $high) {
             return true;
