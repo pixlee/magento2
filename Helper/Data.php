@@ -19,10 +19,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 	   /**
      * Config paths
      */
-     const PIXLEE_ACTIVE				      = 'pixlee_pixlee/account_settings/active';
+     const PIXLEE_ACTIVE			  = 'pixlee_pixlee/account_settings/active';
      const PIXLEE_USER_ID             = 'pixlee_pixlee/account_settings/user_id';
      const PIXLEE_API_KEY             = 'pixlee_pixlee/account_settings/api_key';
-     const PIXLEE_SECRET_KEY			    = 'pixlee_pixlee/account_settings/secret_key';
+     const PIXLEE_SECRET_KEY		  = 'pixlee_pixlee/account_settings/secret_key';
      const PIXLEE_RECIPE_ID           = 'pixlee_pixlee/account_settings/recipe_id';
      const PIXLEE_DISPLAY_OPTIONS_ID  = 'pixlee_pixlee/account_settings/display_options_id';
 
