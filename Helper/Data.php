@@ -241,7 +241,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $variantsDict;
     }
 
-    public function exportProductToPixlee($product) 
+    public function exportProductToPixlee($product)
     {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
@@ -280,6 +280,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
+
+            // Set User Agent
+            if(isset($_SERVER['HTTP_USER_AGENT'])){
+            curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
+            }
 
             $response   = curl_exec($ch);
             $responseInfo   = curl_getinfo($ch);
@@ -362,15 +367,23 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function _extractCart($quote)
     {
         if(is_a($quote, '\Magento\Sales\Model\Order')) {
-            foreach ($quote->getAllVisibleItems() as $item) {
-                $cartData['cart_contents'][] = $this->_extractProduct($item);
+            foreach ($quote->getAllItems() as $item) {
+                // $quote->getAllVisibleItems will actually give us only 'configurable' items
+                // ...when we COULD use with more data from 'simple' items
+                // It might be less robust? Let's see how we all feel about this
+                if ($item->getProduct()->getTypeId() == 'configurable') {
+                    $this->_logger->addDebug("Skipping configurable item: {$item->getId()}");
+                } else {
+                    $cartData['cart_contents'][] = $this->_extractProduct($item);
+                }
+            }
 
             $cartData['cart_total'] = $quote->getGrandTotal();
             $cartData['email'] = $quote->getCustomerEmail();
             $cartData['cart_type'] = "magento_2";
             $cartData['cart_total_quantity'] = (int) $quote->getData('total_qty_ordered');
-            //$cartData['billing_address'] = $this->_extractAddress($quote->getBillingAddress());
-            //$cartData['shipping_address'] = $this->_extractAddress($quote->getShippingAddress());
+            $cartData['billing_address'] = $this->_extractAddress($quote->getBillingAddress());
+            $cartData['shipping_address'] = $this->_extractAddress($quote->getShippingAddress());
             $cartData['order_id'] = (int) $quote->getData('entity_id');
             $cartData['currency'] = $quote->getData('base_currency_code');
             $this->_logger->addInfo(json_encode($cartData));
@@ -382,14 +395,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function _extractAddress($address)
     {
-      $sortedAddress = array(
-        'street'    => $address->getStreet(),
-        'city'      => $address->getCity(),
-        'state'     => $address->getRegion(),
-        'country'   => $address->getCountryId(),
-        'zipcode'   => $address->getPostcode()
-      );
-      return json_encode($sortedAddress);
+        // 2016-03-21, Yunfan
+        // Something went wonky with my caches, and it always asks me to 'update'
+        // my address when I input it - this fixes whatever weird edge case I'm running
+        // into right now, and shouldn't hurt the normal case
+        if (is_null($address)) {
+            $sortedAddress = array();
+        } else {
+            $sortedAddress = array(
+                'street'    => $address->getStreet(),
+                'city'      => $address->getCity(),
+                'state'     => $address->getRegion(),
+                'country'   => $address->getCountryId(),
+                'zipcode'   => $address->getPostcode()
+            );
+        }
+        return json_encode($sortedAddress);
     }
 
     public function _validateCredentials()
