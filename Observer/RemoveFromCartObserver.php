@@ -17,8 +17,8 @@ class RemoveFromCartObserver implements ObserverInterface
 
     public function execute(EventObserver $observer)
     {
-        $product = $observer->getEvent()->getQuoteItem();
-        $productData = array('product' => $this->_pixleeData->_extractProduct($product));
+        $product = $observer->getEvent()->getQuoteItem()->getProduct();
+        $productData = $this->_pixleeData->_extractProduct($product);
         $payload = $this->_pixleeData->_preparePayload($productData);
         $this->_pixleeData->_sendPayload('removeFromCart', $payload);
 

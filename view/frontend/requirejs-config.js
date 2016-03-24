@@ -1,5 +1,5 @@
 var config = {
     paths: {
-        keen: 'Pixlee_Pixlee/keen'
+        keen: 'Pixlee_Pixlee/dropCookie'
     }
 };
