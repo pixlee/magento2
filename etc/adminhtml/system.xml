@@ -32,23 +32,20 @@
 					<comment>Enable or disable Pixlee plugin.</comment>
 				</field>
 
-				<!-- User ID -->
-				<field id="user_id" translate="label" type="text" sortOrder="2"  showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>User ID</label>
-                    <comment>Get your User ID from the Pixlee Dashboard.</comment>
-                </field>
-
 				<!-- API Key -->
 				<field id="api_key" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API Key</label>
                     <comment>Get your API key from the Pixlee Dashboard.</comment>
                 </field>
 
+                <!-- 2016-03-21 - Commenting out secret key until we decide later we need it -->
                 <!-- Secret Key -->
+                <!--
 				<field id="secret_key" translate="label" type="password" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Secret Key</label>
                     <comment>Get your Secret key in the Pixlee Dashboard.</comment>
                 </field>
+                -->
 
                 <!-- Recipe ID -->
 				<field id="recipe_id" translate="label" type="text" sortOrder="5"  showInDefault="1" showInWebsite="1" showInStore="1">

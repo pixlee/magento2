@@ -18,7 +18,11 @@ class AddToCartObserver implements ObserverInterface
     public function execute(EventObserver $observer)
     {
         $product = $observer->getEvent()->getProduct();
+        /*
         $productData = $this->_pixleeData->_extractProduct($product);
+        */
+
+        $productData = array('product' => $this->_pixleeData->_extractProduct($product));
         $payload = $this->_pixleeData->_preparePayload($productData);
         $this->_pixleeData->_sendPayload('addToCart', $payload);
 
