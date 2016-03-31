@@ -61,7 +61,7 @@ class Pixlee
         $product = array('name' => $product_name, 'sku' => $sku, 'buy_now_link_url' => $product_url,
             'product_photo' => $product_image, 'stock' => $aggregateStock,
             'native_product_id' => $product_id, 'variants_json' => $variantsDict);
-        $data = array('title' => $product_name, 'album_type' => 'product', 'num_photo' => 0,
+        $data = array('title' => $product_name, 'album_type' => 'product', 'live_update' => false, 'num_photo' => 0,
             'num_inbox_photo' => 0, 'product' => $product);
         $payload = $this->signedData($data);
         return $this->postToAPI( "/albums?api_key=" . $this->apiKey, $payload );
