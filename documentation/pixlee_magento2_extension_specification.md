@@ -127,52 +127,43 @@ of exporting product data from Magento 2 to Pixlee.
 
 1.  Pixlee_Base_Model_Product_Album
 
-    ![](images/2_1_pixlee_base_model_product_album.png)
+    ![](images/2_1_pixlee_base_model_product_album_v2.png)
     <br />
-
-<!-- Manually inserting the LaTeX \newpage command -->
-\newpage
 
 ## 2.2. Sequence Diagrams ##
 
 1.  Use case: A customer adds a product to the cart and product data is sent to the Pixlee API.
 
-    ![](images/2_2_1_add_to_cart.png)
+    ![](images/2_2_1_add_to_cart_v2.png)
     <br />
-
-<!-- Manually inserting the LaTeX \newpage command -->
-\newpage
 
 2.  Use case: A customer removes a product from the cart and the product data is sent to the Pixlee API.
 
-    ![](images/2_2_2_remove_from_cart.png)
-    <br />
-
-3.  Use case: A customer begins the checkout process from the cart and the products data is sent to the Pixlee API.
-
-    ![](images/2_2_3_checkout_start.png)
-    <br />
-
-4.  Use case: Administrator creates a Magento product and the product is also created on the Pixlee platform.
-
-    ![](images/2_2_4_create_product.png)
-    <br />
-
-5.  Use case: Administrator updates a Magento product and the product is also updated on the Pixlee platform.
-
-    ![](images/2_2_5_update_product.png)
+    ![](images/2_2_2_remove_from_cart_v2.png)
     <br />
 
 <!-- Manually inserting the LaTeX \newpage command -->
 \newpage
+
+3.  Use case: A customer completes the checkout process from the cart and the products data is sent to the Pixlee API.
+
+    ![](images/2_2_3_checkout_success_v2.png)
+    <br />
+
+4.  Use case: Administrator cancels a Magento order and the product is updated on the Pixlee platform.
+
+    ![](images/2_2_3_1_cancel_order_v2.png)
+    <br />
+
+5.  Use case: Administrator creates a Magento product and the product is also created on the Pixlee platform.
+
+    ![](images/2_2_4_create_product_v2.png)
+    <br />
 
 6.  Use case: Administrator exports all the Magento products and the products data is sent to the Pixlee API for importing.
 
-    ![](images/2_2_6_export_products.png)
+    ![](images/2_2_6_export_products_v2.png)
     <br />
-
-<!-- Manually inserting the LaTeX \newpage command -->
-\newpage
 
 ## 2.3. Database Structure Diagram ##
 
