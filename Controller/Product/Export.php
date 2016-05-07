@@ -14,7 +14,7 @@ abstract class Export extends \Magento\Backend\App\Action
       $this->_logger      = $logger;
   }
 
-  protected function execute()
+  public function execute()
   {
     $this->_logger->addInfo("[Pixlee] :: exporting!!");
   }
