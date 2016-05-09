@@ -4,6 +4,12 @@ author: Pixlee
 date: \today
 ---
 
+# 1.0.1 #
+
+## Major Highlights and Improvements ##
+
+- Fixes after code/documentation review
+
 # 1.0.0 #
 
 ## Major Highlights and Improvements ##
