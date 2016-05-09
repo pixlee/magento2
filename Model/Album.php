@@ -8,12 +8,11 @@ class Album extends \Magento\Framework\Model\AbstractModel
 	public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
 	) {
-        $this->_logger = $logger;
+        $this->_logger = $context->getLogger();
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
 	}
 
