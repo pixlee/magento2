@@ -13,7 +13,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_objectManager;
     protected $_logger;
 
-    const ANALYTICS_BASE_URL = 'https://limitless-beyond-4328.herokuapp.com/events/';
+    const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
     protected $_urls = array();
 
 	/**
