@@ -39,10 +39,12 @@ function createPixleeAnalyticsCookie() {
         if (eventData.function == "pixlee_distinct_user_hash") {
           if (eventData.data) {
             var distinct_user_hash_linker = eventData.value;
-            setCookie('pixlee_analytics_cookie', encodeURIComponent(JSON.stringify({
-              CURRENT_PIXLEE_USER_ID: distinct_user_hash_linker,
-              CURRENT_PIXLEE_ALBUM_PHOTOS: []
-            })), 30);
+            if(!getCookie('pixlee_analytics_cookie')) {
+              setCookie('pixlee_analytics_cookie', encodeURIComponent(JSON.stringify({
+                CURRENT_PIXLEE_USER_ID: distinct_user_hash_linker,
+                CURRENT_PIXLEE_ALBUM_PHOTOS: []
+              })), 30);
+            }
           }
         }
       } catch(e) {
