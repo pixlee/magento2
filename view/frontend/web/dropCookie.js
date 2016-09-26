@@ -26,32 +26,37 @@ var getCookie = function(c_name) {
   return false;
 };
 
-function createPixleeAnalyticsCookie() {
-  if (!getCookie('pixlee_analytics_cookie')) {
+var createPixleeAnalyticsCookie = function() {
     var iframe = document.createElement('iframe');
     iframe.style.display = "none";
     iframe.src = 'https://photos.pixlee.com/getDUH';
     document.body.appendChild(iframe);
 
     window.addEventListener("message", function receiveMessage(event) {
-      try {
-        var eventData = JSON.parse(event.data);
-        if (eventData.function == "pixlee_distinct_user_hash") {
-          if (eventData.data) {
-            var distinct_user_hash_linker = eventData.value;
-            if(!getCookie('pixlee_analytics_cookie')) {
-              setCookie('pixlee_analytics_cookie', encodeURIComponent(JSON.stringify({
-                CURRENT_PIXLEE_USER_ID: distinct_user_hash_linker,
-                CURRENT_PIXLEE_ALBUM_PHOTOS: []
-              })), 30);
+        try {
+            var eventData = JSON.parse(event.data);
+            if (eventData.function == "pixlee_distinct_user_hash") {
+                if (eventData.data) {
+                    var distinct_user_hash_linker = eventData.value;
+                    var cookie = getCookie('pixlee_analytics_cookie');
+                    if (!cookie) {
+                        setCookie('pixlee_analytics_cookie', encodeURIComponent(JSON.stringify({
+                            CURRENT_PIXLEE_USER_ID: distinct_user_hash_linker,
+                            CURRENT_PIXLEE_ALBUM_PHOTOS: []
+                        })), 30);
+                    }
+                }
             }
-          }
-        }
-      } catch(e) {
-        console.log("Exception " + e);
-      };
+        } catch(e) {
+            console.log("Exception " + e);
+        };
     }, false);
-  }
 }
 
-window.addEventListener('load', createPixleeAnalyticsCookie);
+var checkPixleeAnalyticsCookie = function(event) {
+    if (!getCookie('pixlee_analytics_cookie')) {
+        createPixleeAnalyticsCookie();
+    }
+};
+
+window.addEventListener('load', checkPixleeAnalyticsCookie);
