@@ -137,9 +137,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getUnexportedProducts()
     {
-        $albumTable = 'px_product_albums';
         $collection = $this->_catalogProduct->getCollection()->addFieldToFilter('visibility', array('neq' => 1));
-        $collection->getSelect()->joinLeft(array('albums' => $albumTable), 'e.entity_id = albums.product_id')->where('albums.product_id is NULL');
         $collection->addAttributeToSelect('*');
         return $collection;
     }
