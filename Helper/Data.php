@@ -7,6 +7,9 @@ namespace Pixlee\Pixlee\Helper;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
+    // A simple Trait to reuse Sentry Handler instantiation
+    use Ravenized;
+
     protected $_catalogProduct;
     protected $_mediaConfig;
     protected $_scopeConfig;
@@ -67,6 +70,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         //$pixleeSecret = $this->getSecretKey();
 
         $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $this->_logger);
+
+        // Use the Ravenized trait to instantiate a Sentry Handler
+        $this->ravenize();
     }
 
     private function _logPixleeMsg($message)

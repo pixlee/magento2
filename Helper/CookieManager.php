@@ -9,6 +9,9 @@ use Magento\Framework\Stdlib\CookieManagerInterface;
 
 class CookieManager
 {
+    // A simple Trait to reuse Sentry Handler instantiation
+    use Ravenized;
+
     /**
      * Name of cookie that holds private content version
      */
@@ -44,6 +47,8 @@ class CookieManager
         $this->cookieManager = $cookieManager;
         $this->cookieMetadataFactory = $cookieMetadataFactory;
         $this->sessionManager = $sessionManager;
+        // Use the Ravenized trait to instantiate a Sentry Handler
+        $this->ravenize();
     }
 
     /**
