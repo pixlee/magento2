@@ -36,7 +36,7 @@ trait Ravenized
 
         // Ask this endpoint, which we expect to remain available, for a Sentry URL
         $urlToHit = "https://distillery.pixlee.com/api/v1/getSentryUrl?api_key="
-                    . $apiKey . "&team=Pixlee+Magento+2&project=Backend";
+                    . $apiKey . "&team=Pixlee&project=Magento+2";
         if (property_exists($this, '_logger') && !is_null($this->_logger)) {
             $this->_logger->addDebug("Asking Pixlee Distillery for Sentry URL at: "
                                      . $urlToHit);
