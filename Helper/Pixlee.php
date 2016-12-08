@@ -4,9 +4,6 @@ namespace Pixlee\Pixlee\Helper;
 
 class Pixlee 
 {
-    // A simple Trait to reuse Sentry Handler instantiation
-    use Ravenized;
-
     private $apiKey;
     private $baseURL;
 
@@ -23,8 +20,6 @@ class Pixlee
         $this->_logger  = $logger;
         $this->apiKey   = $apiKey;
         $this->baseURL  = "http://distillery.pixlee.com/api/v2";
-        // Use the Ravenized trait to instantiate a Sentry Handler
-        $this->ravenize();
     }
 
     public function getAlbums()
