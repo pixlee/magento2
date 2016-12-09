@@ -51,10 +51,15 @@ trait Ravenized
             )
         );
         $response   = curl_exec($ch);
+        $decodedResponse = json_decode($response);
 
         // We expect the response to look something like this:
         //      {"url":"https://<PUBKEY>:<PRIVKEY>@sentry.io/118103"}
-        $sentryUrl = json_decode($response)->{'url'};
+        if (!is_null($decodedResponse) && array_key_exists('url', $decodedResponse)) {
+            $sentryUrl = $decodedResponse->{'url'};
+        } else {
+            return;
+        }
 
         $this->_sentryClient = new \Raven_Client($sentryUrl);
         $this->_sentryClient->install();
