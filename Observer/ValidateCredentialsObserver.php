@@ -8,6 +8,9 @@ use Magento\Framework\Message\ManagerInterface;
 
 class ValidateCredentialsObserver implements ObserverInterface
 {
+    // A simple Trait to reuse Sentry Handler instantiation
+    use \Pixlee\Pixlee\Helper\Ravenized;
+
 	/**
      * @var ManagerInterface
      */
@@ -21,10 +24,14 @@ class ValidateCredentialsObserver implements ObserverInterface
         $this->_pixleeData  = $pixleeData;
         $this->messageManager = $messageManager;
         $this->_logger      = $logger;
+        // Use the Ravenized trait to instantiate a Sentry Handler
+        $this->ravenize();
     }
 
     public function execute(EventObserver $observer)
     {
-    	$this->_pixleeData->_validateCredentials();
+        if ($this->_pixleeData->isActive()) {
+            $this->_pixleeData->_validateCredentials();
+        }
     }
 }

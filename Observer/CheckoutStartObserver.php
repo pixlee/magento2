@@ -7,6 +7,9 @@ use Magento\Framework\Event\ObserverInterface;
 
 class CheckoutStartObserver implements ObserverInterface
 {
+    // A simple Trait to reuse Sentry Handler instantiation
+    use \Pixlee\Pixlee\Helper\Ravenized;
+
     public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
@@ -14,6 +17,8 @@ class CheckoutStartObserver implements ObserverInterface
         // $this->_checkoutCart = $checkoutCart;
         $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
+        // Use the Ravenized trait to instantiate a Sentry Handler
+        $this->ravenize();
     }
 
     public function execute(EventObserver $observer)
