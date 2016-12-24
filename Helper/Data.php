@@ -263,10 +263,28 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $pixlee = $this->_pixleeAPI;
+
+        $extraFields = $this->getExtraFields($product);
+
         $product_mediaurl = $this->_mediaConfig->getMediaUrl($product->getImage());
-        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict);
+        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict, $extraFields);
         $this->_logger->addInfo("Product Exported to Pixlee");
         return $response;
+    }
+
+    public function getExtraFields($product)
+    {
+        // Should always end up with at least the principal product image
+        $productPhotos = array();
+        foreach ($product->getMediaGalleryImages() as $image) {
+            $this->_logger->addDebug($image->getUrl());
+            array_push($productPhotos, $image->getUrl());
+        }
+
+        $extraFields = json_encode(array(
+            'product_photos' => $productPhotos
+        ));
+        return $extraFields;
     }
 
     public function _sendPayload($event, $payload)
