@@ -4,6 +4,7 @@
  * @author teemingchew
  */
 namespace Pixlee\Pixlee\Helper;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -40,7 +41,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\View\Result\PageFactory $pageFactory,
         \Magento\Framework\Pricing\Helper\Data $pricingHelper,
         \Magento\Directory\Model\Region $directoryRegion,
-        \Pixlee\Pixlee\Helper\CookieManager $CookieManager
+        \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        CategoryRepositoryInterface $categoryRepository
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -58,6 +61,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_pricingHelper     = $pricingHelper;
         $this->_directoryRegion   = $directoryRegion;
         $this->_cookieManager     = $CookieManager;
+        $this->_storeManager      = $storeManager;
+        $this->categoryRepository = $categoryRepository;
 
         $pixleeKey = $this->getApiKey();
         // 2016-03-21 - Commenting out the secret key stuff because it's not needed
@@ -239,6 +244,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $variantsDict;
     }
 
+    public function getCategories($product) {
+        $categoriesList = array();
+        $cats = $product->getCategoryIds();
+        foreach ($cats as $categoryId) {
+            $_category = $this->categoryRepository->get($categoryId, $this->_storeManager->getStore()->getId());
+            $fields = array(
+                'category_id' => (int) $categoryId,
+                'category_name' => $_category->getName()
+            );
+            $categoriesList[] = $fields;
+        }
+        return $categoriesList;
+    }
+
     public function exportProductToPixlee($product)
     {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
@@ -280,9 +299,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->_logger->addDebug($image->getUrl());
             array_push($productPhotos, $image->getUrl());
         }
+        $categoriesList = $this->getCategories($product);
 
         $extraFields = json_encode(array(
-            'product_photos' => $productPhotos
+            'product_photos' => $productPhotos,
+            'categories' => $categoriesList
         ));
         return $extraFields;
     }
