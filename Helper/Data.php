@@ -295,9 +295,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         // Should always end up with at least the principal product image
         $productPhotos = array();
-        foreach ($product->getMediaGalleryImages() as $image) {
-            $this->_logger->addDebug($image->getUrl());
-            array_push($productPhotos, $image->getUrl());
+        $images = $product->getMediaGalleryImages();
+        if (count($images) > 0) {
+            foreach ($product->getMediaGalleryImages() as $image) {
+                $this->_logger->addDebug($image->getUrl());
+                array_push($productPhotos, $image->getUrl());
+            }
         }
         $categoriesList = $this->getCategories($product);
 
