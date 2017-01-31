@@ -27,7 +27,7 @@ class Pixlee
         return $this->getFromAPI("/albums");
     }
 
-    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL){
+    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode) {
         $this->_logger->addDebug("* In createProduct");
         /*
             Converted from Rails API format to distillery API format
@@ -61,7 +61,7 @@ class Pixlee
         $product = array('name' => $product_name, 'sku' => $sku, 'buy_now_link_url' => $product_url,
             'product_photo' => $product_image, 'stock' => $aggregateStock,
             'native_product_id' => $product_id, 'variants_json' => $variantsDict,
-            'extra_fields' => $extraFields);
+            'extra_fields' => $extraFields, 'currency' => $currencyCode);
         $data = array('title' => $product_name, 'album_type' => 'product', 'live_update' => false, 'num_photo' => 0,
             'num_inbox_photo' => 0, 'product' => $product);
         $payload = $this->signedData($data);

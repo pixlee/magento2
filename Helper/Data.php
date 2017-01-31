@@ -284,9 +284,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $pixlee = $this->_pixleeAPI;
 
         $extraFields = $this->getExtraFields($product);
+        $currencyCode = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
 
         $product_mediaurl = $this->_mediaConfig->getMediaUrl($product->getImage());
-        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict, $extraFields);
+        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict, $extraFields, $currencyCode);
         $this->_logger->addInfo("Product Exported to Pixlee");
         return $response;
     }
@@ -362,8 +363,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $productData['product_sku']   = $product->getData('sku');
             $productData['variant_id']    = (int) $product->getIdBySku($product->getSku());
             $productData['variant_sku']   = $product->getSku();
-            $productData['price'] = $this->_pricingHelper->currency($product->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
-            $productData['quantity'] = (int) $product->getQty();
+            $productData['price']         = $this->_pricingHelper->currency($product->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
+            $productData['quantity']      = (int) $product->getQty();
+            $productData['currency']      = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
         } elseif ($product->getId() && is_a($product, '\Magento\Sales\Model\Order\Item')) {
             // Checkout Start and Conversion
             $actualProduct = $product->getProduct();
@@ -393,13 +395,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
 
 
-            $productData['variant_id']   = $actualProduct->getId();
+            $productData['variant_id']    = $actualProduct->getId();
             $productData['variant_sku']   = $actualProduct->getSku();
-            $productData['quantity'] = round($product->getQtyOrdered(), $mode=PHP_ROUND_HALF_UP);
-            $productData['price'] = $this->_pricingHelper->currency($actualProduct->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
+            $productData['quantity']      = round($product->getQtyOrdered(), $mode=PHP_ROUND_HALF_UP);
+            $productData['price']         = $this->_pricingHelper->currency($actualProduct->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
             $product = $product->getProduct();
             $productData['product_id']    = $maybeParent->getId();
             $productData['product_sku']   = $maybeParent->getData('sku');
+            $productData['currency']      = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
         }
         return $productData;
     }
