@@ -284,9 +284,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $pixlee = $this->_pixleeAPI;
 
         $extraFields = $this->getExtraFields($product);
+        $currencyCode = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
 
         $product_mediaurl = $this->_mediaConfig->getMediaUrl($product->getImage());
-        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict, $extraFields);
+        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict, $extraFields, $currencyCode);
         $this->_logger->addInfo("Product Exported to Pixlee");
         return $response;
     }
