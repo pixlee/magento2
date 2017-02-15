@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<body>
+    <referenceContainer name="product.info.media">
+        <block class="Pixlee\Pixlee\Block\Gallery"
+            name="product.view.extra"
+            template="Pixlee_Pixlee::pixlee/gallery.phtml"
+            after="-">
+        </block>
+    </referenceContainer>
+</body>
