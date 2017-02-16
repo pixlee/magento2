@@ -26,9 +26,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     // for distillery...although if in the future we'd like to re-introduce it
     // I'd like for the code to still be here
     //
-    //const PIXLEE_SECRET_KEY			    = 'pixlee_pixlee/account_settings/secret_key';
-    const PIXLEE_RECIPE_ID           = 'pixlee_pixlee/account_settings/recipe_id';
-    const PIXLEE_DISPLAY_OPTIONS_ID  = 'pixlee_pixlee/account_settings/display_options_id';
+    //const PIXLEE_SECRET_KEY                      = 'pixlee_pixlee/account_settings/secret_key';
+    const PIXLEE_ACCOUNT_ID          = 'pixlee_pixlee/pdp_widget_settings/account_id';
+    const PIXLEE_WIDGET_ID           = 'pixlee_pixlee/pdp_widget_settings/widget_id';
 
     public function __construct(
         \Magento\Catalog\Model\Product $catalogProduct,
@@ -99,20 +99,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     //   );
     //}
 
-    public function getRecipeId()
+    public function getAccountId()
     {
-    	return $this->_scopeConfig->getValue(
-    		self::PIXLEE_RECIPE_ID,
-    		\Magento\Store\Model\ScopeInterface::SCOPE_STORE
-       );
+        return $this->_scopeConfig->getValue(
+            self::PIXLEE_ACCOUNT_ID,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
     }
 
-    public function getDisplayOptionsId()
+    public function getWidgetId()
     {
-    	return $this->_scopeConfig->getValue(
-    		self::PIXLEE_DISPLAY_OPTIONS_ID,
-    		\Magento\Store\Model\ScopeInterface::SCOPE_STORE
-       );
+        return $this->_scopeConfig->getValue(
+            self::PIXLEE_WIDGET_ID,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
     }
 
     public function isActive($store = null)

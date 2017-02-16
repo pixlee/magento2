@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<body>
+    <!--
+    If you want to move the PDP widget around, change the referenceContainer name here,
+    along with the "after" inside the block tags.
+    The names are a little opaque, but if you're reading this you probably know what you're doing.
+    -->
+    <referenceContainer name="product.info.media">
+        <block class="Pixlee\Pixlee\Block\Gallery"
+            name="product.view.community_gallery"
+            template="Pixlee_Pixlee::pixlee/gallery.phtml"
+            after="-">
+        </block>
+    </referenceContainer>
+</body>
