@@ -22,11 +22,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     */
     const PIXLEE_ACTIVE              = 'pixlee_pixlee/account_settings/active';
     const PIXLEE_API_KEY             = 'pixlee_pixlee/account_settings/api_key';
-    // 2016-03-21 - Commenting out the secret key stuff because it's not needed
-    // for distillery...although if in the future we'd like to re-introduce it
-    // I'd like for the code to still be here
-    //
-    //const PIXLEE_SECRET_KEY                      = 'pixlee_pixlee/account_settings/secret_key';
+    const PIXLEE_SECRET_KEY          = 'pixlee_pixlee/account_settings/secret_key';
     const PIXLEE_ACCOUNT_ID          = 'pixlee_pixlee/pdp_widget_settings/account_id';
     const PIXLEE_WIDGET_ID           = 'pixlee_pixlee/pdp_widget_settings/widget_id';
 
@@ -65,13 +61,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoryRepository = $categoryRepository;
 
         $pixleeKey = $this->getApiKey();
-        // 2016-03-21 - Commenting out the secret key stuff because it's not needed
-        // for distillery...although if in the future we'd like to re-introduce it
-        // I'd like for the code to still be here
-        //
-        //$pixleeSecret = $this->getSecretKey();
+        $pixleeSecretKey = $this->getSecretKey();
 
-        $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $this->_logger);
+        $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
     }
 
     private function _logPixleeMsg($message)
@@ -87,17 +79,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
        );
     }
 
-    // 2016-03-21 - Commenting out the secret key stuff because it's not needed
-    // for distillery...although if in the future we'd like to re-introduce it
-    // I'd like for the code to still be here
-    //
-    //public function getSecretKey()
-    //{
-    //	return $this->_scopeConfig->getValue(
-    //		self::PIXLEE_SECRET_KEY,
-    //		\Magento\Store\Model\ScopeInterface::SCOPE_STORE
-    //   );
-    //}
+    public function getSecretKey()
+    {
+    	return $this->_scopeConfig->getValue(
+    		self::PIXLEE_SECRET_KEY,
+    		\Magento\Store\Model\ScopeInterface::SCOPE_STORE
+       );
+    }
 
     public function getAccountId()
     {
@@ -119,15 +107,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
     	if($this->_scopeConfig->isSetFlag(self::PIXLEE_ACTIVE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store)){
             $pixleeKey = $this->getApiKey();
-
-            // 2016-03-21 - Commenting out the secret key check because it's not needed
-            // for distillery...although if in the future we'd like to re-introduce it
-            // I'd like for the code to still be here
-            //
-            //$pixleeSecret = $this->getSecretKey();
-            //if(!empty($pixleeKey) && !empty($pixleeSecret)) {
-
-            if(!empty($pixleeKey)) {
+            $pixleeSecret = $this->getSecretKey();
+            if(!empty($pixleeKey) && !empty($pixleeSecret)) {
                 return true;
             }
         }
