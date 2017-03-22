@@ -38,6 +38,12 @@
                     <comment>Get your API key from the Pixlee Dashboard.</comment>
                 </field>
 
+				<!-- Secret Key -->
+				<field id="secret_key" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Secret Key</label>
+                    <comment>Get your secret key from the Pixlee Dashboard.</comment>
+                </field>
+
                 <!-- Export Products -->
                 <field id="export_products" translate="label comment" type="button" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Export Products</label>

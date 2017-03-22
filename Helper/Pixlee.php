@@ -8,7 +8,7 @@ class Pixlee
     private $baseURL;
 
     // Constructor
-    public function __construct($apiKey, $logger)
+    public function __construct($apiKey, $secretKey, $logger)
     {
         // YUNFAN NOTE: This check prevents me from reaching the page where I would
         // fill in the very things it's checking for...which is very Catch-22
@@ -17,9 +17,10 @@ class Pixlee
             throw new Exception("An API Key, API secret, and User ID are required");
         }
         */
-        $this->_logger  = $logger;
-        $this->apiKey   = $apiKey;
-        $this->baseURL  = "http://distillery.pixlee.com/api/v2";
+        $this->_logger   = $logger;
+        $this->apiKey    = $apiKey;
+        $this->secretKey = $secretKey;
+        $this->baseURL   = "http://distillery.pixlee.com/api/v2";
     }
 
     public function getAlbums()
@@ -64,7 +65,7 @@ class Pixlee
             'extra_fields' => $extraFields, 'currency' => $currencyCode);
         $data = array('title' => $product_name, 'album_type' => 'product', 'live_update' => false, 'num_photo' => 0,
             'num_inbox_photo' => 0, 'product' => $product);
-        $payload = $this->signedData($data);
+        $payload = json_encode($data, JSON_UNESCAPED_SLASHES);
         return $this->postToAPI( "/albums?api_key=" . $this->apiKey, $payload );
     }
 
@@ -104,7 +105,8 @@ class Pixlee
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
-            'Content-Length: ' . strlen($payload)
+            'Content-Length: ' . strlen($payload),
+            'Signature: ' . $this->generateSignature($payload)
             )
         );
         $response   = curl_exec($ch);
@@ -113,13 +115,8 @@ class Pixlee
         return $this->handleResponse($response, $ch);
     }
 
-    // The rails API takes a signature, which was a sha256 of the payload
-    // we were about to send, JSONified.
-    // There was also a check for a JSON_UNESCAPED_SLASHES constant, which would
-    // 'fix' the JSON before encoding, for older PHP versions
-    // Since distillery doesn't check such a signature, this function is now much simpler
-    private function signedData($data){
-        return json_encode($data);
+    private function generateSignature($data) {
+        return base64_encode(hash_hmac('sha1', $data,  $this->secretKey, true));
     }
 
     private function handleResponse($response, $ch){
