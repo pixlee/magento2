@@ -222,7 +222,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $this->_logger->addDebug("Product {$product->getId()} variantsDict: " . json_encode($variantsDict));
-        return $variantsDict;
+        if (empty($variantsDict)) {
+            return "{}";
+        } else {
+            return json_encode($variantsDict);
+        }
     }
 
     public function getCategories($product) {
