@@ -105,6 +105,7 @@ class Pixlee
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
+            'X-Alt-Referer: magento2.pixlee.com',
             'Content-Length: ' . strlen($payload),
             'Signature: ' . $this->generateSignature($payload)
             )
