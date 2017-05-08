@@ -1,0 +1,44 @@
+<script>
+require(['prototype', 'jquery'], function () {
+    window.requestPixleeDemo = function(url) {
+        var name = jQuery('#pixlee_pixlee_not_a_customer_name').val();
+        var email = jQuery('#pixlee_pixlee_not_a_customer_email_address').val();
+        var website = jQuery('#pixlee_pixlee_not_a_customer_website').val();
+
+        if (name === '') {
+            alert('Name cannot be empty. Please try again.');
+            return;
+        }
+
+        if (email === '') {
+            alert('Email cannot be empty. Please try again.');
+            return;
+        }
+        jQuery.ajax({
+            method: 'post',
+            url: url,
+            data: {
+                source: 'magento_2',
+                name: name,
+                email: email,
+                website: website
+            },
+            success: function (data) {
+                if (data.result === "Successful") {
+                    $('pixlee_request_demo').addClassName('disabled');
+                    alert('Thanks for requesting a demo. We will get in touch with you shortly.');
+                } else {
+                    alert('Opps! Something went wrong. While we are working on resolving the issue, feel free to reach us at hi@pixleeteam.com');
+                }
+            },
+            error: function(data) {
+                alert('Opps! Something went wrong. While we are working on resolving the issue, feel free to reach us at hi@pixleeteam.com');
+            }
+
+        });
+    }
+});
+</script>
+
+<?php echo $block->getButtonHtml() ?>
+
