@@ -25,7 +25,7 @@ class Demo extends \Magento\Config\Block\System\Config\Form\Field {
 
 	public function getRequestDemoUrl()
 	{
-		return "https://pixlee.com/leads/add";
+		return "https://app.pixlee.com/leads/add";
 	}
 
 	public function getButtonHtml()
