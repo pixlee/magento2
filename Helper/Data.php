@@ -20,11 +20,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 	/**
     * Config paths
     */
-    const PIXLEE_ACTIVE              = 'pixlee_pixlee/account_settings/active';
-    const PIXLEE_API_KEY             = 'pixlee_pixlee/account_settings/api_key';
-    const PIXLEE_SECRET_KEY          = 'pixlee_pixlee/account_settings/secret_key';
-    const PIXLEE_ACCOUNT_ID          = 'pixlee_pixlee/pdp_widget_settings/account_id';
-    const PIXLEE_WIDGET_ID           = 'pixlee_pixlee/pdp_widget_settings/widget_id';
+    const PIXLEE_ACTIVE              = 'pixlee_pixlee/existing_customers/account_settings/active';
+    const PIXLEE_API_KEY             = 'pixlee_pixlee/existing_customers/account_settings/api_key';
+    const PIXLEE_SECRET_KEY          = 'pixlee_pixlee/existing_customers/account_settings/secret_key';
+    const PIXLEE_ACCOUNT_ID          = 'pixlee_pixlee/existing_customers/pdp_widget_settings/account_id';
+    const PIXLEE_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/widget_id';
 
     public function __construct(
         \Magento\Catalog\Model\Product $catalogProduct,

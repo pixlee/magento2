@@ -18,55 +18,88 @@
 			<tab>pixlee</tab>
 			<resource>Pixlee_Pixlee::config_pixlee_pixlee</resource>
 
-			<!-- Account Setting Group -->
-			<group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+			<group id="existing_customers" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
 				<!-- Group configs -->
-				<label>Account Settings</label>
-				<attribute type="expanded">1</attribute>
-				<comment>Please configure your Pixlee account information.</comment>
+				<label>Existing Pixlee customer?</label>
+				<attribute type="expanded">0</attribute>
+				<!-- Account Setting Group -->
+				<group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+					<!-- Group configs -->
+					<label>Account Settings</label>
+					<attribute type="expanded">1</attribute>
+					<comment>Please configure your Pixlee account information.</comment>
 
-				<!-- Module enable -->
-				<field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label>Enabled</label>
-					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-					<comment>Enable or disable Pixlee plugin.</comment>
-				</field>
+					<!-- Module enable -->
+					<field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+						<label>Enabled</label>
+						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+						<comment>Enable or disable Pixlee plugin.</comment>
+					</field>
 
-				<!-- API Key -->
-				<field id="api_key" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>API Key</label>
-                    <comment>Get your API key from the Pixlee Dashboard.</comment>
-                </field>
+					<!-- API Key -->
+					<field id="api_key" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>API Key</label>
+	                    <comment>Get your API key from the Pixlee Dashboard.</comment>
+	                </field>
 
-				<!-- Secret Key -->
-				<field id="secret_key" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Secret Key</label>
-                    <comment>Get your secret key from the Pixlee Dashboard.</comment>
-                </field>
+					<!-- Secret Key -->
+					<field id="secret_key" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>Secret Key</label>
+	                    <comment>Get your secret key from the Pixlee Dashboard.</comment>
+	                </field>
 
-                <!-- Export Products -->
-                <field id="export_products" translate="label comment" type="button" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Export Products</label>
-                    <frontend_model>Pixlee\Pixlee\Block\Adminhtml\System\Config\Export</frontend_model>
-                </field>
+	                <!-- Export Products -->
+	                <field id="export_products" translate="label comment" type="button" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>Export Products</label>
+	                    <frontend_model>Pixlee\Pixlee\Block\Adminhtml\System\Config\Export</frontend_model>
+	                </field>
+				</group>
+
+				<group id="pdp_widget_settings" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+					<!-- Group configs -->
+					<label>PDP Widget Settings</label>
+					<attribute type="expanded">0</attribute>
+					<comment>Product description page widget settings. Fill out both to enable PDP widgets. (Alternatively, blank both to disable PDP widgets).</comment>
+
+	                <!-- Account ID -->
+	                <field id="account_id" translate="label" type="text" sortOrder="5"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>Account ID</label>
+	                    <comment>Get your Account ID in the Pixlee Dashboard.</comment>
+	                </field>
+
+	                <!-- Widget ID -->
+	                <field id="widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>Widget ID</label>
+	                    <comment>Get your Widget ID by following the "Install PDP Widget" workflow in the Pixlee Dashboard.</comment>
+	                </field>
+
+				</group>
 			</group>
 
-			<group id="pdp_widget_settings" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+			<group id="not_a_customer" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
 				<!-- Group configs -->
-				<label>PDP Widget Settings</label>
+				<label>Not a Pixlee customer?</label>
 				<attribute type="expanded">0</attribute>
-				<comment>Product description page widget settings. Fill out both to enable PDP widgets. (Alternatively, blank both to disable PDP widgets).</comment>
+				<comment>Thank you for downloading Pixlee’s Magento 2 Pixlee Extension. Please enter your email address below and we will get in touch with you shortly. For immediate assistance, email us at hi@pixleeteam.com.</comment>
 
-                <!-- Account ID -->
-                <field id="account_id" translate="label" type="text" sortOrder="5"  showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Account ID</label>
-                    <comment>Get your Account ID in the Pixlee Dashboard.</comment>
+                <!-- First Name & Last Name -->
+                <field id="name" translate="label" type="text" sortOrder="1"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Your Name</label>
                 </field>
 
-                <!-- Widget ID -->
-                <field id="widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Widget ID</label>
-                    <comment>Get your Widget ID by following the "Install PDP Widget" workflow in the Pixlee Dashboard.</comment>
+                <!-- Email Address -->
+                <field id="email_address" translate="label" type="text" sortOrder="2"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Your Email Address</label>
+                </field>
+
+                <!-- Website -->
+                <field id="website" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Your Company Website</label>
+                </field>
+
+				<field id="request_demo" translate="label comment" type="button" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <frontend_model>Pixlee\Pixlee\Block\Adminhtml\System\Config\Demo</frontend_model>
+                    <label>Submit</label>
                 </field>
 
 			</group>
