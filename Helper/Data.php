@@ -25,7 +25,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const PIXLEE_SECRET_KEY          = 'pixlee_pixlee/existing_customers/account_settings/secret_key';
     const PIXLEE_ACCOUNT_ID          = 'pixlee_pixlee/existing_customers/pdp_widget_settings/account_id';
     const PIXLEE_PDP_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/pdp_widget_id';
-    const PIXLEE_CPD_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/pdp_widget_id';
+    const PIXLEE_CDP_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/cdp_widget_id';
 
     public function __construct(
         \Magento\Catalog\Model\Product $catalogProduct,

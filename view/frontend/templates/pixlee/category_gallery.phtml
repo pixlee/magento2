@@ -19,10 +19,9 @@ window.PixleeAsyncInit = function() {
     });
     Pixlee.addCategoryWidget({
         widgetId: <?php echo $helper->getCDPWidgetId(); ?>,
-        nativeCategoryId: '<?php echo $nativeCategoryId; ?>',
+        nativeCategoryId: <?php echo $nativeCategoryId; ?>,
         ecomm_platform: 'magento_2'
     });
 };
 </script>
 <script src="https://assets.pixlee.com/assets/pixlee_widget_1_0_0.js"></script>
-
