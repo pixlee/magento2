@@ -67,9 +67,15 @@
 	                    <comment>Get your Account ID in the Pixlee Dashboard.</comment>
 	                </field>
 
-	                <!-- Widget ID -->
-	                <field id="widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
-	                    <label>Widget ID</label>
+	                <!-- PDP Widget ID -->
+	                <field id="pdp_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>PDP Widget ID</label>
+	                    <comment>Get your Widget ID by following the "Install PDP Widget" workflow in the Pixlee Dashboard.</comment>
+	                </field>
+
+	                <!-- CDP Widget ID -->
+	                <field id="cpd_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                    <label>CDP Widget ID</label>
 	                    <comment>Get your Widget ID by following the "Install PDP Widget" workflow in the Pixlee Dashboard.</comment>
 	                </field>
 
