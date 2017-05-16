@@ -57,9 +57,9 @@
 
 				<group id="pdp_widget_settings" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
 					<!-- Group configs -->
-					<label>PDP Widget Settings</label>
+					<label>Widget Settings</label>
 					<attribute type="expanded">0</attribute>
-					<comment>Product description page widget settings. Fill out both to enable PDP widgets. (Alternatively, blank both to disable PDP widgets).</comment>
+					<comment>Product and Category description page widget settings. Fill out to enable PDP and CDP widgets. (Alternatively, blank to disable PDP and CDP widgets).</comment>
 
 	                <!-- Account ID -->
 	                <field id="account_id" translate="label" type="text" sortOrder="5"  showInDefault="1" showInWebsite="1" showInStore="1">

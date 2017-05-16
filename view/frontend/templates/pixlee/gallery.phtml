@@ -12,7 +12,7 @@ window.PixleeAsyncInit = function() {
         apiKey: '<?php echo $helper->getApiKey(); ?>'
     });
     Pixlee.addProductWidget({
-        widgetId: <?php echo $helper->getWidgetId(); ?>,
+        widgetId: <?php echo $helper->getPDPWidgetId(); ?>,
         skuId: '<?php echo $_product->getSku(); ?>',
         accountId:<?php echo $helper->getAccountId(); ?>
     });
