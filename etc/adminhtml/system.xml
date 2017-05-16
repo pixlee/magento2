@@ -74,7 +74,7 @@
 	                </field>
 
 	                <!-- CDP Widget ID -->
-	                <field id="cpd_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
+	                <field id="cdp_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
 	                    <label>CDP Widget ID</label>
 	                    <comment>Get your Widget ID by following the "Install PDP Widget" workflow in the Pixlee Dashboard.</comment>
 	                </field>
