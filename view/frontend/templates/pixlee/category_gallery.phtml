@@ -1,7 +1,13 @@
-<?php /* @var $block \Pixlee\Pixlee\Block\Gallery */?>
+<?php
+/**
+ * Category view template
+ *
+ * @var $block \Magento\Catalog\Block\Category\View
+ */
+?>
 <?php
 $helper = $this->helper('Pixlee\Pixlee\Helper\Data');
-$_product = $block->getProduct() 
+$nativeCategoryId = $block->getCurrentCategory()->getId();
 ?>
 <div id="pixlee_container"></div>
 <div id="pixlee_widget_master_container"></div>
@@ -11,10 +17,10 @@ window.PixleeAsyncInit = function() {
     Pixlee.init({
         apiKey: '<?php echo $helper->getApiKey(); ?>'
     });
-    Pixlee.addProductWidget({
-        widgetId: <?php echo $helper->getPDPWidgetId(); ?>,
-        skuId: '<?php echo $_product->getSku(); ?>',
-        accountId:<?php echo $helper->getAccountId(); ?>
+    Pixlee.addCategoryWidget({
+        widgetId: <?php echo $helper->getCDPWidgetId(); ?>,
+        nativeCategoryId: <?php echo $nativeCategoryId; ?>,
+        ecomm_platform: 'magento_2'
     });
 };
 </script>

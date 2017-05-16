@@ -24,7 +24,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const PIXLEE_API_KEY             = 'pixlee_pixlee/existing_customers/account_settings/api_key';
     const PIXLEE_SECRET_KEY          = 'pixlee_pixlee/existing_customers/account_settings/secret_key';
     const PIXLEE_ACCOUNT_ID          = 'pixlee_pixlee/existing_customers/pdp_widget_settings/account_id';
-    const PIXLEE_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/widget_id';
+    const PIXLEE_PDP_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/pdp_widget_id';
+    const PIXLEE_CDP_WIDGET_ID           = 'pixlee_pixlee/existing_customers/pdp_widget_settings/cdp_widget_id';
 
     public function __construct(
         \Magento\Catalog\Model\Product $catalogProduct,
@@ -95,10 +96,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         );
     }
 
-    public function getWidgetId()
+    public function getPDPWidgetId()
     {
         return $this->_scopeConfig->getValue(
-            self::PIXLEE_WIDGET_ID,
+            self::PIXLEE_PDP_WIDGET_ID,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    public function getCDPWidgetId()
+    {
+        return $this->_scopeConfig->getValue(
+            self::PIXLEE_CDP_WIDGET_ID,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
@@ -443,11 +452,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function _validateCredentials()
     {
-        try{
-            $this->_pixleeAPI->getAlbums();
-        }catch(Exception $e){
-            throw new \Magento\Framework\Exception\LocalizedException(__('You may have entered the wrong credentials. Please check again.'));
-        }
+        $this->_pixleeAPI->getAlbums();
     }
 
     public function _preparePayload($extraData = array())
