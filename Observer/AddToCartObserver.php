@@ -12,25 +12,35 @@ class AddToCartObserver implements ObserverInterface
 
     public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
     ) {
         $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
+        $this->_scopeConfig = $scopeConfig;
         // Use the Ravenized trait to instantiate a Sentry Handler
         $this->ravenize();
     }
 
     public function execute(EventObserver $observer)
-    {
-        $product = $observer->getEvent()->getProduct();
-        /*
-        $productData = $this->_pixleeData->_extractProduct($product);
-        */
+    {   
+        $pixleeEnabled = $this->_scopeConfig->getValue(
+            'pixlee_pixlee/existing_customers/account_settings/active',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
 
-        $productData = array('product' => $this->_pixleeData->_extractProduct($product));
-        $payload = $this->_pixleeData->_preparePayload($productData);
-        $this->_pixleeData->_sendPayload('addToCart', $payload);
+        if ($pixleeEnabled) {
+            $product = $observer->getEvent()->getProduct();
+            /*
+            $productData = $this->_pixleeData->_extractProduct($product);
+            */
 
-        $this->_logger->addInfo("[Pixlee] :: addToCart ".json_encode($payload));
+            $productData = array('product' => $this->_pixleeData->_extractProduct($product));
+            $payload = $this->_pixleeData->_preparePayload($productData);
+            $this->_pixleeData->_sendPayload('addToCart', $payload);
+
+            $this->_logger->addInfo("[Pixlee] :: addToCart ".json_encode($payload));
+        }
+
     }
 }
