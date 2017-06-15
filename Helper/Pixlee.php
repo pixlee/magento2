@@ -89,7 +89,15 @@ class Pixlee
         );
         $response   = curl_exec($ch);
 
-        return $this->handleResponse($response, $ch);
+        $this->_logger->addInfo("Inside getFromAPI");
+        $responseCode = curl_getinfo($ch)['http_code'];
+        $this->_logger->addInfo("Response code = {$responseCode}");
+
+        if( !$this->isBetween( $responseCode, 200, 299 ) ){
+            return false;
+        } else {
+            return true;
+        }
     }
 
     private function postToAPI($uri, $payload){

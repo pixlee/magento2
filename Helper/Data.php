@@ -451,8 +451,43 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     public function _validateCredentials()
-    {
-        $this->_pixleeAPI->getAlbums();
+    {   
+        // this function gets executed after the configuration is saved
+        // The idea is that we make an API call that requires credentails. 
+        // If it goes through, we say "successfull". Else, we say "not successfull" and set the credentails to point zero
+        // I originally wanted to do this is a backend model where we can do stuff before save. But unfortunately, backend models are not avaialble for group of items.
+        $this->_logger->addInfo("Validating Credentails");
+        if ($this->isActive()) {
+            $this->_logger->addInfo("Making the call"); 
+            $test_call_success = $this->_pixleeAPI->getAlbums();
+            if ($test_call_success) {
+                $this->_logger->addInfo("Show Message that everything went fine"); 
+            } else {
+                $this->resourceConfig->saveConfig(
+                    self::PIXLEE_ACTIVE, 
+                    '0', 
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                );
+
+                $this->resourceConfig->saveConfig(
+                    self::PIXLEE_API_KEY, 
+                    '', 
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                );
+
+                $this->resourceConfig->saveConfig(
+                    self::PIXLEE_SECRET_KEY, 
+                    '', 
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                );
+
+                throw new \Exception("Please check the credentails and try again. Your settings were not saved");
+                $this->_logger->addInfo("Show Message that config was not saved"); 
+            }
+        }
     }
 
     public function _preparePayload($extraData = array())

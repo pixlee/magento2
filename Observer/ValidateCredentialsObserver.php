@@ -30,8 +30,6 @@ class ValidateCredentialsObserver implements ObserverInterface
 
     public function execute(EventObserver $observer)
     {
-        if ($this->_pixleeData->isActive()) {
-            $this->_pixleeData->_validateCredentials();
-        }
+        $this->_pixleeData->_validateCredentials();
     }
 }
