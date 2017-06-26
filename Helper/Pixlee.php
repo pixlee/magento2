@@ -65,7 +65,13 @@ class Pixlee
             'extra_fields' => $extraFields, 'currency' => $currencyCode);
         $data = array('title' => $product_name, 'album_type' => 'product', 'live_update' => false, 'num_photo' => 0,
             'num_inbox_photo' => 0, 'product' => $product);
-        $payload = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        //Fix for php versions that don't support JSON_UNESCAPED_SLASHES (< php 5.4)
+        if(defined("JSON_UNESCAPED_SLASHES")){
+            $payload = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            $payload = str_replace('\\/', '/', json_encode($data));
+        }
         return $this->postToAPI( "/albums?api_key=" . $this->apiKey, $payload );
     }
 
