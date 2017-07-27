@@ -20,12 +20,12 @@
 
 			<group id="existing_customers" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
 				<!-- Group configs -->
-				<label>Existing Pixlee customer?</label>
+				<label>Settings</label>
 				<attribute type="expanded">0</attribute>
 				<!-- Account Setting Group -->
 				<group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
 					<!-- Group configs -->
-					<label>Account Settings</label>
+					<label>API Settings</label>
 					<attribute type="expanded">1</attribute>
 					<comment>Please configure your Pixlee account information.</comment>
 
@@ -78,9 +78,14 @@
 	                    <label>CDP Widget ID</label>
 	                    <comment>Get your Widget ID by following the "Install PDP Widget" workflow in the Pixlee Dashboard.</comment>
 	                </field>
-
 				</group>
 			</group>
+		</section>
+
+		<section id="pixlee_demo" translate="label" type="text" sortOrder="1200" showInDefault="1" showInWebsite="1" showInStore="1">
+			<label>Request Demo</label>
+			<tab>pixlee</tab>
+			<resource>Pixlee_Pixlee::config_pixlee_pixlee</resource>
 
 			<group id="not_a_customer" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
 				<!-- Group configs -->
@@ -110,5 +115,6 @@
 
 			</group>
 		</section>
+
 	</system>
 </config>
