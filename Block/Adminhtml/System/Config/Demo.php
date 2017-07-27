@@ -32,7 +32,7 @@ class Demo extends \Magento\Config\Block\System\Config\Form\Field {
 	{
 		$buttonData = array(
 			'id' => 'pixlee_request_demo',
-			'label' => __('Request Demo'),
+			'label' => __('Request Access'),
 			'onclick' => 'javascript:requestPixleeDemo(\''.$this->getRequestDemoUrl().'\'); return false;'
 		);
 
