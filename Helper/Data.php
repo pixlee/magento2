@@ -40,6 +40,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Directory\Model\Region $directoryRegion,
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
         CategoryRepositoryInterface $categoryRepository
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
@@ -59,6 +60,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_directoryRegion   = $directoryRegion;
         $this->_cookieManager     = $CookieManager;
         $this->_storeManager      = $storeManager;
+        $this->resourceConfig     = $resourceConfig;
         $this->categoryRepository = $categoryRepository;
 
         $pixleeKey = $this->getApiKey();
