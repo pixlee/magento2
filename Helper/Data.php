@@ -117,14 +117,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function isActive($store = null)
     {
     	if($this->_scopeConfig->isSetFlag(self::PIXLEE_ACTIVE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store)){
-            $pixleeKey = $this->getApiKey();
-            $pixleeSecret = $this->getSecretKey();
-            if(!empty($pixleeKey) && !empty($pixleeSecret)) {
-                return true;
-            }
+            return true;
+        } else {
+            return false;
         }
 
-        return false;
     }
 
     public function isInactive()
