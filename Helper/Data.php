@@ -251,6 +251,41 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $categoriesList;
     }
 
+    public function getAllPhotos($product) {
+        $productPhotos = array();
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $productRepository = $objectManager->get('\Magento\Catalog\Model\ProductRepository');
+        $extractedProduct = $productRepository->getById($product->getId());
+        $images = $extractedProduct->getMediaGalleryImages();
+        if (count($images) > 0) {
+            foreach ($images as $image) {
+                $photoURL = $image->getUrl();
+                if (in_array($photoURL, $productPhotos) == false) {
+                    array_push($productPhotos, $photoURL);
+                }
+            }
+        }
+
+        // Get Variants
+        $childProducts = $this->_configurableProduct->getUsedProductCollection($product);
+        if (count($childProducts) > 0) {
+            foreach ($childProducts as $child) {
+                $actualChildProduct = $productRepository->getById($child->getId());
+                $childImages = $actualChildProduct->getMediaGalleryImages();
+                if (count($childImages) > 0) {
+                    foreach ($childImages as $image) {
+                        $photoURL = $image->getUrl();
+                        if (in_array($photoURL, $productPhotos) == false) {
+                            array_push($productPhotos, $photoURL);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $productPhotos;
+    }
+
     public function exportProductToPixlee($product)
     {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
@@ -287,16 +322,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getExtraFields($product)
     {
-        // Should always end up with at least the principal product image
-        $productPhotos = array();
-        $images = $product->getMediaGalleryImages();
-        if (count($images) > 0) {
-            foreach ($product->getMediaGalleryImages() as $image) {
-                $this->_logger->addDebug($image->getUrl());
-                array_push($productPhotos, $image->getUrl());
-            }
-        }
         $categoriesList = $this->getCategories($product);
+        $productPhotos = $this->getAllPhotos($product);
 
         $extraFields = json_encode(array(
             'product_photos' => $productPhotos,
