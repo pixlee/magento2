@@ -68,7 +68,7 @@ class Export extends \Magento\Backend\App\Action
             'platform' => 'magento_2'
         );
 
-        $ch = curl_init('https://19978d4b.ngrok.io/api/v1/notifyExportStatus?api_key=' . $api_key);
+        $ch = curl_init('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
