@@ -39,6 +39,7 @@ class Export extends \Magento\Backend\App\Action
             foreach ($products as $product) {
                 $ids = $product->getStoreIds();
                 if(isset($ids[0])) {
+                    $counter += 1;
                     $product->getStoreId($ids[0]);
                 }
                 $response = $this->_pixleeData->exportProductToPixlee($product);
