@@ -35,7 +35,7 @@ class AddToCartObserver implements ObserverInterface
             $productData = $this->_pixleeData->_extractProduct($product);
             */
 
-            $productData = array('product' => $this->_pixleeData->_extractProduct($product));
+            $productData = $this->_pixleeData->_extractProduct($product);
             $payload = $this->_pixleeData->_preparePayload($productData);
             $this->_pixleeData->_sendPayload('addToCart', $payload);
 
