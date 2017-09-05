@@ -131,7 +131,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getUnexportedProducts()
     {
-        $collection = $this->_catalogProduct->getCollection()->addFieldToFilter('visibility', array('neq' => 1));
+        $collection = $this->_catalogProduct->getCollection();
+        $collection->addFieldToFilter('visibility', array('neq' => 1));
+        $collection->addFieldToFilter('status', array('neq' => 2));
+        
         $collection->addAttributeToSelect('*');
         return $collection;
     }
