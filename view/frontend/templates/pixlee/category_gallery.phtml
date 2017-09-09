@@ -9,19 +9,21 @@
 $helper = $this->helper('Pixlee\Pixlee\Helper\Data');
 $nativeCategoryId = $block->getCurrentCategory()->getId();
 ?>
-<div id="pixlee_container"></div>
-<div id="pixlee_widget_master_container"></div>
-<script id="pixlee_script">
+<?php if ($helper->getCDPWidgetId() != ""): ?>
+	<div id="pixlee_container"></div>
+	<div id="pixlee_widget_master_container"></div>
+	<script id="pixlee_script">
 
-window.PixleeAsyncInit = function() {
-    Pixlee.init({
-        apiKey: '<?php echo $helper->getApiKey(); ?>'
-    });
-    Pixlee.addCategoryWidget({
-        widgetId: <?php echo $helper->getCDPWidgetId(); ?>,
-        nativeCategoryId: <?php echo $nativeCategoryId; ?>,
-        ecomm_platform: 'magento'
-    });
-};
-</script>
-<script src="https://assets.pixlee.com/assets/pixlee_widget_1_0_0.js"></script>
+	window.PixleeAsyncInit = function() {
+	    Pixlee.init({
+	        apiKey: '<?php echo $helper->getApiKey(); ?>'
+	    });
+	    Pixlee.addCategoryWidget({
+	        widgetId: <?php echo $helper->getCDPWidgetId(); ?>,
+	        nativeCategoryId: <?php echo $nativeCategoryId; ?>,
+	        ecomm_platform: 'magento'
+	    });
+	};
+	</script>
+	<script src="https://assets.pixlee.com/assets/pixlee_widget_1_0_0.js"></script>
+<?php endif; ?>

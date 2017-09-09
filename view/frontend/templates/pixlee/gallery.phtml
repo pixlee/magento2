@@ -3,19 +3,21 @@
 $helper = $this->helper('Pixlee\Pixlee\Helper\Data');
 $_product = $block->getProduct() 
 ?>
-<div id="pixlee_container"></div>
-<div id="pixlee_widget_master_container"></div>
-<script id="pixlee_script">
+<?php if ($helper->getPDPWidgetId() != ""): ?>
+	<div id="pixlee_container"></div>
+	<div id="pixlee_widget_master_container"></div>
+	<script id="pixlee_script">
 
-window.PixleeAsyncInit = function() {
-    Pixlee.init({
-        apiKey: '<?php echo $helper->getApiKey(); ?>'
-    });
-    Pixlee.addProductWidget({
-        widgetId: <?php echo $helper->getPDPWidgetId(); ?>,
-        skuId: '<?php echo $_product->getSku(); ?>',
-        accountId:<?php echo $helper->getAccountId(); ?>
-    });
-};
-</script>
-<script src="https://assets.pixlee.com/assets/pixlee_widget_1_0_0.js"></script>
+	window.PixleeAsyncInit = function() {
+	    Pixlee.init({
+	        apiKey: '<?php echo $helper->getApiKey(); ?>'
+	    });
+	    Pixlee.addProductWidget({
+	        widgetId: <?php echo $helper->getPDPWidgetId(); ?>,
+	        skuId: '<?php echo $_product->getSku(); ?>',
+	        accountId:<?php echo $helper->getAccountId(); ?>
+	    });
+	};
+	</script>
+	<script src="https://assets.pixlee.com/assets/pixlee_widget_1_0_0.js"></script>
+<?php endif; ?>
