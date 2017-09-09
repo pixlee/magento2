@@ -63,8 +63,8 @@ class SalesOrderObserver implements ObserverInterface
                     $this->_logger->addDebug("Sales product ID: {$product->getId()}");
                     $this->_logger->addDebug("Sales product SKU: {$product->getSku()}");
                     $this->_logger->addDebug("Sales product type: {$product->getTypeId()}");
-
-                    $this->_pixleeData->exportProductToPixlee($product);
+                    $categoriesMap = $this->_pixleeData->getCategoriesMap();
+                    $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
                 }
             }
         // Coming from order cancelled
@@ -76,8 +76,8 @@ class SalesOrderObserver implements ObserverInterface
                 $this->_logger->addDebug("Sales product ID: {$product->getId()}");
                 $this->_logger->addDebug("Sales product SKU: {$product->getSku()}");
                 $this->_logger->addDebug("Sales product type: {$product->getTypeId()}");
-
-                $this->_pixleeData->exportProductToPixlee($product);
+                $categoriesMap = $this->_pixleeData->getCategoriesMap();
+                $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
             }
         } else {
             return $this;
