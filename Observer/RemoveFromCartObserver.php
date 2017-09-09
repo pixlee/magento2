@@ -7,17 +7,12 @@ use Magento\Framework\Event\ObserverInterface;
 
 class RemoveFromCartObserver implements ObserverInterface
 {
-    // A simple Trait to reuse Sentry Handler instantiation
-    use \Pixlee\Pixlee\Helper\Ravenized;
-
     public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
     ) {
         $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
-        // Use the Ravenized trait to instantiate a Sentry Handler
-        $this->ravenize();
     }
 
     public function execute(EventObserver $observer)

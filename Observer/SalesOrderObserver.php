@@ -7,9 +7,6 @@ use Magento\Framework\Event\ObserverInterface;
 
 class SalesOrderObserver implements ObserverInterface
 {
-    // A simple Trait to reuse Sentry Handler instantiation
-    use \Pixlee\Pixlee\Helper\Ravenized;
-
     public function __construct(
         \Magento\Sales\Model\ResourceModel\Order\Collection $collection,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
@@ -18,8 +15,6 @@ class SalesOrderObserver implements ObserverInterface
         $this->_collection = $collection;
         $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
-        // Use the Ravenized trait to instantiate a Sentry Handler
-        $this->ravenize();
     }
 
     public function execute(EventObserver $observer)
