@@ -129,14 +129,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     	return !$this->isActive();
     }
 
-    public function getUnexportedProducts()
+    public function getTotalProductsCount()
     {
         $collection = $this->_catalogProduct->getCollection();
         $collection->addFieldToFilter('visibility', array('neq' => 1));
         $collection->addFieldToFilter('status', array('neq' => 2));
-        
-        $collection->addAttributeToSelect('*');
-        return $collection;
+        $count = $collection->getSize();
+        return $count;
     }
 
     public function getPixleeRemainingText()
