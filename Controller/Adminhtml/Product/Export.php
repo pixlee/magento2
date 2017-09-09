@@ -28,21 +28,31 @@ class Export extends \Magento\Backend\App\Action
 
     public function execute()
     {
-        if($this->_pixleeData->isActive()){
-            $products = $this->_pixleeData->getUnexportedProducts();
-            $products->getSelect();
-
+        if($this->_pixleeData->isActive()) {
+            // Pagination variables
+            $num_products = $this->_pixleeData->getTotalProductsCount();
+            $counter = 0;   
+            $limit = 100;
+            $offset = 0;
             $job_id = uniqid();
-            $counter = 0;
-            $this->notify_export_status('started', $job_id, count($products));
+            $this->notify_export_status('started', $job_id, $num_products);
+            $categoriesMap = $this->_pixleeData->getCategoriesMap();
 
-            foreach ($products as $product) {
-                $ids = $product->getStoreIds();
-                if(isset($ids[0])) {
+            while ($offset < $num_products) {
+                $offset = $offset + $limit;
+                $products = $this->_catalogProduct->getCollection();
+                $products->addFieldToFilter('visibility', array('neq' => 1));
+                $products->addFieldToFilter('status', array('neq' => 2));
+                $products->getSelect()->limit($limit, $offset);
+
+                foreach ($products as $product) {
+                    $ids = $product->getStoreIds();
+                    if(isset($ids[0])) {
+                        $product->getStoreId($ids[0]);
+                    }
                     $counter += 1;
-                    $product->getStoreId($ids[0]);
+                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
                 }
-                $response = $this->_pixleeData->exportProductToPixlee($product);
             }
 
             $this->notify_export_status('finished', $job_id, $counter);
