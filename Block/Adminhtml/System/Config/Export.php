@@ -54,7 +54,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 			'onclick' => 'javascript:exportToPixlee(\''.$this->getAjaxExportUrl().'\'); return false;'
 		);
 
-		if($this->_pixleeData->isInactive() || $this->_pixleeData->getUnexportedProducts()->count() == 0){
+		if($this->_pixleeData->isInactive()){
 			$buttonData['class'] = 'disabled';
 		}
 
