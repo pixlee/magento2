@@ -41,7 +41,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        CategoryRepositoryInterface $categoryRepository
+        CategoryRepositoryInterface $categoryRepository,
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -62,6 +63,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->categoryRepository = $categoryRepository;
+        $this->categoryFactory = $categoryFactory;
 
         $pixleeKey = $this->getApiKey();
         $pixleeSecretKey = $this->getSecretKey();
@@ -136,6 +138,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $collection->addFieldToFilter('status', array('neq' => 2));
         $count = $collection->getSize();
         return $count;
+    }
+
+    public function getPaginatedProducts($limit, $offset) {
+        $products = $this->_catalogProduct->getCollection();
+        $products->addFieldToFilter('visibility', array('neq' => 1));
+        $products->addFieldToFilter('status', array('neq' => 2));
+        $products->getSelect()->limit($limit, $offset);
+        $products->addAttributeToSelect('*');
+        return $products;
     }
 
     public function getPixleeRemainingText()

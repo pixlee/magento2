@@ -23,8 +23,8 @@ class CreateProductTriggerObserver implements ObserverInterface
             // it seems something's catching any exceptions coming back from the
             // exportProductToPixlee function before bubbling up to me, gonna just
             // leave this call as-is, without wrapping in a try/catch
-            $this->_pixleeData->exportProductToPixlee($product);
-            $this->_logger->addInfo("[Pixlee] :: createProduct ".json_encode($product));
+            $categoriesMap = $this->_pixleeData->getCategoriesMap();
+            $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
         }
     }
 }
