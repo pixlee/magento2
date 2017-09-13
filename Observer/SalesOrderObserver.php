@@ -7,9 +7,6 @@ use Magento\Framework\Event\ObserverInterface;
 
 class SalesOrderObserver implements ObserverInterface
 {
-    // A simple Trait to reuse Sentry Handler instantiation
-    use \Pixlee\Pixlee\Helper\Ravenized;
-
     public function __construct(
         \Magento\Sales\Model\ResourceModel\Order\Collection $collection,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
@@ -18,8 +15,6 @@ class SalesOrderObserver implements ObserverInterface
         $this->_collection = $collection;
         $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
-        // Use the Ravenized trait to instantiate a Sentry Handler
-        $this->ravenize();
     }
 
     public function execute(EventObserver $observer)
@@ -63,8 +58,8 @@ class SalesOrderObserver implements ObserverInterface
                     $this->_logger->addDebug("Sales product ID: {$product->getId()}");
                     $this->_logger->addDebug("Sales product SKU: {$product->getSku()}");
                     $this->_logger->addDebug("Sales product type: {$product->getTypeId()}");
-
-                    $this->_pixleeData->exportProductToPixlee($product);
+                    $categoriesMap = $this->_pixleeData->getCategoriesMap();
+                    $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
                 }
             }
         // Coming from order cancelled
@@ -76,8 +71,8 @@ class SalesOrderObserver implements ObserverInterface
                 $this->_logger->addDebug("Sales product ID: {$product->getId()}");
                 $this->_logger->addDebug("Sales product SKU: {$product->getSku()}");
                 $this->_logger->addDebug("Sales product type: {$product->getTypeId()}");
-
-                $this->_pixleeData->exportProductToPixlee($product);
+                $categoriesMap = $this->_pixleeData->getCategoriesMap();
+                $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
             }
         } else {
             return $this;

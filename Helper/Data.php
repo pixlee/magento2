@@ -41,7 +41,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        CategoryRepositoryInterface $categoryRepository
+        CategoryRepositoryInterface $categoryRepository,
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -62,6 +63,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->categoryRepository = $categoryRepository;
+        $this->categoryFactory = $categoryFactory;
 
         $pixleeKey = $this->getApiKey();
         $pixleeSecretKey = $this->getSecretKey();
@@ -129,14 +131,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     	return !$this->isActive();
     }
 
-    public function getUnexportedProducts()
+    public function getTotalProductsCount()
     {
         $collection = $this->_catalogProduct->getCollection();
         $collection->addFieldToFilter('visibility', array('neq' => 1));
         $collection->addFieldToFilter('status', array('neq' => 2));
-        
-        $collection->addAttributeToSelect('*');
-        return $collection;
+        $count = $collection->getSize();
+        return $count;
+    }
+
+    public function getPaginatedProducts($limit, $offset) {
+        $products = $this->_catalogProduct->getCollection();
+        $products->addFieldToFilter('visibility', array('neq' => 1));
+        $products->addFieldToFilter('status', array('neq' => 2));
+        $products->getSelect()->limit($limit, $offset);
+        $products->addAttributeToSelect('*');
+        return $products;
     }
 
     public function getPixleeRemainingText()
@@ -240,18 +250,66 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function getCategories($product) {
-        $categoriesList = array();
-        $cats = $product->getCategoryIds();
-        foreach ($cats as $categoryId) {
-            $_category = $this->categoryRepository->get($categoryId, $this->_storeManager->getStore()->getId());
-            $fields = array(
-                'category_id' => (int) $categoryId,
-                'category_name' => $_category->getName()
-            );
-            $categoriesList[] = $fields;
+    public function getCategories($product, $categoriesMap) {
+        $allCategoriesIds = array();
+        $productCategories = $product->getCategoryIds();
+
+        foreach ($productCategories as $categoryId) {
+            $parent_ids = $categoriesMap[$categoryId]['parent_ids'];
+            $allCategoriesIds = array_merge($allCategoriesIds, $parent_ids);
         }
-        return $categoriesList;
+
+        $allCategoriesIds = array_unique($allCategoriesIds, SORT_NUMERIC);
+        $result = array();
+        foreach ($allCategoriesIds as $categoryId) {
+            $fields = array(
+                'category_id' => $categoryId,
+                'category_name' => $categoriesMap[$categoryId]['name'],
+                'category_url' => $categoriesMap[$categoryId]['url']
+            );
+
+            array_push($result, $fields);
+        }
+
+        return $result;
+    }
+
+    public function getCategoriesMap() {
+        $categories = $this->categoryFactory->create()->getCollection()->addAttributeToSelect('*');
+
+        $helper = array();
+        foreach ($categories as $category) {
+            $helper[$category->getId()] = $category->getName();
+        }
+
+        $allCategories = array();
+        foreach ($categories as $cat) {
+            $path = $cat->getPath();
+            $parents = explode('/', $path);
+            $fullName = '';
+
+            $realParentIds = array();
+
+            foreach ($parents as $parent) {
+                if ((int) $parent != 1 && (int) $parent != 2) {
+                    $name = $helper[(int) $parent];
+                    $fullName = $fullName . $name . ' > ';
+                    array_push($realParentIds, (int) $parent);
+                }
+            }
+
+            $categoryBody = array(
+                'name' => substr($fullName, 0, -3), 
+                'url' => $cat->getUrl($cat),
+                'parent_ids' => $realParentIds
+            );
+
+            $allCategories[$cat->getId()] = $categoryBody;
+        }
+
+        // Format
+        // Hashmap where keys are category_ids and values are a hashmp with name and url keys
+        return $allCategories;
     }
 
     public function getAllPhotos($product) {
@@ -289,7 +347,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $productPhotos;
     }
 
-    public function exportProductToPixlee($product)
+    public function exportProductToPixlee($product, $categoriesMap)
     {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
@@ -314,7 +372,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $pixlee = $this->_pixleeAPI;
 
-        $extraFields = $this->getExtraFields($product);
+        $extraFields = $this->getExtraFields($product, $categoriesMap);
         $currencyCode = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
 
         $product_mediaurl = $this->_mediaConfig->getMediaUrl($product->getImage());
@@ -323,9 +381,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $response;
     }
 
-    public function getExtraFields($product)
+    public function getExtraFields($product, $categoriesMap)
     {
-        $categoriesList = $this->getCategories($product);
+        $categoriesList = $this->getCategories($product, $categoriesMap);
         $productPhotos = $this->getAllPhotos($product);
 
         $extraFields = json_encode(array(
