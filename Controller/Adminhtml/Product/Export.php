@@ -39,11 +39,8 @@ class Export extends \Magento\Backend\App\Action
             $categoriesMap = $this->_pixleeData->getCategoriesMap();
 
             while ($offset < $num_products) {
+                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset);
                 $offset = $offset + $limit;
-                $products = $this->_catalogProduct->getCollection();
-                $products->addFieldToFilter('visibility', array('neq' => 1));
-                $products->addFieldToFilter('status', array('neq' => 2));
-                $products->getSelect()->limit($limit, $offset);
 
                 foreach ($products as $product) {
                     $ids = $product->getStoreIds();
