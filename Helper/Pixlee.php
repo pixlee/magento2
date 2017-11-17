@@ -148,7 +148,8 @@ class Pixlee
         //  Product updated.
         // Suppose we'll check the HTTP return code, but not expect a JSON 'status' field
         if( !$this->isBetween( $responseCode, 200, 299 ) ){
-            throw new \Exception("HTTP $responseCode response from API");
+            $this->_logger->addDebug("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product");
+            return $theResult;
         } else {
             return $theResult;
         }
