@@ -31,24 +31,24 @@ class Export extends \Magento\Backend\App\Action
         if($this->_pixleeData->isActive()) {
             $referrer = $this->request->getHeader('referer');
             $parts = explode("/", $referrer);
-            $websiteId = $parts[sizeof($parts) - 2];
+            $websiteId = (int) $parts[sizeof($parts) - 2];
 
             // Pagination variables
-            $num_products = $this->_pixleeData->getTotalProductsCount(); // Website ID
+            $num_products = $this->_pixleeData->getTotalProductsCount($websiteId);
             $counter = 0;   
             $limit = 100;
             $offset = 0;
             $job_id = uniqid();
             $this->notify_export_status('started', $job_id, $num_products);
-            $categoriesMap = $this->_pixleeData->getCategoriesMap(); // Website ID
+            $categoriesMap = $this->_pixleeData->getCategoriesMap();
 
             while ($offset < $num_products) {
-                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset); // Website ID
+                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset, $websiteId);
                 $offset = $offset + $limit;
 
                 foreach ($products as $product) {
                     $counter += 1;
-                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap); // Website ID
+                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap, $websiteId);
                 }
             }
 
