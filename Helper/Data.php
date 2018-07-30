@@ -131,19 +131,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     	return !$this->isActive();
     }
 
-    public function getTotalProductsCount()
+    public function getTotalProductsCount($websiteId)
     {
         $collection = $this->_catalogProduct->getCollection();
         $collection->addFieldToFilter('visibility', array('neq' => 1));
         $collection->addFieldToFilter('status', array('neq' => 2));
+        $collection->addWebsiteFilter($websiteId);
         $count = $collection->getSize();
         return $count;
     }
 
-    public function getPaginatedProducts($limit, $offset) {
+    public function getPaginatedProducts($limit, $offset, $websiteId) {
         $products = $this->_catalogProduct->getCollection();
         $products->addFieldToFilter('visibility', array('neq' => 1));
         $products->addFieldToFilter('status', array('neq' => 2));
+        $products->addWebsiteFilter($websiteId);
         $products->getSelect()->limit($limit, $offset);
         $products->addAttributeToSelect('*');
         return $products;
