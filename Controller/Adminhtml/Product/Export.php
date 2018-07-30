@@ -29,6 +29,10 @@ class Export extends \Magento\Backend\App\Action
     public function execute()
     {
         if($this->_pixleeData->isActive()) {
+            $referrer = $this->request->getHeader('referer');
+            $parts = explode("/", $referrer);
+            $websiteId = $parts[sizeof($parts) - 2];
+                        
             // Pagination variables
             $num_products = $this->_pixleeData->getTotalProductsCount();
             $counter = 0;   
