@@ -11,7 +11,7 @@ $nativeCategoryId = $block->getCurrentCategory()->getId();
 $websiteId = $helper->getWebsiteId();
 $helper->initializePixleeAPI($websiteId);
 ?>
-<?php if ($helper->getCDPWidgetId() != ""): ?>
+<?php if ($helper->isActive() && $helper->getCDPWidgetId() != ""): ?>
 	<div id="pixlee_container"></div>
 	<div id="pixlee_widget_master_container"></div>
 	<script id="pixlee_script">
