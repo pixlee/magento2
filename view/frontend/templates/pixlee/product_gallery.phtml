@@ -1,6 +1,8 @@
 <?php /* @var $block \Pixlee\Pixlee\Block\Gallery */?>
 <?php
 $helper = $this->helper('Pixlee\Pixlee\Helper\Data');
+$websiteId = $helper->getWebsiteId();
+$helper->initializePixleeAPI($websiteId);
 $_product = $block->getProduct() 
 ?>
 <?php if ($helper->getPDPWidgetId() != ""): ?>

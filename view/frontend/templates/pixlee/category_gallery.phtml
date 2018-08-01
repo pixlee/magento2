@@ -8,6 +8,8 @@
 <?php
 $helper = $this->helper('Pixlee\Pixlee\Helper\Data');
 $nativeCategoryId = $block->getCurrentCategory()->getId();
+$websiteId = $helper->getWebsiteId();
+$helper->initializePixleeAPI($websiteId);
 ?>
 <?php if ($helper->getCDPWidgetId() != ""): ?>
 	<div id="pixlee_container"></div>
