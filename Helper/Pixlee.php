@@ -28,7 +28,8 @@ class Pixlee
         return $this->getFromAPI("/albums");
     }
 
-    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode) {
+    public function createProduct($product_name, $sku, $product_image, $product_id = NULL, $extraFields = NULL, $regionalInfo)
+    {
         $this->_logger->addDebug("* In createProduct");
         /*
             Converted from Rails API format to distillery API format
@@ -52,20 +53,37 @@ class Pixlee
                 'num_photo': <VAL>,
                 'num_inbox_photo': <VAL>,
                 'product':
-                    'name': <VAL>,
                     'sku': <VAL>,
-                    'buy_now_link_url': <VAL>,
-                    'product_photo': <VAL>
+                    'product_photo': <VAL>,
+                    ...
+                    'regiona_info': [
+                        {
+                            'buy_now_link_url': <VAL>,
+                            'stock': <VAL>,
+                            'name': <VAL>,
+                            ...
+                        }
+                    ]
                 }
             }
         */
-        $product = array('name' => $product_name, 'sku' => $sku, 'buy_now_link_url' => $product_url,
-            'product_photo' => $product_image, 'stock' => $aggregateStock,
-            'native_product_id' => $product_id, 'variants_json' => $variantsDict,
-            'extra_fields' => $extraFields, 'currency' => $currencyCode);
-        $data = array('title' => $product_name, 'album_type' => 'product', 'live_update' => false, 'num_photo' => 0,
-            'num_inbox_photo' => 0, 'product' => $product);
+        $product = array(
+            'name' => $product_name, 
+            'sku' => $sku, 
+            'product_photo' => $product_image, 
+            'native_product_id' => $product_id, 
+            'extra_fields' => $extraFields, 
+            'regional_info' => $regionalInfo
+        );
 
+        $data = array(
+            'title' => $product_name, 
+            'album_type' => 'product', 
+            'live_update' => false, 
+            'num_photo' => 0,
+            'num_inbox_photo' => 0, 
+            'product' => $product
+        );
         //Fix for php versions that don't support JSON_UNESCAPED_SLASHES (< php 5.4)
         if(defined("JSON_UNESCAPED_SLASHES")){
             $payload = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
