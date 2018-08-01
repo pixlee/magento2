@@ -68,6 +68,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productFactory     = $productFactory;
     }
 
+    public function getStoreCode()
+    {
+        return $this->_storeManager->getStore()->getCode();
+    } 
+
+    public function getStoreName()
+    {
+        return $this->_storeManager->getStore()->getName();
+    }
+
+    public function getWebsiteId()
+    {
+        return $this->_storeManager->getStore()->getWebsiteId();
+    }
+
     public function initializePixleeAPI($websiteId) {
         $this->websiteId = $websiteId;
         $pixleeKey = $this->getApiKey($websiteId);
