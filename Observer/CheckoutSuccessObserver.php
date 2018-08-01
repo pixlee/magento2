@@ -17,21 +17,22 @@ class CheckoutSuccessObserver implements ObserverInterface
         \Magento\Checkout\Model\Session $checkoutSession,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         $this->_collection = $collection;
         $this->_checkoutSession = $checkoutSession;
         $this->_pixleeData  = $pixleeData;
         $this->_logger      = $logger;
         $this->_scopeConfig = $scopeConfig;
+        $this->_storeManager = $storeManager;
     }
 
     public function execute(EventObserver $observer)
     {
-        $pixleeEnabled = $this->_scopeConfig->getValue(
-            'pixlee_pixlee/existing_customers/account_settings/active',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        $websiteId = $this->_storeManager->getWebsite()->getWebsiteId();
+        $this->_pixleeData->initializePixleeAPI($websiteId);
+        $pixleeEnabled = $this->_pixleeData->isActive();
 
         if ($pixleeEnabled) {
             $this->_logger->addInfo("[Pixlee] :: start of Conversion");

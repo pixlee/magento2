@@ -8,12 +8,12 @@ use Magento\Framework\Message\ManagerInterface;
 
 class ValidateCredentialsObserver implements ObserverInterface
 {
-	/**
+    /**
      * @var ManagerInterface
      */
     protected $messageManager;
 
-	public function __construct(
+    public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
         ManagerInterface $messageManager,
         \Psr\Log\LoggerInterface $logger
@@ -24,7 +24,10 @@ class ValidateCredentialsObserver implements ObserverInterface
     }
 
     public function execute(EventObserver $observer)
-    {
+    {   
+        $this->_logger->addInfo("[Pixlee] :: start of Validation");
+        $websiteId = $observer->getEvent()->getData('website');
+        $this->_pixleeData->initializePixleeAPI($websiteId);
         $this->_pixleeData->_validateCredentials();
     }
 }
