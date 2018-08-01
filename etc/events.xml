@@ -6,9 +6,9 @@
     </event>
 
     <!-- Remove from Cart -->
-    <event name="sales_quote_remove_item">
+    <!--     <event name="sales_quote_remove_item">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\RemoveFromCartObserver" />
-    </event>
+    </event> -->
 
     <!-- Start Checkout -->
     <!-- <event name="sales_quote_address_collect_totals_after"> -->
@@ -34,9 +34,9 @@
 
     <!-- Cancel Order -->
     <!-- If an order is canceled, the stock will go up, so we'll check for that here -->
-    <event name="order_cancel_after">
+<!--     <event name="order_cancel_after">
        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
-    </event>
+    </event> -->
 
     <!-- Admin: Create/Update Product -->
     <event name="catalog_product_save_after">
