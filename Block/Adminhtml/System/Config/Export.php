@@ -17,12 +17,14 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 		\Pixlee\Pixlee\Helper\Data $pixleeData,
 		\Magento\Backend\Block\Template\Context $context,
 		\Magento\Store\Model\StoreManagerInterface $storeManager,
+		\Magento\Framework\App\Request\Http $request,
 		array $data = []
 	) {
 		$this->_adminhtmlData = $adminhtmlData;
 		$this->_pixleeData  = $pixleeData;
 		$this->_logger = $context->getLogger();
 		$this->_storeManager = $storeManager;
+		$this->websiteId = (int) $request->getParam('website', 0);
 		parent::__construct($context, $data);
 	}
 
@@ -56,8 +58,8 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 			'onclick' => 'javascript:exportToPixlee(\''.$this->getAjaxExportUrl().'\'); return false;'
 		);
 
-        $websiteId = $this->_storeManager->getWebsite()->getWebsiteId();
-        $this->_pixleeData->initializePixleeAPI($websiteId);		
+        $this->_logger->addInfo($this->websiteId);
+        $this->_pixleeData->initializePixleeAPI($this->websiteId);
 		if($this->_pixleeData->isInactive()){
 			$buttonData['class'] = 'disabled';
 		}
