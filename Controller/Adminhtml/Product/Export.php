@@ -17,21 +17,25 @@ class Export extends \Magento\Backend\App\Action
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         JsonFactory $resultJsonFactory,
+        \Magento\Framework\App\Request\Http $request,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
     ) {
         parent::__construct($context);
         $this->resultJsonFactory  = $resultJsonFactory;
+        $this->request            = $request;
         $this->_pixleeData        = $pixleeData;
         $this->_logger            = $logger;
     }
 
     public function execute()
     {
+        $referrer = $this->request->getHeader('referer');
+        $parts = explode("/", $referrer);
+        $websiteId = (int) $parts[sizeof($parts) - 2];
+        $this->_pixleeData->initializePixleeAPI($websiteId);
+
         if($this->_pixleeData->isActive()) {
-            $referrer = $this->request->getHeader('referer');
-            $parts = explode("/", $referrer);
-            $websiteId = (int) $parts[sizeof($parts) - 2];
 
             // Pagination variables
             $num_products = $this->_pixleeData->getTotalProductsCount($websiteId);
