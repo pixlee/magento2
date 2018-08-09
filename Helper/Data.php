@@ -392,7 +392,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 'name' => $storeProduct->getName(),
                 'buy_now_link_url' => $productUrl,
                 'price' => $convertedPrice,
-                'stock' => $this->getAggregateStock($storeProduct, $websiteId),
+                'stock' => $this->getAggregateStock($product),
                 'currency' => $storeCurrency,
                 'description' => $storeProduct->getDescription(),
                 'variants_json' => $this->getVariantsDict($storeProduct),
@@ -407,7 +407,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {   
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
-        // call getAggregateStock and getVariantsDict, keeping this version of the check
         if ($product->getVisibility() <= 1) {
             $this->_logger->addDebug("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
@@ -422,13 +421,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $pixlee = $this->_pixleeAPI;
 
-        // Equivalent to send_product_to_distillery for Shopify and BigCommerce
         $response = $pixlee->createProduct(
             $product->getName(), 
             $product->getSku(), 
+            $product->getProductUrl(),
             $this->_mediaConfig->getMediaUrl($product->getImage()),
             intval($product->getId()), 
+            $this->getAggregateStock($product),
+            $this->getVariantsDict($product),
             $this->getExtraFields($product, $categoriesMap), 
+            $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
+            $product->getPrice(),
             $this->getRegionalInformation($websiteId, $product)
         );
 

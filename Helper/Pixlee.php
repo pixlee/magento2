@@ -27,8 +27,7 @@ class Pixlee
     {
         return $this->getFromAPI("/albums");
     }
-
-    public function createProduct($product_name, $sku, $product_image, $product_id = NULL, $extraFields = NULL, $regionalInfo)
+    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo)
     {
         $this->_logger->addDebug("* In createProduct");
         /*
@@ -55,6 +54,9 @@ class Pixlee
                 'product':
                     'sku': <VAL>,
                     'product_photo': <VAL>,
+                    'buy_now_link_url': <VAL>,
+                    'stock': <VAL>,
+                    'name': <VAL>,
                     ...
                     'regiona_info': [
                         {
@@ -70,9 +72,14 @@ class Pixlee
         $product = array(
             'name' => $product_name, 
             'sku' => $sku, 
+            'buy_now_link_url' => $product_url,
             'product_photo' => $product_image, 
+            'stock' => $aggregateStock,
             'native_product_id' => $product_id, 
+            'variants_json' => $variantsDict,
             'extra_fields' => $extraFields, 
+            'currency' => $currencyCode,
+            'price' => $price,
             'regional_info' => $regionalInfo
         );
 
