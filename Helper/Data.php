@@ -316,7 +316,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $realParentIds = array();
 
             foreach ($parents as $parent) {
-                if ((int) $parent != 1 && (int) $parent != 2) {
+                if ((int) $parent != 0 && (int) $parent != 1 && (int) $parent != 2) {
                     $name = $helper[(int) $parent];
                     $fullName = $fullName . $name . ' > ';
                     array_push($realParentIds, (int) $parent);
