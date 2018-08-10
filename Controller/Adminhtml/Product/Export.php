@@ -31,8 +31,8 @@ class Export extends \Magento\Backend\App\Action
     public function execute()
     {
         $referrer = $this->request->getHeader('referer');
-        $parts = explode("/", $referrer);
-        $websiteId = (int) $parts[sizeof($parts) - 2];
+        preg_match("/section\/pixlee_pixlee\/website\/(.*)\/key\//", $referrer, $matches);
+        $websiteId = (int) ($matches[1]);
         $this->_pixleeData->initializePixleeAPI($websiteId);
 
         if($this->_pixleeData->isActive()) {
