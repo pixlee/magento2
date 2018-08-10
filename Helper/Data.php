@@ -17,7 +17,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
     protected $_urls = array();
 
-	/**
+    /**
     * Config paths
     */
     const PIXLEE_ACTIVE              = 'pixlee_pixlee/existing_customers/account_settings/active';
@@ -151,7 +151,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function isInactive()
     {
-    	return !$this->isActive();
+        return !$this->isActive();
     }
 
     public function getTotalProductsCount($websiteId)
@@ -382,7 +382,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $storeBaseUrl = $this->_storeManager->getStore($storeId)->getBaseUrl();
             $storeProduct = $this->productFactory->create()->setStoreId($storeId)->load($product->getId());
 
-            $basePrice = $storeProduct->getPrice();
+            $basePrice = $storeProduct->getFinalPrice();
             $storeCurrency = $this->_storeManager->getStore($storeId)->getDefaultCurrency();
             $convertedPrice = $this->_storeManager->getStore($storeId)->getBaseCurrency()->convert($basePrice, $storeCurrency);
 
@@ -393,7 +393,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 'buy_now_link_url' => $productUrl,
                 'price' => $convertedPrice,
                 'stock' => $this->getAggregateStock($product),
-                'currency' => $storeCurrency,
+                'currency' => $storeCurrency->getCode(),
                 'description' => $storeProduct->getDescription(),
                 'variants_json' => $this->getVariantsDict($storeProduct),
                 'region_code' => $storeCode
@@ -431,7 +431,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->getVariantsDict($product),
             $this->getExtraFields($product, $categoriesMap), 
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
-            $product->getPrice(),
+            $product->getFinalPrice(),
             $this->getRegionalInformation($websiteId, $product)
         );
 
@@ -666,9 +666,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     function _module_dir($moduleName, $type = '')
     {
-    	$om = \Magento\Framework\App\ObjectManager::getInstance();
-    	$reader = $om->get('Magento\Framework\Module\Dir\Reader');
-    	return $reader->getModuleDir($type, $moduleName);
+        $om = \Magento\Framework\App\ObjectManager::getInstance();
+        $reader = $om->get('Magento\Framework\Module\Dir\Reader');
+        return $reader->getModuleDir($type, $moduleName);
     }
 
     protected function _getPixleeCookie() {
