@@ -635,9 +635,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function _preparePayload($extraData = array())
+    public function _preparePayload($extraData = array(), $storeId)
     {
-        if(($payload = $this->_getPixleeCookie()) && $this->isActive()) {
+        if($payload = $this->_getPixleeCookie()) {
             // Append all extra data to the payload
             foreach($extraData as $key => $value) {
               // Don't accidentally overwrite existing data.
@@ -651,6 +651,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $payload['ecommerce_platform'] = 'magento_2';
             $payload['ecommerce_platform_version'] = '2.0.0';
             $payload['version_hash'] = $this->_getVersionHash();
+            $payload['region_code'] = $this->_storeManager->getStore($storeId)->getCode();
             $this->_logger->addDebug("Sending payload: " . json_encode($payload));
             return json_encode($payload);
         }

@@ -29,7 +29,8 @@ class AddToCartObserver implements ObserverInterface
         if ($pixleeEnabled) {
             $product = $observer->getEvent()->getProduct();   
             $productData = $this->_pixleeData->_extractProduct($product);
-            $payload = $this->_pixleeData->_preparePayload($productData);
+            $storeId = $this->_storeManager->getStore()->getStoreId();
+            $payload = $this->_pixleeData->_preparePayload($productData, $storeId);
             $this->_pixleeData->_sendPayload('addToCart', $payload);
             $this->_logger->addInfo("[Pixlee] :: addToCart ".json_encode($payload));
         }

@@ -25,11 +25,11 @@
     <!-- we fire a conversion event to limitless, we'll also 'update' the product via distillery. -->
     <event name="multishipping_checkout_controller_success_action">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
-        <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
+        <!-- <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" /> -->
     </event>
     <event name="checkout_onepage_controller_success_action">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
-        <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
+        <!-- <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" /> -->
     </event>
 
     <!-- Cancel Order -->
