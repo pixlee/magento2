@@ -8,7 +8,7 @@
     <referenceContainer name="product.info.media">
         <block class="Pixlee\Pixlee\Block\Gallery"
             name="product.view.community_gallery"
-            template="Pixlee_Pixlee::pixlee/gallery.phtml"
+            template="Pixlee_Pixlee::pixlee/product_gallery.phtml"
             after="-">
         </block>
     </referenceContainer>

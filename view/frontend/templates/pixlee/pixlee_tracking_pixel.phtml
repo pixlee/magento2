@@ -1,6 +1,12 @@
-<?php $helper = $this->helper('Pixlee\Pixlee\Helper\Data'); ?>
+<?php 
+$helper = $this->helper('Pixlee\Pixlee\Helper\Data'); 
+$websiteId = $helper->getWebsiteId();
+$helper->initializePixleeAPI($websiteId);
+?>
 
-<script type="text/javascript" src="https://assets.pixlee.com/assets/pixlee_events.js" src_type="url"></script>
-<script type="text/javascript">
-    pixlee_analytics = new Pixlee_Analytics('<?php echo $helper->getApiKey(); ?>');
-</script>
+<?php if ($helper->isActive()): ?>
+	<script type="text/javascript" src="https://assets.pixlee.com/assets/pixlee_events.js" src_type="url"></script>
+	<script type="text/javascript">
+	    pixlee_analytics = new Pixlee_Analytics('<?php echo $helper->getApiKey(); ?>');
+	</script>
+<?php endif; ?>

@@ -6,9 +6,9 @@
     </event>
 
     <!-- Remove from Cart -->
-    <event name="sales_quote_remove_item">
+    <!--     <event name="sales_quote_remove_item">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\RemoveFromCartObserver" />
-    </event>
+    </event> -->
 
     <!-- Start Checkout -->
     <!-- <event name="sales_quote_address_collect_totals_after"> -->
@@ -25,18 +25,18 @@
     <!-- we fire a conversion event to limitless, we'll also 'update' the product via distillery. -->
     <event name="multishipping_checkout_controller_success_action">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
-        <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
+        <!-- <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" /> -->
     </event>
     <event name="checkout_onepage_controller_success_action">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
-        <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
+        <!-- <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" /> -->
     </event>
 
     <!-- Cancel Order -->
     <!-- If an order is canceled, the stock will go up, so we'll check for that here -->
-    <event name="order_cancel_after">
+<!--     <event name="order_cancel_after">
        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
-    </event>
+    </event> -->
 
     <!-- Admin: Create/Update Product -->
     <event name="catalog_product_save_after">

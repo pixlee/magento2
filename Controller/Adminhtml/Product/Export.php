@@ -17,20 +17,28 @@ class Export extends \Magento\Backend\App\Action
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         JsonFactory $resultJsonFactory,
+        \Magento\Framework\App\Request\Http $request,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
         \Psr\Log\LoggerInterface $logger
     ) {
         parent::__construct($context);
         $this->resultJsonFactory  = $resultJsonFactory;
+        $this->request            = $request;
         $this->_pixleeData        = $pixleeData;
         $this->_logger            = $logger;
     }
 
     public function execute()
     {
+        $referrer = $this->request->getHeader('referer');
+        preg_match("/section\/pixlee_pixlee\/website\/(.*)\/key\//", $referrer, $matches);
+        $websiteId = (int) ($matches[1]);
+        $this->_pixleeData->initializePixleeAPI($websiteId);
+
         if($this->_pixleeData->isActive()) {
+
             // Pagination variables
-            $num_products = $this->_pixleeData->getTotalProductsCount();
+            $num_products = $this->_pixleeData->getTotalProductsCount($websiteId);
             $counter = 0;   
             $limit = 100;
             $offset = 0;
@@ -39,16 +47,12 @@ class Export extends \Magento\Backend\App\Action
             $categoriesMap = $this->_pixleeData->getCategoriesMap();
 
             while ($offset < $num_products) {
-                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset);
+                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset, $websiteId);
                 $offset = $offset + $limit;
 
                 foreach ($products as $product) {
-                    $ids = $product->getStoreIds();
-                    if(isset($ids[0])) {
-                        $product->getStoreId($ids[0]);
-                    }
                     $counter += 1;
-                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
+                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap, $websiteId);
                 }
             }
 

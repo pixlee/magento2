@@ -17,7 +17,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
     protected $_urls = array();
 
-	/**
+    /**
     * Config paths
     */
     const PIXLEE_ACTIVE              = 'pixlee_pixlee/existing_customers/account_settings/active';
@@ -42,7 +42,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
         CategoryRepositoryInterface $categoryRepository,
-        \Magento\Catalog\Model\CategoryFactory $categoryFactory
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory,
+        \Magento\Catalog\Model\ProductFactory $productFactory
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -63,11 +64,29 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->categoryRepository = $categoryRepository;
-        $this->categoryFactory = $categoryFactory;
+        $this->categoryFactory    = $categoryFactory;
+        $this->productFactory     = $productFactory;
+    }
 
-        $pixleeKey = $this->getApiKey();
-        $pixleeSecretKey = $this->getSecretKey();
+    public function getStoreCode()
+    {
+        return $this->_storeManager->getStore()->getCode();
+    } 
 
+    public function getStoreName()
+    {
+        return $this->_storeManager->getStore()->getName();
+    }
+
+    public function getWebsiteId()
+    {
+        return $this->_storeManager->getStore()->getWebsiteId();
+    }
+
+    public function initializePixleeAPI($websiteId) {
+        $this->websiteId = $websiteId;
+        $pixleeKey = $this->getApiKey($websiteId);
+        $pixleeSecretKey = $this->getSecretKey($websiteId);
         $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
     }
 
@@ -78,25 +97,28 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getApiKey()
     {
-    	return $this->_scopeConfig->getValue(
-    		self::PIXLEE_API_KEY,
-    		\Magento\Store\Model\ScopeInterface::SCOPE_STORE
-       );
+        return $this->_scopeConfig->getValue(
+            self::PIXLEE_API_KEY,
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            $this->websiteId
+        );
     }
 
     public function getSecretKey()
     {
-    	return $this->_scopeConfig->getValue(
-    		self::PIXLEE_SECRET_KEY,
-    		\Magento\Store\Model\ScopeInterface::SCOPE_STORE
-       );
+        return $this->_scopeConfig->getValue(
+            self::PIXLEE_SECRET_KEY,
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            $this->websiteId
+        );
     }
 
     public function getAccountId()
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_ACCOUNT_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            $this->websiteId
         );
     }
 
@@ -104,7 +126,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_PDP_WIDGET_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            $this->websiteId
         );
     }
 
@@ -112,38 +135,40 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_CDP_WIDGET_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            $this->websiteId
         );
     }
 
-    public function isActive($store = null)
+    public function isActive()
     {
-    	if($this->_scopeConfig->isSetFlag(self::PIXLEE_ACTIVE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store)){
+        if($this->_scopeConfig->isSetFlag(self::PIXLEE_ACTIVE, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE, $this->websiteId)) {
             return true;
         } else {
             return false;
         }
-
     }
 
     public function isInactive()
     {
-    	return !$this->isActive();
+        return !$this->isActive();
     }
 
-    public function getTotalProductsCount()
+    public function getTotalProductsCount($websiteId)
     {
         $collection = $this->_catalogProduct->getCollection();
         $collection->addFieldToFilter('visibility', array('neq' => 1));
         $collection->addFieldToFilter('status', array('neq' => 2));
+        $collection->addWebsiteFilter($websiteId);
         $count = $collection->getSize();
         return $count;
     }
 
-    public function getPaginatedProducts($limit, $offset) {
+    public function getPaginatedProducts($limit, $offset, $websiteId) {
         $products = $this->_catalogProduct->getCollection();
         $products->addFieldToFilter('visibility', array('neq' => 1));
         $products->addFieldToFilter('status', array('neq' => 2));
+        $products->addWebsiteFilter($websiteId);
         $products->getSelect()->limit($limit, $offset);
         $products->addAttributeToSelect('*');
         return $products;
@@ -291,7 +316,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $realParentIds = array();
 
             foreach ($parents as $parent) {
-                if ((int) $parent != 1 && (int) $parent != 2) {
+                if ((int) $parent != 0 && (int) $parent != 1 && (int) $parent != 2) {
                     $name = $helper[(int) $parent];
                     $fullName = $fullName . $name . ' > ';
                     array_push($realParentIds, (int) $parent);
@@ -347,23 +372,47 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $productPhotos;
     }
 
-    public function exportProductToPixlee($product, $categoriesMap)
-    {
+    public function getRegionalInformation($websiteId, $product) {
+        $result = array();
+
+        $website = $this->_storeManager->getWebsite($websiteId);
+        $storeIds = $website->getStoreIds();   
+        foreach ($storeIds as $storeId) {
+            $storeCode = $this->_storeManager->getStore($storeId)->getCode();
+            $storeBaseUrl = $this->_storeManager->getStore($storeId)->getBaseUrl();
+            $storeProduct = $this->productFactory->create()->setStoreId($storeId)->load($product->getId());
+
+            $basePrice = $storeProduct->getFinalPrice();
+            $storeCurrency = $this->_storeManager->getStore($storeId)->getDefaultCurrency();
+            $convertedPrice = $this->_storeManager->getStore($storeId)->getBaseCurrency()->convert($basePrice, $storeCurrency);
+
+            $productUrl = $storeBaseUrl . $storeProduct->getUrlKey() . ".html";
+
+            array_push($result, array(
+                'name' => $storeProduct->getName(),
+                'buy_now_link_url' => $productUrl,
+                'price' => $convertedPrice,
+                'stock' => $this->getAggregateStock($product),
+                'currency' => $storeCurrency->getCode(),
+                'description' => $storeProduct->getDescription(),
+                'variants_json' => $this->getVariantsDict($storeProduct),
+                'region_code' => $storeCode
+            ));
+        }
+
+        return $result;
+    }    
+
+    public function exportProductToPixlee($product, $categoriesMap, $websiteId)
+    {   
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
-        // call getAggregateStock and getVariantsDict, keeping this version of the check
         if ($product->getVisibility() <= 1) {
             $this->_logger->addDebug("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
         }
 
-        $aggregateStock = $this->getAggregateStock($product);
-        $variantsDict = $this->getVariantsDict($product);
-
         $this->_logger->addDebug("Product ID {$product->getID()} class: " . get_class($product));
-
-        $this->_logger->addDebug("Product ID {$product->getID()} stock: {$aggregateStock}");
-        $this->_logger->addDebug("Product ID {$product->getID()} variants: " . json_encode($variantsDict));
 
         $productName = $product->getName();
         if($this->isInactive() || !isset($productName)) {
@@ -372,11 +421,20 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $pixlee = $this->_pixleeAPI;
 
-        $extraFields = $this->getExtraFields($product, $categoriesMap);
-        $currencyCode = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
+        $response = $pixlee->createProduct(
+            $product->getName(), 
+            $product->getSku(), 
+            $product->getProductUrl(),
+            $this->_mediaConfig->getMediaUrl($product->getImage()),
+            intval($product->getId()), 
+            $this->getAggregateStock($product),
+            $this->getVariantsDict($product),
+            $this->getExtraFields($product, $categoriesMap), 
+            $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
+            $product->getFinalPrice(),
+            $this->getRegionalInformation($websiteId, $product)
+        );
 
-        $product_mediaurl = $this->_mediaConfig->getMediaUrl($product->getImage());
-        $response = $pixlee->createProduct($product->getName(), $product->getSku(), $product->getProductUrl(), $product_mediaurl, intval($product->getId()), $aggregateStock, $variantsDict, $extraFields, $currencyCode);
         $this->_logger->addInfo("Product Exported to Pixlee");
         return $response;
     }
@@ -577,9 +635,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function _preparePayload($extraData = array())
+    public function _preparePayload($extraData = array(), $storeId)
     {
-        if(($payload = $this->_getPixleeCookie()) && $this->isActive()) {
+        if($payload = $this->_getPixleeCookie()) {
             // Append all extra data to the payload
             foreach($extraData as $key => $value) {
               // Don't accidentally overwrite existing data.
@@ -593,6 +651,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $payload['ecommerce_platform'] = 'magento_2';
             $payload['ecommerce_platform_version'] = '2.0.0';
             $payload['version_hash'] = $this->_getVersionHash();
+            $payload['region_code'] = $this->_storeManager->getStore($storeId)->getCode();
             $this->_logger->addDebug("Sending payload: " . json_encode($payload));
             return json_encode($payload);
         }
@@ -608,9 +667,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     function _module_dir($moduleName, $type = '')
     {
-    	$om = \Magento\Framework\App\ObjectManager::getInstance();
-    	$reader = $om->get('Magento\Framework\Module\Dir\Reader');
-    	return $reader->getModuleDir($type, $moduleName);
+        $om = \Magento\Framework\App\ObjectManager::getInstance();
+        $reader = $om->get('Magento\Framework\Module\Dir\Reader');
+        return $reader->getModuleDir($type, $moduleName);
     }
 
     protected function _getPixleeCookie() {
