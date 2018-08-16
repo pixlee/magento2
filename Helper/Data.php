@@ -43,11 +43,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
         \Magento\Catalog\Model\ProductFactory $productFactory
     ){
-        $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
-        $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
-        $this->_urls['checkoutStart'] = self::ANALYTICS_BASE_URL . 'checkoutStart';
-        $this->_urls['checkoutSuccess'] = self::ANALYTICS_BASE_URL . 'conversion';
-
         $this->_catalogProduct    = $catalogProduct;
         $this->_configurableProduct    = $configurableProduct;
         $this->_mediaConfig       = $mediaConfig;
