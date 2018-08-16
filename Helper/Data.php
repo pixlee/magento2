@@ -14,7 +14,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_objectManager;
     protected $_logger;
 
-    const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
+    const ANALYTICS_BASE_URL = 'https://takehomemagento.herokuapp.com/analytics/';
     protected $_urls = array();
 
     /**
@@ -41,8 +41,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        CategoryRepositoryInterface $categoryRepository,
-        \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ProductFactory $productFactory
     ){
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
@@ -63,8 +61,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_cookieManager     = $CookieManager;
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
-        $this->categoryRepository = $categoryRepository;
-        $this->categoryFactory    = $categoryFactory;
         $this->productFactory     = $productFactory;
     }
 
@@ -275,68 +271,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function getCategories($product, $categoriesMap) {
-        $allCategoriesIds = array();
-        $productCategories = $product->getCategoryIds();
-
-        foreach ($productCategories as $categoryId) {
-            $parent_ids = $categoriesMap[$categoryId]['parent_ids'];
-            $allCategoriesIds = array_merge($allCategoriesIds, $parent_ids);
-        }
-
-        $allCategoriesIds = array_unique($allCategoriesIds, SORT_NUMERIC);
-        $result = array();
-        foreach ($allCategoriesIds as $categoryId) {
-            $fields = array(
-                'category_id' => $categoryId,
-                'category_name' => $categoriesMap[$categoryId]['name'],
-                'category_url' => $categoriesMap[$categoryId]['url']
-            );
-
-            array_push($result, $fields);
-        }
-
-        return $result;
-    }
-
-    public function getCategoriesMap() {
-        $categories = $this->categoryFactory->create()->getCollection()->addAttributeToSelect('*');
-
-        $helper = array();
-        foreach ($categories as $category) {
-            $helper[$category->getId()] = $category->getName();
-        }
-
-        $allCategories = array();
-        foreach ($categories as $cat) {
-            $path = $cat->getPath();
-            $parents = explode('/', $path);
-            $fullName = '';
-
-            $realParentIds = array();
-
-            foreach ($parents as $parent) {
-                if ((int) $parent != 0 && (int) $parent != 1 && (int) $parent != 2) {
-                    $name = $helper[(int) $parent];
-                    $fullName = $fullName . $name . ' > ';
-                    array_push($realParentIds, (int) $parent);
-                }
-            }
-
-            $categoryBody = array(
-                'name' => substr($fullName, 0, -3), 
-                'url' => $cat->getUrl($cat),
-                'parent_ids' => $realParentIds
-            );
-
-            $allCategories[$cat->getId()] = $categoryBody;
-        }
-
-        // Format
-        // Hashmap where keys are category_ids and values are a hashmp with name and url keys
-        return $allCategories;
-    }
-
     public function getAllPhotos($product) {
         $productPhotos = array();
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
@@ -403,7 +337,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $result;
     }    
 
-    public function exportProductToPixlee($product, $categoriesMap, $websiteId)
+    public function exportProductToPixlee($product, $websiteId)
     {   
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
@@ -429,7 +363,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             intval($product->getId()), 
             $this->getAggregateStock($product),
             $this->getVariantsDict($product),
-            $this->getExtraFields($product, $categoriesMap), 
+            $this->getExtraFields($product), 
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
             $this->getRegionalInformation($websiteId, $product)
@@ -439,52 +373,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $response;
     }
 
-    public function getExtraFields($product, $categoriesMap)
+    public function getExtraFields($product)
     {
-        $categoriesList = $this->getCategories($product, $categoriesMap);
         $productPhotos = $this->getAllPhotos($product);
 
         $extraFields = json_encode(array(
-            'product_photos' => $productPhotos,
-            'categories' => $categoriesList
+            'product_photos' => $productPhotos
         ));
         return $extraFields;
-    }
-
-    public function _sendPayload($event, $payload)
-    {
-        if($payload && isset($this->_urls[$event])) {
-            $ch = curl_init($this->_urls[$event]);
-
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
-
-            // Set User Agent
-            if(isset($_SERVER['HTTP_USER_AGENT'])){
-            curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
-            }
-
-            $response   = curl_exec($ch);
-            $responseInfo   = curl_getinfo($ch);
-            $responseCode   = $responseInfo['http_code'];
-            curl_close($ch);
-
-            if( !$this->isBetween($responseCode, 200, 299) ) {
-                $this->_logger->addInfo("HTTP $responseCode response from Pixlee API");
-            } elseif ( is_object($response) && is_null( $response->status ) ) {
-                $this->_logger->addInfo("Pixlee did not return a status");
-            } elseif( is_object($response) && !$this->isBetween( $response->status, 200, 299 ) ) {
-                $errorMessage   = implode(',', (array)$response->message);
-                $this->_logger->addInfo("$response->status - $errorMessage ");
-            } else {
-                $this->_logger->addInfo("Analytics event sent");
-                return true;
-            }
-        }
-        $this->_logger->addInfo("Analytics event not sent ".json_encode($payload));
-        return false;
     }
 
     public function _extractProduct($product)
@@ -546,55 +442,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $productData;
     }
 
-    public function _extractCart($quote)
-    {
-        if(is_a($quote, '\Magento\Sales\Model\Order')) {
-            foreach ($quote->getAllItems() as $item) {
-                // $quote->getAllVisibleItems will actually give us only 'configurable' items
-                // ...when we COULD use with more data from 'simple' items
-                // It might be less robust? Let's see how we all feel about this
-                if ($item->getProduct()->getTypeId() == 'configurable') {
-                    $this->_logger->addDebug("Skipping configurable item: {$item->getId()}");
-                } else {
-                    $cartData['cart_contents'][] = $this->_extractProduct($item);
-                }
-            }
-
-            $cartData['cart_total'] = $quote->getGrandTotal();
-            $cartData['email'] = $quote->getCustomerEmail();
-            $cartData['cart_type'] = "magento_2";
-            $cartData['cart_total_quantity'] = (int) $quote->getData('total_qty_ordered');
-            $cartData['billing_address'] = $this->_extractAddress($quote->getBillingAddress());
-            $cartData['shipping_address'] = $this->_extractAddress($quote->getShippingAddress());
-            $cartData['order_id'] = (int) $quote->getData('entity_id');
-            $cartData['currency'] = $quote->getData('base_currency_code');
-            $this->_logger->addInfo(json_encode($cartData));
-            return $cartData;
-        }
-
-        return false;
-    }
-
-    public function _extractAddress($address)
-    {
-        // 2016-03-21, Yunfan
-        // Something went wonky with my caches, and it always asks me to 'update'
-        // my address when I input it - this fixes whatever weird edge case I'm running
-        // into right now, and shouldn't hurt the normal case
-        if (is_null($address)) {
-            $sortedAddress = array();
-        } else {
-            $sortedAddress = array(
-                'street'    => $address->getStreet(),
-                'city'      => $address->getCity(),
-                'state'     => $address->getRegion(),
-                'country'   => $address->getCountryId(),
-                'zipcode'   => $address->getPostcode()
-            );
-        }
-        return json_encode($sortedAddress);
-    }
-
     public function _validateCredentials()
     {   
         // this function gets executed after the configuration is saved
@@ -633,30 +480,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->_logger->addInfo("Show Message that config was not saved"); 
             }
         }
-    }
-
-    public function _preparePayload($extraData = array(), $storeId)
-    {
-        if($payload = $this->_getPixleeCookie()) {
-            // Append all extra data to the payload
-            foreach($extraData as $key => $value) {
-              // Don't accidentally overwrite existing data.
-                if(!isset($payload[$key])) {
-                    $payload[$key] = $value;
-                }
-            }
-              // Required key/value pairs not in the payload by default.
-            $payload['API_KEY']= $this->getApiKey();
-            $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
-            $payload['ecommerce_platform'] = 'magento_2';
-            $payload['ecommerce_platform_version'] = '2.0.0';
-            $payload['version_hash'] = $this->_getVersionHash();
-            $payload['region_code'] = $this->_storeManager->getStore($storeId)->getCode();
-            $this->_logger->addDebug("Sending payload: " . json_encode($payload));
-            return json_encode($payload);
-        }
-        $this->_logger->addInfo("Analytics event not sent because the cookie wasn't found");
-        return false; // No cookie exists,
     }
 
     protected function _getVersionHash() {

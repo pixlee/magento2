@@ -1,47 +1,5 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <!-- Add to Cart -->
-    <event name="checkout_cart_add_product_complete">
-        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\AddToCartObserver" />
-    </event>
-
-    <!-- Remove from Cart -->
-    <!--     <event name="sales_quote_remove_item">
-        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\RemoveFromCartObserver" />
-    </event> -->
-
-    <!-- Start Checkout -->
-    <!-- <event name="sales_quote_address_collect_totals_after"> -->
-    <!-- The closest we have is the following, which fires after saving billing address -->
-    <!-- HOWEVER, it also fires on add to carts, so we'll not be using it -->
-    <!-- <event name="sales_quote_save_after"> -->
-    <!--     <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutStartObserver" /> -->
-    <!-- </event> -->
-
-    <!-- Conversion -->
-    <!-- The way Magento works, as soon as an order is placed, the inventory quantity ticks down -->
-    <!-- Shipping then canceling seems to leave the stock recduced, but canceling an order -->
-    <!-- that hasn't yet shipped seems to restore the stock value. So in the same place that -->
-    <!-- we fire a conversion event to limitless, we'll also 'update' the product via distillery. -->
-    <event name="multishipping_checkout_controller_success_action">
-        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
-        <!-- <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" /> -->
-    </event>
-    <event name="checkout_onepage_controller_success_action">
-        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CheckoutSuccessObserver" />
-        <!-- <observer name="pixlee_stock" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" /> -->
-    </event>
-
-    <!-- Cancel Order -->
-    <!-- If an order is canceled, the stock will go up, so we'll check for that here -->
-<!--     <event name="order_cancel_after">
-       <observer name="pixlee" instance="Pixlee\Pixlee\Observer\SalesOrderObserver" />
-    </event> -->
-
-    <!-- Admin: Create/Update Product -->
-    <event name="catalog_product_save_after">
-        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\CreateProductTriggerObserver" />
-    </event>
 
     <!-- Admin: Save Pixlee Configuration -->
     <event name="admin_system_config_changed_section_pixlee_pixlee">

@@ -44,7 +44,6 @@ class Export extends \Magento\Backend\App\Action
             $offset = 0;
             $job_id = uniqid();
             $this->notify_export_status('started', $job_id, $num_products);
-            $categoriesMap = $this->_pixleeData->getCategoriesMap();
 
             while ($offset < $num_products) {
                 $products = $this->_pixleeData->getPaginatedProducts($limit, $offset, $websiteId);
@@ -52,7 +51,7 @@ class Export extends \Magento\Backend\App\Action
 
                 foreach ($products as $product) {
                     $counter += 1;
-                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap, $websiteId);
+                    $response = $this->_pixleeData->exportProductToPixlee($product, $websiteId);
                 }
             }
 
