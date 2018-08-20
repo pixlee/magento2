@@ -1,8 +1,5 @@
 <?php
-/**
- * Copyright © 2015 Pixlee
- * @author teemingchew
- */
+
 namespace Pixlee\Pixlee\Helper;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 
@@ -176,16 +173,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getAggregateStock($product) {
 
-        // 1) If this is a 'simple'-ish product, just return stockItem->getQty for this product
-        // If it's not a simple product:
-        //      2) If ALL child products have a 'NULL' stockItem->getQty, return a NULL for
-        //      the aggregate
-        //      3) If ANY child products have a non-null stock quantity (including 0), add them up
         $aggregateStock = NULL;
-
-        // Regardless of what type of product this is, we can check the ConfigurableProduct class
-        // to see if this product has "children" products.
-        // If it is, we'll get a collection of products, if not, we'll simply get an empty collection
         $childProducts = $this->_configurableProduct->getUsedProductCollection($product);
 
         // For some reason !empty() doesn't work here
@@ -334,8 +322,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function exportProductToPixlee($product, $websiteId)
     {   
-        // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
-        // later on in the code, but since now I need $product to be reasonable in order to
         if ($product->getVisibility() <= 1) {
             $this->_logger->addDebug("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
@@ -376,65 +362,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'product_photos' => $productPhotos
         ));
         return $extraFields;
-    }
-
-    public function _extractProduct($product)
-    {
-        $this->_logger->addDebug("Passed product class: " . get_class($product));
-        $this->_logger->addDebug("Passed product ID: {$product->getId()}");
-        $this->_logger->addDebug("Passed product SKU: {$product->getSku()}");
-        $this->_logger->addDebug("Passed product type: {$product->getTypeId()}");
-
-        $productData = array();
-
-        if($product->getId() && is_a($product, '\Magento\Catalog\Model\Product\Interceptor')) {
-            // Add to Cart and Remove from Cart
-            $productData['product_id']    = (int) $product->getId();
-            $productData['product_sku']   = $product->getData('sku');
-            $productData['variant_id']    = (int) $product->getIdBySku($product->getSku());
-            $productData['variant_sku']   = $product->getSku();
-            $productData['price']         = $this->_pricingHelper->currency($product->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
-            $productData['quantity']      = (int) $product->getQty();
-            $productData['currency']      = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
-        } elseif ($product->getId() && is_a($product, '\Magento\Sales\Model\Order\Item')) {
-            // Checkout Start and Conversion
-            $actualProduct = $product->getProduct();
-
-            // TIME TO JUMP THROUGH HOOPS FOR CONFIGURABLE PRODUCTS YAYYYYYY
-            // Now that we have what we think is the actual product, try to find a
-            // parent product (Note: This parent product is essentially generated from the variant SKU)
-            $myObjectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $maybeParentConfigurable = $myObjectManager->create('Magento\ConfigurableProduct\Model\Product\Type\Configurable');
-            $maybeParentIds = $maybeParentConfigurable->getParentIdsByChild($actualProduct->getId());
-            $maybeParentId = empty($maybeParentIds) ? NULL : $maybeParentIds[0];
-            $maybeParentFromSkuProductObject = $myObjectManager->create('Magento\Catalog\Model\Product');
-            $maybeParentFromSkuProduct = $maybeParentFromSkuProductObject->load($maybeParentId);
-            $this->_logger->addDebug("Maybe my parent class (from SKU): " . get_class($maybeParentFromSkuProduct));
-            $this->_logger->addDebug("Maybe my parent ID (from SKU): {$maybeParentFromSkuProduct->getId()}");
-            $this->_logger->addDebug("Maybe my parent SKU (from SKU): {$maybeParentFromSkuProduct->getSku()}");
-            $this->_logger->addDebug("Maybe my parent type (from SKU): {$maybeParentFromSkuProduct->getTypeId()}");
-            // After all that logic, it's possible we have a null parent, in which case...
-            // ...we are our own parent
-            // awks
-            $maybeParent = NULL;
-            if (is_null($maybeParentFromSkuProduct->getId())) {
-                $this->_logger->addDebug("Ended up with null parent object, using self (probably 'simple' type)");
-                $maybeParent = $actualProduct;
-            } else {
-                $maybeParent = $maybeParentFromSkuProduct;
-            }
-
-
-            $productData['variant_id']    = $actualProduct->getId();
-            $productData['variant_sku']   = $actualProduct->getSku();
-            $productData['quantity']      = round($product->getQtyOrdered(), $mode=PHP_ROUND_HALF_UP);
-            $productData['price']         = $this->_pricingHelper->currency($actualProduct->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
-            $product = $product->getProduct();
-            $productData['product_id']    = $maybeParent->getId();
-            $productData['product_sku']   = $maybeParent->getData('sku');
-            $productData['currency']      = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
-        }
-        return $productData;
     }
 
     public function _validateCredentials()

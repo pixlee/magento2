@@ -10,8 +10,6 @@ class Pixlee
     // Constructor
     public function __construct($apiKey, $secretKey, $logger)
     {
-        // YUNFAN NOTE: This check prevents me from reaching the page where I would
-        // fill in the very things it's checking for...which is very Catch-22
         /*
         if( is_null( $apiKey ) || is_null( $secretKey ) || is_null( $userID )){
             throw new Exception("An API Key, API secret, and User ID are required");
@@ -115,8 +113,7 @@ class Pixlee
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'X-Alt-Referer: magento2.pixlee.com'
+                'Content-Type: application/json'
             )
         );
         $response   = curl_exec($ch);
@@ -145,7 +142,6 @@ class Pixlee
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Content-Type: application/json',
-            'X-Alt-Referer: magento2.pixlee.com',
             'Content-Length: ' . strlen($payload),
             'Signature: ' . $this->generateSignature($payload)
             )
@@ -167,12 +163,6 @@ class Pixlee
 
         curl_close($ch);
 
-        // Unlike the rails API, distillery doesn't return such pretty statuses
-        // On successful creation, we get a JSON with the created product's fields:
-        //  {"id":217127,"title":"Tori Tank","user_id":1055,"account_id":216,"public_contribution":false,"thumbnail_id":0,"inbox_thumbnail_id":0,"public_viewing":false,"description":null,"deleted_at":null,"public_token":null,"moderation":false,"email_slug":"A27EfF","campaign":false,"instructions":null,"action_link":null,"password":null,"has_password":false,"collect_email":false,"collect_custom_1":false,"collect_custom_1_field":null,"location_updated_at":null,"captions_updated_at":null,"redis_count":null,"num_inbox_photos":null,"unread_messages":null,"num_photos":null,"updated_dead_at":null,"live_update":false,"album_type":"product","display_options":{},"photos":[],"created_at":"2016-03-11 04:28:45.592","updated_at":"2016-03-11 04:28:45.592"}
-        // On product update, we just get a string that says:
-        //  Product updated.
-        // Suppose we'll check the HTTP return code, but not expect a JSON 'status' field
         if( !$this->isBetween( $responseCode, 200, 299 ) ){
             $this->_logger->addWarning("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product");
             return $theResult;
