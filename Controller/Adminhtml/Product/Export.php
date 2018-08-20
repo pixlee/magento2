@@ -43,7 +43,6 @@ class Export extends \Magento\Backend\App\Action
             $limit = 100;
             $offset = 0;
             $job_id = uniqid();
-            $this->notify_export_status('started', $job_id, $num_products);
 
             while ($offset < $num_products) {
                 $products = $this->_pixleeData->getPaginatedProducts($limit, $offset, $websiteId);
@@ -55,7 +54,6 @@ class Export extends \Magento\Backend\App\Action
                 }
             }
 
-            $this->notify_export_status('finished', $job_id, $counter);
             $resultJson = $this->resultJsonFactory->create();
             return $resultJson->setData([
                 'message' => 'Success!',
@@ -66,25 +64,5 @@ class Export extends \Magento\Backend\App\Action
     private function _logPixleeMsg($message)
     {
         $this->_logger->addInfo("[Pixlee] :: ".$message);
-    }
-
-    protected function notify_export_status($status, $job_id, $num_products) {
-        $api_key = $this->_pixleeData->getApiKey();
-        $payload = array(
-            'api_key' => $api_key,
-            'status' => $status,
-            'job_id' => $job_id,
-            'num_products' => $num_products,
-            'platform' => 'magento_2'
-        );
-
-        $ch = curl_init('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/json'
-        ));
-        $response = curl_exec($ch);
     }
 }
