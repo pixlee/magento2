@@ -9,4 +9,41 @@ $helper->initializePixleeAPI($websiteId);
 	<script type="text/javascript">
 	    pixlee_analytics = new Pixlee_Analytics('<?php echo $helper->getApiKey(); ?>');
 	</script>
+
+	<script type="text/javascript">
+	/** 
+	 *  this should be idealy done on the event "checkout_cart_add_product_complete"
+	 *  but since all the requirement is exposed on the frontend this will work for this example project
+	 *  however this construction makes this very brittle to change
+	 *  v1 but figured out that this will not work on category page without re-pointing to the correct products so abandoning
+	
+ 	document.addEventListener("DOMContentLoaded", function(event) { 
+		var pixhttp = new XMLHttpRequest();
+		var pixurl = 'https://takehomemagento.herokuapp.com/analytics';
+		
+		document.getElementById('product-addtocart-button').addEventListener('click', function() {
+			var pixproduct = document.querySelector('.price-box').getAttribute('data-product-id');
+			var pixprice = Number.parseFloat(document.querySelector('#product-price-'+pixproduct).getAttribute('data-price-amount')).toFixed(2);
+			var pixqty = document.querySelector('#qty').value;
+			var pixcurrency = document.querySelector("meta[itemprop='priceCurrency']").getAttribute('content');
+
+			pixhttp.open('POST',pixurl,true);
+
+			var pixbody = {
+				"product_id": pixproduct,
+				"price": pixprice,
+				"quantity": pixqty,
+				"currency": pixcurrency
+			};
+			pixhttp.onreadystatechange = function(){
+				if(this.readyState == XMLHttpRequest.DONE && this.status == 200){
+					console.log('sent');
+				}
+			}
+			pixhttp.send(JSON.stringify(pixbody));
+		});
+	});
+	**/
+
+	</script>
 <?php endif; ?>

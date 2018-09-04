@@ -10,6 +10,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_scopeConfig;
     protected $_objectManager;
     protected $_logger;
+    protected $_categoryFactory;
 
     const ANALYTICS_BASE_URL = 'https://takehomemagento.herokuapp.com/analytics/';
     protected $_urls = array();
@@ -38,7 +39,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        \Magento\Catalog\Model\ProductFactory $productFactory
+        \Magento\Catalog\Model\ProductFactory $productFactory,
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory
+        
     ){
         $this->_catalogProduct    = $catalogProduct;
         $this->_configurableProduct    = $configurableProduct;
@@ -54,6 +57,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->productFactory     = $productFactory;
+        $this->_categoryFactory   = $categoryFactory;
     }
 
     public function getStoreCode()
@@ -75,7 +79,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->websiteId = $websiteId;
         $pixleeKey = $this->getApiKey($websiteId);
         $pixleeSecretKey = $this->getSecretKey($websiteId);
-        $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
+        return $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
     }
 
     private function _logPixleeMsg($message)
@@ -347,7 +351,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->getExtraFields($product), 
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
-            $this->getRegionalInformation($websiteId, $product)
+            $this->getRegionalInformation($websiteId, $product),
+            $this->getCategories($product)
         );
 
         $this->_logger->addInfo("Product Exported to Pixlee");
@@ -433,4 +438,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             return false;
         }
     }
+
+    public function getCategories($product)
+    {
+        $catIds = $product->getCategoryIds();
+        $mappedCat = array_map(function($el){
+            return array('category_id'=> $el,'category_name'=> $this->_categoryFactory->create()->load($el)->getName());
+        },$catIds);
+    
+        return $mappedCat;
+        
+    }
+
 }
