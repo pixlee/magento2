@@ -5,5 +5,7 @@
     <event name="admin_system_config_changed_section_pixlee_pixlee">
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\ValidateCredentialsObserver" />
     </event>
-
+    <event name="checkout_cart_add_product_complete">
+        <observer name="pixlee" instance="Pixlee\Pixlee\Observer\AddToCart" />
+    </event>
 </config>

@@ -25,7 +25,7 @@ class Pixlee
     {
         return $this->getFromAPI("/albums");
     }
-    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo)
+    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo, $categories)
     {
         $this->_logger->addDebug("* In createProduct");
         /*
@@ -78,8 +78,8 @@ class Pixlee
             'extra_fields' => $extraFields, 
             'currency' => $currencyCode,
             'price' => $price,
-            'regional_info' => $regionalInfo
-        );
+            'regional_info' => $regionalInfo,
+            'categories' => $categories        );
 
         $data = array(
             'title' => $product_name, 
@@ -180,4 +180,19 @@ class Pixlee
             return false;
         }
     }
+
+    public function addToCartData($product,$price,$qty,$currency)
+    {
+        $data = array(
+            'product_id'    => $product,
+            'proudct_price' => $price,
+            'qty'           => $qty,
+            'currency'      => $currency
+        );
+        
+        $serialized = json_encode($data);
+        
+        return $this->postToAPI("/analytics?api_key=" . $this->apiKey , $serialized);
+    }
+
 }
