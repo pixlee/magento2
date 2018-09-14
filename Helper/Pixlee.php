@@ -98,6 +98,18 @@ class Pixlee
         return $this->postToAPI( "/albums?api_key=" . $this->apiKey, $payload );
     }
 
+    public function addToCartAnalytics($data) {
+        $this->_logger->addDebug("* In addToCartAnalytics");
+        //Fix for php versions that don't support JSON_UNESCAPED_SLASHES (< php 5.4)
+        if(defined("JSON_UNESCAPED_SLASHES")){
+            $payload = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            $payload = str_replace('\\/', '/', json_encode($data));
+        }
+        return $this->postToAPI( "/analytics?api_key=" . $this->apiKey, $payload );
+    }
+
+
     private function getFromAPI( $uri, $options = NULL )
     {
         $apiString    = "?api_key=".$this->apiKey;
@@ -164,7 +176,7 @@ class Pixlee
         curl_close($ch);
 
         if( !$this->isBetween( $responseCode, 200, 299 ) ){
-            $this->_logger->addWarning("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product");
+            $this->_logger->addWarning("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product or push data to analytics");
             return $theResult;
         } else {
             return $theResult;

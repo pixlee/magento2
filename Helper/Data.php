@@ -38,7 +38,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        \Magento\Catalog\Model\ProductFactory $productFactory
+        \Magento\Catalog\Model\ProductFactory $productFactory,
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory
     ){
         $this->_catalogProduct    = $catalogProduct;
         $this->_configurableProduct    = $configurableProduct;
@@ -54,6 +55,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->productFactory     = $productFactory;
+        $this->_categoryFactory   = $categoryFactory;
     }
 
     public function getStoreCode()
@@ -76,6 +78,31 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $pixleeKey = $this->getApiKey($websiteId);
         $pixleeSecretKey = $this->getSecretKey($websiteId);
         $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
+    }
+
+    public function initializeAddToCartData($product) {
+        $this->_logger->addDebug("* In initializeAddToCartData");
+        
+        // Sample body:
+        // {
+        //     "product_id": 234,
+        //     "price": 100.00,
+        //     "quantity": 2,
+        //     "currency": "USD"
+        // }
+
+        // Add 'categories' => $this->getCategories($product) to test the getCategories() function
+
+        $data = array(
+            'product_id' => intval($product->getId()), 
+            'price' => $product->getFinalPrice(), 
+            'quantity' => intval($product->getQty()), 
+            'currency' => $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
+            // 'categories' => $this->getCategories($product)   
+        );
+        $pixlee = $this->_pixleeAPI;
+        $response = $pixlee->addToCartAnalytics($data);
+        return $response;
     }
 
     private function _logPixleeMsg($message)
@@ -205,6 +232,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $this->_logger->addDebug("Product {$product->getId()} aggregate stock: {$aggregateStock}");
         return $aggregateStock;
+    }
+
+    public function getCategories($product) {
+
+        $categoriesArray = array();
+        $category_ids = $product->getCategoryIds();
+
+        foreach ($category_ids as $category_id) {
+            $_cat = $this->_categoryFactory->create()->load($category_id);
+            $category = array(
+                'category_id' => $category_id, 
+                'category_name' => $_cat->getName()
+            );
+            array_push($categoriesArray, $category);
+        } 
+        return $categoriesArray;
     }
 
     public function getVariantsDict($product) {
