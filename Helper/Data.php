@@ -56,6 +56,33 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productFactory     = $productFactory;
     }
 
+    /**
+     * Get all the categories to which a product belongs.
+     *
+     * @param \Magento\Catalog\Model\Product $product
+     * @return array[] An array of arrays containing the following keys:
+     *     - category_id
+     *     - category_name
+     */
+    public function getCategories(\Magento\Catalog\Model\Product $product)
+    {
+        $category_collection = $product->getCategoryCollection()
+            ->addNameToResult()
+            ->exportToArray();
+
+        $categories = array();
+
+        foreach ($category_collection as $id => $category)
+        {
+            array_push($categories, [
+                "category_id" => $id,
+                "category_name" => $category["name"]
+            ]);
+        }
+        
+        return $categories;
+    }
+
     public function getStoreCode()
     {
         return $this->_storeManager->getStore()->getCode();
@@ -357,9 +384,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getExtraFields($product)
     {
         $productPhotos = $this->getAllPhotos($product);
+        $categories = $this->getCategories($product);
 
         $extraFields = json_encode(array(
-            'product_photos' => $productPhotos
+            'product_photos' => $productPhotos,
+            'categories' => $categories
         ));
         return $extraFields;
     }

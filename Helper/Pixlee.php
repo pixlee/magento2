@@ -21,6 +21,17 @@ class Pixlee
         $this->baseURL   = "https://takehomemagento.herokuapp.com";
     }
 
+    /**
+     * Post data to the analytics end-point.
+     *
+     * @param array $payload
+     * @return array The JSON-decoded response from the server.
+     */
+    public function postAnalytics($payload)
+    {
+        return $this->postToAPI("/analytics", json_encode($payload));
+    }
+
     public function getAlbums()
     {
         return $this->getFromAPI("/albums");
