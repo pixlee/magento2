@@ -2,7 +2,7 @@
 
 namespace Pixlee\Pixlee\Helper;
 
-class Pixlee 
+class Pixlee
 {
     private $apiKey;
     private $baseURL;
@@ -25,7 +25,8 @@ class Pixlee
     {
         return $this->getFromAPI("/albums");
     }
-    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo)
+    // Adds '$categories' param to include product categories.
+    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo, $categories = NULL)
     {
         $this->_logger->addDebug("* In createProduct");
         /*
@@ -68,25 +69,26 @@ class Pixlee
             }
         */
         $product = array(
-            'name' => $product_name, 
-            'sku' => $sku, 
+            'name' => $product_name,
+            'sku' => $sku,
             'buy_now_link_url' => $product_url,
-            'product_photo' => $product_image, 
+            'product_photo' => $product_image,
             'stock' => $aggregateStock,
-            'native_product_id' => $product_id, 
+            'native_product_id' => $product_id,
             'variants_json' => $variantsDict,
-            'extra_fields' => $extraFields, 
+            'extra_fields' => $extraFields,
             'currency' => $currencyCode,
             'price' => $price,
-            'regional_info' => $regionalInfo
+            'regional_info' => $regionalInfo,
+            'categories' => $categories
         );
 
         $data = array(
-            'title' => $product_name, 
-            'album_type' => 'product', 
-            'live_update' => false, 
+            'title' => $product_name,
+            'album_type' => 'product',
+            'live_update' => false,
             'num_photo' => 0,
-            'num_inbox_photo' => 0, 
+            'num_inbox_photo' => 0,
             'product' => $product
         );
         //Fix for php versions that don't support JSON_UNESCAPED_SLASHES (< php 5.4)
@@ -107,7 +109,7 @@ class Pixlee
         if( !is_null($options)){
             $queryString  = http_build_query($options);
             $urlToHit     = $urlToHit . "&" . $queryString;
-        }      
+        }
 
         $ch = curl_init( $urlToHit );
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");

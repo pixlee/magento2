@@ -6,4 +6,9 @@
         <observer name="pixlee" instance="Pixlee\Pixlee\Observer\ValidateCredentialsObserver" />
     </event>
 
+    <!-- Send Cart Product Info to Pixlee API -->
+    <event name="checkout_cart_product_add_after">
+        <observer name="pixlee_add_cart" instance="Pixlee\Pixlee\Observer\AddToCart" />
+    </event>
+
 </config>

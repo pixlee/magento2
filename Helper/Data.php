@@ -38,7 +38,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        \Magento\Catalog\Model\ProductFactory $productFactory
+        \Magento\Catalog\Model\ProductFactory $productFactory,
+        \Magento\Catalog\Model\CategoryFactory $categoryFactory,
     ){
         $this->_catalogProduct    = $catalogProduct;
         $this->_configurableProduct    = $configurableProduct;
@@ -54,12 +55,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->productFactory     = $productFactory;
+        $this->categoryFactory    = $categoryFactory;
     }
 
     public function getStoreCode()
     {
         return $this->_storeManager->getStore()->getCode();
-    } 
+    }
 
     public function getStoreName()
     {
@@ -293,7 +295,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $result = array();
 
         $website = $this->_storeManager->getWebsite($websiteId);
-        $storeIds = $website->getStoreIds();   
+        $storeIds = $website->getStoreIds();
         foreach ($storeIds as $storeId) {
             $storeCode = $this->_storeManager->getStore($storeId)->getCode();
             $storeBaseUrl = $this->_storeManager->getStore($storeId)->getBaseUrl();
@@ -318,10 +320,28 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $result;
-    }    
+    }
+
+    // For every category the product belongs to, get category's name and ID and add it to the array
+    public function getCategories($product)
+    {
+      $categories = array();
+      $catIds = $product->getCategoryIds();
+
+      foreach ($catIds as $cid) {
+        $_category = $this->categoryFactory->create()->load($cid);
+
+        array_push($categories, array(
+            'category_id' => $cid,
+            'category_name' => $_category->getName()
+          );
+      }
+
+      return $categories;
+    }
 
     public function exportProductToPixlee($product, $websiteId)
-    {   
+    {
         if ($product->getVisibility() <= 1) {
             $this->_logger->addDebug("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
@@ -336,18 +356,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $pixlee = $this->_pixleeAPI;
 
+        // Add 'categories' field to createProduct method to include categories when
+        // exporting products to pixlee
         $response = $pixlee->createProduct(
-            $product->getName(), 
-            $product->getSku(), 
+            $product->getName(),
+            $product->getSku(),
             $product->getProductUrl(),
             $this->_mediaConfig->getMediaUrl($product->getImage()),
-            intval($product->getId()), 
+            intval($product->getId()),
             $this->getAggregateStock($product),
             $this->getVariantsDict($product),
-            $this->getExtraFields($product), 
+            $this->getExtraFields($product),
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
-            $this->getRegionalInformation($websiteId, $product)
+            $this->getRegionalInformation($websiteId, $product),
+            $this->getCategories($product)
         );
 
         $this->_logger->addInfo("Product Exported to Pixlee");
@@ -365,41 +388,41 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     public function _validateCredentials()
-    {   
+    {
         // this function gets executed after the configuration is saved
-        // The idea is that we make an API call that requires credentails. 
+        // The idea is that we make an API call that requires credentails.
         // If it goes through, we say "successfull". Else, we say "not successfull" and set the credentails to point zero
         // I originally wanted to do this is a backend model where we can do stuff before save. But unfortunately, backend models are not avaialble for group of items.
         $this->_logger->addInfo("Validating Credentails");
         if ($this->isActive()) {
-            $this->_logger->addInfo("Making the call"); 
+            $this->_logger->addInfo("Making the call");
             $test_call_success = $this->_pixleeAPI->getAlbums();
             if ($test_call_success) {
-                $this->_logger->addInfo("Show Message that everything went fine"); 
+                $this->_logger->addInfo("Show Message that everything went fine");
             } else {
                 $this->resourceConfig->saveConfig(
-                    self::PIXLEE_ACTIVE, 
-                    '0', 
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    self::PIXLEE_ACTIVE,
+                    '0',
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     \Magento\Store\Model\Store::DEFAULT_STORE_ID
                 );
 
                 $this->resourceConfig->saveConfig(
-                    self::PIXLEE_API_KEY, 
-                    '', 
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    self::PIXLEE_API_KEY,
+                    '',
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     \Magento\Store\Model\Store::DEFAULT_STORE_ID
                 );
 
                 $this->resourceConfig->saveConfig(
-                    self::PIXLEE_SECRET_KEY, 
-                    '', 
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    self::PIXLEE_SECRET_KEY,
+                    '',
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     \Magento\Store\Model\Store::DEFAULT_STORE_ID
                 );
 
                 throw new \Exception("Please check the credentails and try again. Your settings were not saved");
-                $this->_logger->addInfo("Show Message that config was not saved"); 
+                $this->_logger->addInfo("Show Message that config was not saved");
             }
         }
     }
