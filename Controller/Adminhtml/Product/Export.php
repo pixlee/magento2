@@ -30,11 +30,10 @@ class Export extends \Magento\Backend\App\Action
 
     public function execute()
     {
-        $referrer = $this->request->getHeader('referer');
-        preg_match("/section\/pixlee_pixlee\/website\/(.*)\/key\//", $referrer, $matches);
-        $websiteId = (int) ($matches[1]);
+        $referrer = $this->request->getHeader('referer');	
+		preg_match("/section\/pixlee_pixlee\/key\/(.*)\/website\/(.*)\//", $referrer, $matches);		
+		$websiteId =(int)($matches[2]);
         $this->_pixleeData->initializePixleeAPI($websiteId);
-
         if($this->_pixleeData->isActive()) {
 
             // Pagination variables

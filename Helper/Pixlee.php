@@ -25,7 +25,7 @@ class Pixlee
     {
         return $this->getFromAPI("/albums");
     }
-    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo)
+    public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo,$categories)
     {
         $this->_logger->addDebug("* In createProduct");
         /*
@@ -78,7 +78,8 @@ class Pixlee
             'extra_fields' => $extraFields, 
             'currency' => $currencyCode,
             'price' => $price,
-            'regional_info' => $regionalInfo
+            'regional_info' => $regionalInfo,
+			'categories' => $categories
         );
 
         $data = array(
@@ -108,18 +109,20 @@ class Pixlee
             $queryString  = http_build_query($options);
             $urlToHit     = $urlToHit . "&" . $queryString;
         }      
-
         $ch = curl_init( $urlToHit );
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); # added these statements so that it allows insecure SSL i.e from localhost
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,false);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                 'Content-Type: application/json'
             )
-        );
+        );		
         $response   = curl_exec($ch);
-
+		file_put_contents('php://stderr', print_r(" response is ".$response, TRUE));
         $this->_logger->addInfo("Inside getFromAPI");
         $responseCode = curl_getinfo($ch)['http_code'];
+		file_put_contents('php://stderr', print_r(" response code is ".$responseCode, TRUE));
         $this->_logger->addInfo("Response code = {$responseCode}");
 
         if( !$this->isBetween( $responseCode, 200, 299 ) ){
@@ -138,6 +141,8 @@ class Pixlee
         $this->_logger->addDebug("Hitting URL: {$urlToHit}");
         $this->_logger->addDebug("With payload: {$payload}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false); # added these statements so that it allows insecure SSL i.e from localhost
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -164,7 +169,7 @@ class Pixlee
         curl_close($ch);
 
         if( !$this->isBetween( $responseCode, 200, 299 ) ){
-            $this->_logger->addWarning("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product");
+            $this->_logger->addWarning("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product ");
             return $theResult;
         } else {
             return $theResult;

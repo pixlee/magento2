@@ -38,7 +38,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Pixlee\Pixlee\Helper\CookieManager $CookieManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
-        \Magento\Catalog\Model\ProductFactory $productFactory
+        \Magento\Catalog\Model\ProductFactory $productFactory,
+		\Magento\Catalog\Model\ResourceModel\CategoryFactory $categoryFactory 
     ){
         $this->_catalogProduct    = $catalogProduct;
         $this->_configurableProduct    = $configurableProduct;
@@ -54,6 +55,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_storeManager      = $storeManager;
         $this->resourceConfig     = $resourceConfig;
         $this->productFactory     = $productFactory;
+		$this->_categoryFactory = $categoryFactory;
     }
 
     public function getStoreCode()
@@ -320,6 +322,27 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $result;
     }    
 
+    #Gets category list of the product and then sends it as an array
+	
+	public function getCategories($product)
+	{
+		$categoryData=array();
+		$categoryIds = $product->getCategoryIds(); #getting all category Ids of the particular product
+		$objectManager = \Magento\Framework\App\ObjectManager::getInstance();	
+		if(count($categoryIds)){ # checking if it has any categories
+		foreach($categoryIds as $cat){  #looping through all categoryIds to find the info related to each id
+			$category = $objectManager->create('Magento\Catalog\Model\Category')->load($cat); #loading the category infomration based on the categoryId
+			array_push($categoryData,array(
+			'category_id'=> $cat,
+			'category_name'=>$category->getName()
+			)) ;
+		  }
+		}
+		$payload = json_encode($categoryData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		$this->_logger->addInfo("payload is ". $payload);
+		return $categoryData;
+	}
+	
     public function exportProductToPixlee($product, $websiteId)
     {   
         if ($product->getVisibility() <= 1) {
@@ -347,7 +370,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->getExtraFields($product), 
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
-            $this->getRegionalInformation($websiteId, $product)
+            $this->getRegionalInformation($websiteId, $product),
+			$this->getCategories($product)
         );
 
         $this->_logger->addInfo("Product Exported to Pixlee");
