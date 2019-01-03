@@ -41,8 +41,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
 
 	public function getAjaxExportUrl()
 	{
-		// return $this->_adminhtmlData->getUrl('pixlee_pixlee/export');
-		return $this->getUrl('pixlee_export/product/export');
+		return $this->getUrl('pixlee_export/product/export', [ 'website_id' => (string) $this->websiteId ]);
 	}
 
 	public function getAPIKey()
