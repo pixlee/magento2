@@ -386,7 +386,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $storeCurrency = $this->_storeManager->getStore($storeId)->getDefaultCurrency();
             $convertedPrice = $this->_storeManager->getStore($storeId)->getBaseCurrency()->convert($basePrice, $storeCurrency);
 
-            $productUrl = $storeBaseUrl . $storeProduct->getUrlKey() . ".html";
+            $productUrl = $storeProduct->getProductUrl();
 
             array_push($result, array(
                 'name' => $storeProduct->getName(),
