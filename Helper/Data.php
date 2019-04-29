@@ -290,7 +290,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $fields = array(
                 'category_id' => $categoryId,
                 'category_name' => $categoriesMap[$categoryId]['name'],
-                'category_url' => $categoriesMap[$categoryId]['url']
+                'category_url' => $categoriesMap[$categoryId]['url'],
+                'category_updated_at' => time()
             );
 
             array_push($result, $fields);
@@ -446,7 +447,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $extraFields = json_encode(array(
             'product_photos' => $productPhotos,
-            'categories' => $categoriesList
+            'categories' => $categoriesList,
+            'ecommerce_platform' => 'magento_2'
         ));
         return $extraFields;
     }
