@@ -447,7 +447,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $extraFields = json_encode(array(
             'product_photos' => $productPhotos,
-            'categories' => $categoriesList
+            'categories' => $categoriesList,
+            'ecommerce_platform' => 'magento_2'
         ));
         return $extraFields;
     }

@@ -80,8 +80,7 @@ class Pixlee
             'extra_fields' => $extraFields, 
             'currency' => $currencyCode,
             'price' => $price,
-            'regional_info' => $regionalInfo,
-            'ecommerce_platform' => 'magento_2'
+            'regional_info' => $regionalInfo
         );
 
         $data = array(
