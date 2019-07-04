@@ -11,7 +11,7 @@ require(['prototype'], function () {
       }
       
       $('pixlee_export_button').addClassName('disabled');
-      new Ajax.Request('<?php /* @escapeNotVerified */ echo $block->getAjaxExportUrl() ?>', {
+      new Ajax.Request('<?= /* @noEscape */ $block->getAjaxExportUrl() ?>', {
         // method:    'get',
         onSuccess: function(response){
           if (response.responseText){
@@ -31,5 +31,5 @@ require(['prototype'], function () {
   });
 </script>
 
-<?php echo $block->getButtonHtml() ?>
-<p class="note"><span id="pixlee_remaining"><?php echo $jsonHelper->getPixleeRemainingText(); ?></span></p>
+<?= $block->getButtonHtml() ?>
+<p class="note"><span id="pixlee_remaining"><?= /* @noEscape */ $jsonHelper->getPixleeRemainingText(); ?></span></p>
