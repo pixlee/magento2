@@ -281,7 +281,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         foreach ($productCategories as $categoryId) {
             $parent_ids = $categoriesMap[$categoryId]['parent_ids'];
-            $allCategoriesIds = array_merge($allCategoriesIds, $parent_ids);
+            foreach ($parent_ids as $parent_id) {
+                array_push($allCategoriesIds, $parent_id);
+            }
         }
 
         $allCategoriesIds = array_unique($allCategoriesIds, SORT_NUMERIC);
@@ -462,11 +464,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
-
-            // Set User Agent
-            if(isset($_SERVER['HTTP_USER_AGENT'])){
-            curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
-            }
 
             $response   = curl_exec($ch);
             $responseInfo   = curl_getinfo($ch);
