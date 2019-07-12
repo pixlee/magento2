@@ -4,6 +4,7 @@
  * @author teemingchew
  */
 namespace Pixlee\Pixlee\Helper;
+
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
@@ -15,7 +16,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_logger;
 
     const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
-    protected $_urls = array();
+    protected $_urls = [];
 
     /**
     * Config paths
@@ -44,7 +45,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         CategoryRepositoryInterface $categoryRepository,
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ProductFactory $productFactory
-    ){
+    ) {
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
         $this->_urls['checkoutStart'] = self::ANALYTICS_BASE_URL . 'checkoutStart';
@@ -71,7 +72,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getStoreCode()
     {
         return $this->_storeManager->getStore()->getCode();
-    } 
+    }
 
     public function getStoreName()
     {
@@ -83,7 +84,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->_storeManager->getStore()->getWebsiteId();
     }
 
-    public function initializePixleeAPI($websiteId) {
+    public function initializePixleeAPI($websiteId)
+    {
         $this->websiteId = $websiteId;
         $pixleeKey = $this->getApiKey($websiteId);
         $pixleeSecretKey = $this->getSecretKey($websiteId);
@@ -142,7 +144,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function isActive()
     {
-        if($this->_scopeConfig->isSetFlag(self::PIXLEE_ACTIVE, \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE, $this->websiteId)) {
+        if ($this->_scopeConfig->isSetFlag(
+            self::PIXLEE_ACTIVE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            $this->websiteId
+        )) {
             return true;
         } else {
             return false;
@@ -157,17 +163,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getTotalProductsCount($websiteId)
     {
         $collection = $this->_catalogProduct->getCollection();
-        $collection->addFieldToFilter('visibility', array('neq' => 1));
-        $collection->addFieldToFilter('status', array('neq' => 2));
+        $collection->addFieldToFilter('visibility', ['neq' => 1]);
+        $collection->addFieldToFilter('status', ['neq' => 2]);
         $collection->addWebsiteFilter($websiteId);
         $count = $collection->getSize();
         return $count;
     }
 
-    public function getPaginatedProducts($limit, $offset, $websiteId) {
+    public function getPaginatedProducts($limit, $offset, $websiteId)
+    {
         $products = $this->_catalogProduct->getCollection();
-        $products->addFieldToFilter('visibility', array('neq' => 1));
-        $products->addFieldToFilter('status', array('neq' => 2));
+        $products->addFieldToFilter('visibility', ['neq' => 1]);
+        $products->addFieldToFilter('status', ['neq' => 2]);
         $products->addWebsiteFilter($websiteId);
         $products->getSelect()->limit($limit, $offset);
         $products->addAttributeToSelect('*');
@@ -176,21 +183,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function getPixleeRemainingText()
     {
-        if($this->isInactive()) {
+        if ($this->isInactive()) {
             return "Save your Pixlee API access information before exporting your products.";
         } else {
             return "Export your products to Pixlee and start collecting photos.";
         }
     }
 
-    public function getAggregateStock($product) {
+    public function getAggregateStock($product)
+    {
 
         // 1) If this is a 'simple'-ish product, just return stockItem->getQty for this product
         // If it's not a simple product:
-        //      2) If ALL child products have a 'NULL' stockItem->getQty, return a NULL for
+        //      2) If ALL child products have a 'null' stockItem->getQty, return a null for
         //      the aggregate
         //      3) If ANY child products have a non-null stock quantity (including 0), add them up
-        $aggregateStock = NULL;
+        $aggregateStock = null;
 
         // Regardless of what type of product this is, we can check the ConfigurableProduct class
         // to see if this product has "children" products.
@@ -202,15 +210,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->_logger->addDebug("This product has children");
 
             // Get aggregate stock of children
-            foreach($childProducts as $child) {
+            foreach ($childProducts as $child) {
                 $this->_logger->addDebug("Child ID: {$child->getId()}");
                 $this->_logger->addDebug("Child SKU: {$child->getSku()}");
 
                 // Then, try to actually get the stock count
                 $stockItem = $this->_stockRegistry->getStockItem($child->getId(), $product->getStore()->getWebsiteId());
 
-                if (!is_null($stockItem)) {
-                    if (is_null($aggregateStock)) {
+                if ($stockItem !== null) {
+                    if ($aggregateStock === null) {
                         $aggregateStock = max(0, $stockItem->getQty());
                     } else {
                         $aggregateStock += max(0, $stockItem->getQty());
@@ -228,11 +236,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $aggregateStock;
     }
 
-    public function getVariantsDict($product) {
+    public function getVariantsDict($product)
+    {
 
         // If the passed product is configurable, return a dictionary
         // (which will get converted to a JSON), otherwise, empty array
-        $variantsDict = NULL;
+        $variantsDict = null;
 
         // This will just return an empty collection if this product is not configurable
         // e.g., won't throw an exception
@@ -243,27 +252,27 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (count($childProducts) > 0) {
             $this->_logger->addDebug("This product has children");
 
-            foreach($childProducts as $child) {
+            foreach ($childProducts as $child) {
                 $this->_logger->addDebug("Child ID: {$child->getId()}");
                 $this->_logger->addDebug("Child SKU: {$child->getSku()}");
 
-                if (is_null($variantsDict)) {
-                    $variantsDict = array();
+                if ($variantsDict === null) {
+                    $variantsDict = [];
                 }
 
                 $stockItem = $this->_stockRegistry->getStockItem($child->getId(), $product->getStore()->getWebsiteId());
                 // It could be that Magento isn't keeping stock...
-                if (is_null($stockItem)) {
-                  $variantStock = NULL;
+                if ($stockItem === null) {
+                    $variantStock = null;
                 } else {
-                  $variantStock = max(0, $stockItem->getQty());
+                    $variantStock = max(0, $stockItem->getQty());
                 }
                 $this->_logger->addDebug("Child Stock: {$variantStock}");
 
-                $variantsDict[$child->getId()] = array(
+                $variantsDict[$child->getId()] = [
                   'variant_stock' => $variantStock,
                   'variant_sku' => $child->getSku(),
-                );
+                ];
             }
         }
 
@@ -275,8 +284,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function getCategories($product, $categoriesMap) {
-        $allCategoriesIds = array();
+    public function getCategories($product, $categoriesMap)
+    {
+        $allCategoriesIds = [];
         $productCategories = $product->getCategoryIds();
 
         foreach ($productCategories as $categoryId) {
@@ -287,14 +297,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $allCategoriesIds = array_unique($allCategoriesIds, SORT_NUMERIC);
-        $result = array();
+        $result = [];
         foreach ($allCategoriesIds as $categoryId) {
-            $fields = array(
+            $fields = [
                 'category_id' => $categoryId,
                 'category_name' => $categoriesMap[$categoryId]['name'],
                 'category_url' => $categoriesMap[$categoryId]['url'],
                 'category_updated_at' => time()
-            );
+            ];
 
             array_push($result, $fields);
         }
@@ -302,21 +312,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $result;
     }
 
-    public function getCategoriesMap() {
+    public function getCategoriesMap()
+    {
         $categories = $this->categoryFactory->create()->getCollection()->addAttributeToSelect('*');
 
-        $helper = array();
+        $helper = [];
         foreach ($categories as $category) {
             $helper[$category->getId()] = $category->getName();
         }
 
-        $allCategories = array();
+        $allCategories = [];
         foreach ($categories as $cat) {
             $path = $cat->getPath();
             $parents = explode('/', $path);
             $fullName = '';
 
-            $realParentIds = array();
+            $realParentIds = [];
 
             foreach ($parents as $parent) {
                 if ((int) $parent != 0 && (int) $parent != 1 && (int) $parent != 2) {
@@ -326,11 +337,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 }
             }
 
-            $categoryBody = array(
-                'name' => substr($fullName, 0, -3), 
+            $categoryBody = [
+                'name' => substr($fullName, 0, -3),
                 'url' => $cat->getUrl($cat),
                 'parent_ids' => $realParentIds
-            );
+            ];
 
             $allCategories[$cat->getId()] = $categoryBody;
         }
@@ -340,8 +351,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $allCategories;
     }
 
-    public function getAllPhotos($product) {
-        $productPhotos = array();
+    public function getAllPhotos($product)
+    {
+        $productPhotos = [];
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $productRepository = $objectManager->get('\Magento\Catalog\Model\ProductRepository');
         $extractedProduct = $productRepository->getById($product->getId());
@@ -375,11 +387,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $productPhotos;
     }
 
-    public function getRegionalInformation($websiteId, $product) {
-        $result = array();
+    public function getRegionalInformation($websiteId, $product)
+    {
+        $result = [];
 
         $website = $this->_storeManager->getWebsite($websiteId);
-        $storeIds = $website->getStoreIds();   
+        $storeIds = $website->getStoreIds();
         foreach ($storeIds as $storeId) {
             $storeCode = $this->_storeManager->getStore($storeId)->getCode();
             $storeBaseUrl = $this->_storeManager->getStore($storeId)->getBaseUrl();
@@ -387,11 +400,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
             $basePrice = $storeProduct->getFinalPrice();
             $storeCurrency = $this->_storeManager->getStore($storeId)->getDefaultCurrency();
-            $convertedPrice = $this->_storeManager->getStore($storeId)->getBaseCurrency()->convert($basePrice, $storeCurrency);
+            $convertedPrice = $this->_storeManager->getStore($storeId)->getBaseCurrency()->convert(
+                $basePrice,
+                $storeCurrency
+            );
 
             $productUrl = $storeProduct->getProductUrl();
 
-            array_push($result, array(
+            array_push($result, [
                 'name' => $storeProduct->getName(),
                 'buy_now_link_url' => $productUrl,
                 'price' => $convertedPrice,
@@ -400,14 +416,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 'description' => $storeProduct->getDescription(),
                 'variants_json' => $this->getVariantsDict($storeProduct),
                 'region_code' => $storeCode
-            ));
+            ]);
         }
 
         return $result;
-    }    
+    }
 
     public function exportProductToPixlee($product, $categoriesMap, $websiteId)
-    {   
+    {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
         if ($product->getVisibility() <= 1) {
@@ -418,21 +434,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_logger->addDebug("Product ID {$product->getID()} class: " . get_class($product));
 
         $productName = $product->getName();
-        if($this->isInactive() || !isset($productName)) {
+        if ($this->isInactive() || !isset($productName)) {
             return false;
         }
 
         $pixlee = $this->_pixleeAPI;
 
         $response = $pixlee->createProduct(
-            $product->getName(), 
-            $product->getSku(), 
+            $product->getName(),
+            $product->getSku(),
             $product->getProductUrl(),
             $this->_mediaConfig->getMediaUrl($product->getImage()),
-            intval($product->getId()), 
+            intval($product->getId()),
             $this->getAggregateStock($product),
             $this->getVariantsDict($product),
-            $this->getExtraFields($product, $categoriesMap), 
+            $this->getExtraFields($product, $categoriesMap),
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
             $this->getRegionalInformation($websiteId, $product)
@@ -447,34 +463,34 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $categoriesList = $this->getCategories($product, $categoriesMap);
         $productPhotos = $this->getAllPhotos($product);
 
-        $extraFields = json_encode(array(
+        $extraFields = json_encode([
             'product_photos' => $productPhotos,
             'categories' => $categoriesList,
             'ecommerce_platform' => 'magento_2'
-        ));
+        ]);
         return $extraFields;
     }
 
     public function _sendPayload($event, $payload)
     {
-        if($payload && isset($this->_urls[$event])) {
+        if ($payload && isset($this->_urls[$event])) {
             $ch = curl_init($this->_urls[$event]);
 
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/json']);
 
             $response   = curl_exec($ch);
             $responseInfo   = curl_getinfo($ch);
             $responseCode   = $responseInfo['http_code'];
             curl_close($ch);
 
-            if( !$this->isBetween($responseCode, 200, 299) ) {
+            if (!$this->isBetween($responseCode, 200, 299)) {
                 $this->_logger->addInfo("HTTP $responseCode response from Pixlee API");
-            } elseif ( is_object($response) && is_null( $response->status ) ) {
+            } elseif (is_object($response) && $response->status === null) {
                 $this->_logger->addInfo("Pixlee did not return a status");
-            } elseif( is_object($response) && !$this->isBetween( $response->status, 200, 299 ) ) {
+            } elseif (is_object($response) && !$this->isBetween($response->status, 200, 299)) {
                 $errorMessage   = implode(',', (array)$response->message);
                 $this->_logger->addInfo("$response->status - $errorMessage ");
             } else {
@@ -493,15 +509,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_logger->addDebug("Passed product SKU: {$product->getSku()}");
         $this->_logger->addDebug("Passed product type: {$product->getTypeId()}");
 
-        $productData = array();
+        $productData = [];
 
-        if($product->getId() && is_a($product, '\Magento\Catalog\Model\Product\Interceptor')) {
+        if ($product->getId() && is_a($product, '\Magento\Catalog\Model\Product\Interceptor')) {
             // Add to Cart and Remove from Cart
             $productData['product_id']    = (int) $product->getId();
             $productData['product_sku']   = $product->getData('sku');
             $productData['variant_id']    = (int) $product->getIdBySku($product->getSku());
             $productData['variant_sku']   = $product->getSku();
-            $productData['price']         = $this->_pricingHelper->currency($product->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
+            // Get price in the main currency of the store. (USD, EUR, etc.)
+            $productData['price']         = $this->_pricingHelper->currency($product->getPrice(), true, false);
             $productData['quantity']      = (int) $product->getQty();
             $productData['currency']      = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
         } elseif ($product->getId() && is_a($product, '\Magento\Sales\Model\Order\Item')) {
@@ -512,9 +529,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             // Now that we have what we think is the actual product, try to find a
             // parent product (Note: This parent product is essentially generated from the variant SKU)
             $myObjectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $maybeParentConfigurable = $myObjectManager->create('Magento\ConfigurableProduct\Model\Product\Type\Configurable');
+            $maybeParentConfigurable = $myObjectManager->create(
+                'Magento\ConfigurableProduct\Model\Product\Type\Configurable'
+            );
             $maybeParentIds = $maybeParentConfigurable->getParentIdsByChild($actualProduct->getId());
-            $maybeParentId = empty($maybeParentIds) ? NULL : $maybeParentIds[0];
+            $maybeParentId = empty($maybeParentIds) ? null : $maybeParentIds[0];
             $maybeParentFromSkuProductObject = $myObjectManager->create('Magento\Catalog\Model\Product');
             $maybeParentFromSkuProduct = $maybeParentFromSkuProductObject->load($maybeParentId);
             $this->_logger->addDebug("Maybe my parent class (from SKU): " . get_class($maybeParentFromSkuProduct));
@@ -524,18 +543,17 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             // After all that logic, it's possible we have a null parent, in which case...
             // ...we are our own parent
             // awks
-            $maybeParent = NULL;
-            if (is_null($maybeParentFromSkuProduct->getId())) {
+            $maybeParent = null;
+            if ($maybeParentFromSkuProduct->getId() === null) {
                 $this->_logger->addDebug("Ended up with null parent object, using self (probably 'simple' type)");
                 $maybeParent = $actualProduct;
             } else {
                 $maybeParent = $maybeParentFromSkuProduct;
             }
 
-
             $productData['variant_id']    = $actualProduct->getId();
             $productData['variant_sku']   = $actualProduct->getSku();
-            $productData['quantity']      = round($product->getQtyOrdered(), $mode=PHP_ROUND_HALF_UP);
+            $productData['quantity']      = round($product->getQtyOrdered(), $mode = PHP_ROUND_HALF_UP);
             $productData['price']         = $this->_pricingHelper->currency($actualProduct->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
             $product = $product->getProduct();
             $productData['product_id']    = $maybeParent->getId();
@@ -547,7 +565,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function _extractCart($quote)
     {
-        if(is_a($quote, '\Magento\Sales\Model\Order')) {
+        if (is_a($quote, '\Magento\Sales\Model\Order')) {
             foreach ($quote->getAllItems() as $item) {
                 // $quote->getAllVisibleItems will actually give us only 'configurable' items
                 // ...when we COULD use with more data from 'simple' items
@@ -580,67 +598,70 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         // Something went wonky with my caches, and it always asks me to 'update'
         // my address when I input it - this fixes whatever weird edge case I'm running
         // into right now, and shouldn't hurt the normal case
-        if (is_null($address)) {
-            $sortedAddress = array();
+        if ($address === null) {
+            $sortedAddress = [];
         } else {
-            $sortedAddress = array(
+            $sortedAddress = [
                 'street'    => $address->getStreet(),
                 'city'      => $address->getCity(),
                 'state'     => $address->getRegion(),
                 'country'   => $address->getCountryId(),
                 'zipcode'   => $address->getPostcode()
-            );
+            ];
         }
         return json_encode($sortedAddress);
     }
 
     public function _validateCredentials()
-    {   
+    {
         // this function gets executed after the configuration is saved
-        // The idea is that we make an API call that requires credentials. 
-        // If it goes through, we say "successfull". Else, we say "not successfull" and set the credentials to point zero
-        // I originally wanted to do this is a backend model where we can do stuff before save. But unfortunately, backend models are not avaialble for group of items.
+        // The idea is that we make an API call that requires credentials.
+        // If it goes through, we say "successfull". Else, we say "not successfull" and set the
+        // credentials to point zero
+        // I originally wanted to do this is a backend model where we can do stuff before save.
+        // But unfortunately, backend models are not avaialble for group of items.
         $this->_logger->addInfo("Validating Credentials");
         if ($this->isActive()) {
-            $this->_logger->addInfo("Making the call"); 
+            $this->_logger->addInfo("Making the call");
             $test_call_success = $this->_pixleeAPI->getAlbums();
             if ($test_call_success) {
-                $this->_logger->addInfo("Show Message that everything went fine"); 
+                $this->_logger->addInfo("Show Message that everything went fine");
             } else {
                 $this->resourceConfig->saveConfig(
-                    self::PIXLEE_ACTIVE, 
-                    '0', 
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    self::PIXLEE_ACTIVE,
+                    '0',
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     \Magento\Store\Model\Store::DEFAULT_STORE_ID
                 );
 
                 $this->resourceConfig->saveConfig(
-                    self::PIXLEE_API_KEY, 
-                    '', 
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    self::PIXLEE_API_KEY,
+                    '',
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     \Magento\Store\Model\Store::DEFAULT_STORE_ID
                 );
 
                 $this->resourceConfig->saveConfig(
-                    self::PIXLEE_SECRET_KEY, 
-                    '', 
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 
+                    self::PIXLEE_SECRET_KEY,
+                    '',
+                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     \Magento\Store\Model\Store::DEFAULT_STORE_ID
                 );
 
+                $this->_logger->addInfo("Show Message that config was not saved");
                 throw new \Exception("Please check the credentials and try again. Your settings were not saved");
-                $this->_logger->addInfo("Show Message that config was not saved"); 
+
             }
         }
     }
 
-    public function _preparePayload($extraData = array(), $storeId)
+    public function _preparePayload($extraData = [], $storeId)
     {
-        if($payload = $this->_getPixleeCookie()) {
+        if ($payload = $this->_getPixleeCookie()) {
             // Append all extra data to the payload
-            foreach($extraData as $key => $value) {
+            foreach ($extraData as $key => $value) {
               // Don't accidentally overwrite existing data.
-                if(!isset($payload[$key])) {
+                if (!isset($payload[$key])) {
                     $payload[$key] = $value;
                 }
             }
@@ -658,9 +679,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return false; // No cookie exists,
     }
 
-    protected function _getVersionHash() {
+    protected function _getVersionHash()
+    {
         $version_hash = file_get_contents($this->_module_dir('Pixlee_Pixlee').'/version.txt');
-        $version_hash = str_replace(array("\r", "\n"), '', $version_hash);
+        $version_hash = str_replace(["\r", "\n"], '', $version_hash);
         return $version_hash;
     }
 
@@ -671,7 +693,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $reader->getModuleDir($type, $moduleName);
     }
 
-    protected function _getPixleeCookie() {
+    protected function _getPixleeCookie()
+    {
         $cookie = $this->_cookieManager->get();
         if (isset($cookie)) {
             return json_decode($cookie, true);
@@ -681,7 +704,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected function isBetween($theNum, $low, $high)
     {
-        if($theNum >= $low && $theNum <= $high) {
+        if ($theNum >= $low && $theNum <= $high) {
             return true;
         } else {
             return false;

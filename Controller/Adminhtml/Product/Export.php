@@ -35,11 +35,11 @@ class Export extends \Magento\Backend\App\Action
         $websiteId = (int) ($matches[1]);
         $this->_pixleeData->initializePixleeAPI($websiteId);
 
-        if($this->_pixleeData->isActive()) {
+        if ($this->_pixleeData->isActive()) {
 
             // Pagination variables
             $num_products = $this->_pixleeData->getTotalProductsCount($websiteId);
-            $counter = 0;   
+            $counter = 0;
             $limit = 100;
             $offset = 0;
             $job_id = uniqid();
@@ -51,7 +51,7 @@ class Export extends \Magento\Backend\App\Action
                 $offset = $offset + $limit;
 
                 foreach ($products as $product) {
-                    $counter += 1;
+                    $counter++;
                     $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap, $websiteId);
                 }
             }
@@ -69,23 +69,22 @@ class Export extends \Magento\Backend\App\Action
         $this->_logger->addInfo("[Pixlee] :: ".$message);
     }
 
-    protected function notify_export_status($status, $job_id, $num_products) {
+    protected function notify_export_status($status, $job_id, $num_products)
+    {
         $api_key = $this->_pixleeData->getApiKey();
-        $payload = array(
+        $payload = [
             'api_key' => $api_key,
             'status' => $status,
             'job_id' => $job_id,
             'num_products' => $num_products,
             'platform' => 'magento_2'
-        );
+        ];
 
         $ch = curl_init('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            'Content-Type: application/json'
-        ));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/json' ]);
         $response = curl_exec($ch);
     }
 }

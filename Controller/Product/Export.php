@@ -8,16 +8,16 @@ namespace Pixlee\Pixlee\Controller\Product;
 
 abstract class Export extends \Magento\Backend\App\Action
 {
-  public function __construct(
-      \Psr\Log\LoggerInterface $logger
-  ) {
-      $this->_logger      = $logger;
-  }
+    public function __construct(
+        \Psr\Log\LoggerInterface $logger
+    ) {
+        $this->_logger      = $logger;
+    }
 
-  public function execute()
-  {
-    $this->_logger->addInfo("[Pixlee] :: exporting!!");
-  }
+    public function execute()
+    {
+        $this->_logger->addInfo("[Pixlee] :: exporting!!");
+    }
 
   // protected $_coreResource;
   // protected $_pixleeData;
