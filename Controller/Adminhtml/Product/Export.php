@@ -43,7 +43,7 @@ class Export extends \Magento\Backend\App\Action
             $limit = 100;
             $offset = 0;
             $job_id = uniqid();
-            $this->notify_export_status('started', $job_id, $num_products);
+            $this->notifyExportStatus('started', $job_id, $num_products);
             $categoriesMap = $this->_pixleeData->getCategoriesMap();
 
             while ($offset < $num_products) {
@@ -56,7 +56,7 @@ class Export extends \Magento\Backend\App\Action
                 }
             }
 
-            $this->notify_export_status('finished', $job_id, $counter);
+            $this->notifyExportStatus('finished', $job_id, $counter);
             $resultJson = $this->resultJsonFactory->create();
             return $resultJson->setData([
                 'message' => 'Success!',
@@ -69,7 +69,7 @@ class Export extends \Magento\Backend\App\Action
         $this->_logger->addInfo("[Pixlee] :: ".$message);
     }
 
-    protected function notify_export_status($status, $job_id, $num_products)
+    protected function notifyExportStatus($status, $job_id, $num_products)
     {
         $api_key = $this->_pixleeData->getApiKey();
         $payload = [

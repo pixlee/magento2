@@ -681,12 +681,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     protected function _getVersionHash()
     {
-        $version_hash = file_get_contents($this->_module_dir('Pixlee_Pixlee').'/version.txt');
+        $version_hash = file_get_contents($this->_moduleDir('Pixlee_Pixlee').'/version.txt');
         $version_hash = str_replace(["\r", "\n"], '', $version_hash);
         return $version_hash;
     }
 
-    function _module_dir($moduleName, $type = '')
+    protected function _moduleDir($moduleName, $type = '')
     {
         $om = \Magento\Framework\App\ObjectManager::getInstance();
         $reader = $om->get('Magento\Framework\Module\Dir\Reader');
