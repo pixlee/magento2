@@ -445,13 +445,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $product->getSku(),
             $product->getProductUrl(),
             $this->_mediaConfig->getMediaUrl($product->getImage()),
+            $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
+            $product->getFinalPrice(),
+            $this->getRegionalInformation($websiteId, $product),
             intval($product->getId()),
             $this->getAggregateStock($product),
             $this->getVariantsDict($product),
-            $this->getExtraFields($product, $categoriesMap),
-            $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
-            $product->getFinalPrice(),
-            $this->getRegionalInformation($websiteId, $product)
+            $this->getExtraFields($product, $categoriesMap)
         );
 
         $this->_logger->addInfo("Product Exported to Pixlee");
@@ -655,7 +655,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
     }
 
-    public function _preparePayload($extraData = [], $storeId)
+    public function _preparePayload($storeId, $extraData = [])
     {
         if ($payload = $this->_getPixleeCookie()) {
             // Append all extra data to the payload

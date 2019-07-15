@@ -32,13 +32,13 @@ class Pixlee
         $sku,
         $product_url,
         $product_image,
+        $currencyCode,
+        $price,
+        $regionalInfo,
         $product_id = null,
         $aggregateStock = null,
         $variantsDict = null,
-        $extraFields = null,
-        $currencyCode,
-        $price,
-        $regionalInfo
+        $extraFields = null
     ) {
         $this->_logger->addDebug("* In createProduct");
         /*
