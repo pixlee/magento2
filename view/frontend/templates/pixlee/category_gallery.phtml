@@ -6,7 +6,9 @@
  */
 ?>
 <?php
-$helper = $this->helper('Pixlee\Pixlee\Helper\Data');
+use Pixlee\Pixlee\Helper\Data;
+
+$helper = $this->helper(Data::class);
 $nativeCategoryId = $block->getCurrentCategory()->getId();
 $websiteId = $helper->getWebsiteId();
 $helper->initializePixleeAPI($websiteId);

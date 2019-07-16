@@ -6,6 +6,13 @@
 namespace Pixlee\Pixlee\Helper;
 
 use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Framework\Module\Dir\Reader;
+use Magento\Catalog\Model\ProductRepository;
+use Magento\Catalog\Model\Product\Interceptor;
+use Magento\Sales\Model\Order\Item as SalesItem;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Catalog\Model\Product as CatalogProduct;
+use Magento\Sales\Model\Order as SalesOrder;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -355,7 +362,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $productPhotos = [];
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $productRepository = $objectManager->get('\Magento\Catalog\Model\ProductRepository');
+        $productRepository = $objectManager->get(ProductRepository::class);
         $extractedProduct = $productRepository->getById($product->getId());
         $images = $extractedProduct->getMediaGalleryImages();
         if (count($images) > 0) {
@@ -511,7 +518,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         $productData = [];
 
-        if ($product->getId() && is_a($product, '\Magento\Catalog\Model\Product\Interceptor')) {
+        if ($product->getId() && is_a($product, Interceptor::class)) {
             // Add to Cart and Remove from Cart
             $productData['product_id']    = (int) $product->getId();
             $productData['product_sku']   = $product->getData('sku');
@@ -521,7 +528,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $productData['price']         = $this->_pricingHelper->currency($product->getPrice(), true, false);
             $productData['quantity']      = (int) $product->getQty();
             $productData['currency']      = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
-        } elseif ($product->getId() && is_a($product, '\Magento\Sales\Model\Order\Item')) {
+        } elseif ($product->getId() && is_a($product, SalesItem::class)) {
             // Checkout Start and Conversion
             $actualProduct = $product->getProduct();
 
@@ -529,12 +536,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             // Now that we have what we think is the actual product, try to find a
             // parent product (Note: This parent product is essentially generated from the variant SKU)
             $myObjectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $maybeParentConfigurable = $myObjectManager->create(
-                'Magento\ConfigurableProduct\Model\Product\Type\Configurable'
-            );
+            $maybeParentConfigurable = $myObjectManager->create(Configurable::class);
             $maybeParentIds = $maybeParentConfigurable->getParentIdsByChild($actualProduct->getId());
             $maybeParentId = empty($maybeParentIds) ? null : $maybeParentIds[0];
-            $maybeParentFromSkuProductObject = $myObjectManager->create('Magento\Catalog\Model\Product');
+            $maybeParentFromSkuProductObject = $myObjectManager->create(CatalogProduct::class);
             $maybeParentFromSkuProduct = $maybeParentFromSkuProductObject->load($maybeParentId);
             $this->_logger->addDebug("Maybe my parent class (from SKU): " . get_class($maybeParentFromSkuProduct));
             $this->_logger->addDebug("Maybe my parent ID (from SKU): {$maybeParentFromSkuProduct->getId()}");
@@ -565,7 +570,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function _extractCart($quote)
     {
-        if (is_a($quote, '\Magento\Sales\Model\Order')) {
+        if (is_a($quote, SalesOrder::class)) {
             foreach ($quote->getAllItems() as $item) {
                 // $quote->getAllVisibleItems will actually give us only 'configurable' items
                 // ...when we COULD use with more data from 'simple' items
@@ -689,7 +694,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected function _moduleDir($moduleName, $type = '')
     {
         $om = \Magento\Framework\App\ObjectManager::getInstance();
-        $reader = $om->get('Magento\Framework\Module\Dir\Reader');
+        $reader = $om->get(Reader::class);
         return $reader->getModuleDir($type, $moduleName);
     }
 

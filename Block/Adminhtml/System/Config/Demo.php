@@ -2,6 +2,8 @@
 
 namespace Pixlee\Pixlee\Block\Adminhtml\System\Config;
 
+use Magento\Backend\Block\Widget\Button;
+
 class Demo extends \Magento\Config\Block\System\Config\Form\Field
 {
 
@@ -37,7 +39,7 @@ class Demo extends \Magento\Config\Block\System\Config\Form\Field
             'onclick' => 'javascript:requestPixleeDemo(\''.$this->getRequestDemoUrl().'\'); return false;'
         ];
 
-        $button = $this->getLayout()->createBlock('Magento\Backend\Block\Widget\Button')->setData($buttonData);
+        $button = $this->getLayout()->createBlock(Button::class)->setData($buttonData);
         return $button->toHtml();
     }
 

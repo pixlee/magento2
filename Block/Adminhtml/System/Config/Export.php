@@ -8,6 +8,8 @@
 
 namespace Pixlee\Pixlee\Block\Adminhtml\System\Config;
 
+use Magento\Backend\Block\Widget\Button;
+
 class Export extends \Magento\Config\Block\System\Config\Form\Field
 {
     protected $_exportButtonLabel = "Export Products to Pixlee";
@@ -62,7 +64,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
             $buttonData['class'] = 'disabled';
         }
 
-        $button = $this->getLayout()->createBlock('Magento\Backend\Block\Widget\Button')->setData($buttonData);
+        $button = $this->getLayout()->createBlock(Button::class)->setData($buttonData);
         return $button->toHtml();
     }
 
