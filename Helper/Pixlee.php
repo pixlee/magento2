@@ -2,6 +2,8 @@
 
 namespace Pixlee\Pixlee\Helper;
 
+use Magento\Framework\HTTP\Client\Curl;
+
 class Pixlee
 {
     private $apiKey;
@@ -21,6 +23,7 @@ class Pixlee
         $this->apiKey    = $apiKey;
         $this->secretKey = $secretKey;
         $this->baseURL   = "http://distillery.pixlee.com/api/v2";
+        $this->_curl     = new Curl;
     }
 
     public function getAlbums()
@@ -122,17 +125,17 @@ class Pixlee
             $urlToHit     = $urlToHit . "&" . $queryString;
         }
 
-        $ch = curl_init($urlToHit);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'X-Alt-Referer: magento2.pixlee.com'
-        ]);
-        $response   = curl_exec($ch);
+        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $headers = [
+          "Content-Type" => "application/json",
+          "X-Alt-Referer" => "magento2.pixlee.com"
+        ];
+        $this->_curl->setHeaders($headers);
 
+        $this->_curl->post($urlToHit, []);
         $this->_logger->addInfo("Inside getFromAPI");
-        $responseCode = curl_getinfo($ch)['http_code'];
+        $responseCode = $this->_curl->getStatus();
         $this->_logger->addInfo("Response code = {$responseCode}");
 
         if (!$this->isBetween($responseCode, 200, 299)) {
@@ -144,26 +147,22 @@ class Pixlee
 
     private function postToAPI($uri, $payload)
     {
-        $this->_logger->addDebug("*** In postToAPI");
-        $this->_logger->addDebug("With this URI: {$uri}");
         $urlToHit = $this->baseURL . $uri;
 
-        $ch = curl_init($urlToHit);
-        $this->_logger->addDebug("Hitting URL: {$urlToHit}");
-        $this->_logger->addDebug("With payload: {$payload}");
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'X-Alt-Referer: magento2.pixlee.com',
-            'Content-Length: ' . strlen($payload),
-            'Signature: ' . $this->generateSignature($payload)
-        ]);
-        $response   = curl_exec($ch);
+        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, $payload);
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $headers = [
+          "Content-Type" => "application/json",
+          "X-Alt-Referer" => "magento2.pixlee.com",
+          'Content-Length' => strlen($payload),
+          'Signature' => $this->generateSignature($payload)
+        ];
+        $this->_curl->setHeaders($headers);
 
-        $this->_logger->addDebug("Got response: {$response}");
-        return $this->handleResponse($response, $ch);
+        $this->_curl->post($urlToHit, $payload);
+        $response = $this->_curl->getBody();
+        return $this->handleResponse($response);
     }
 
     private function generateSignature($data)
@@ -171,13 +170,10 @@ class Pixlee
         return base64_encode(hash_hmac('sha1', $data, $this->secretKey, true));
     }
 
-    private function handleResponse($response, $ch)
+    private function handleResponse($response)
     {
-        $responseInfo   = curl_getinfo($ch);
-        $responseCode   = $responseInfo['http_code'];
+        $responseCode   = $this->_curl->getStatus();
         $theResult      = json_decode($response);
-
-        curl_close($ch);
 
         // Unlike the rails API, distillery doesn't return such pretty statuses
         // On successful creation, we get a JSON with the created product's fields:

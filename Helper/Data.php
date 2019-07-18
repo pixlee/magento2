@@ -51,7 +51,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\App\Config\ConfigResource\ConfigInterface $resourceConfig,
         CategoryRepositoryInterface $categoryRepository,
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
-        \Magento\Catalog\Model\ProductFactory $productFactory
+        \Magento\Catalog\Model\ProductFactory $productFactory,
+        \Magento\Framework\HTTP\Client\Curl $curl
     ) {
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -74,6 +75,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoryRepository = $categoryRepository;
         $this->categoryFactory    = $categoryFactory;
         $this->productFactory     = $productFactory;
+        $this->_curl              = $curl;
     }
 
     public function getStoreCode()
@@ -481,17 +483,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function _sendPayload($event, $payload)
     {
         if ($payload && isset($this->_urls[$event])) {
-            $ch = curl_init($this->_urls[$event]);
+            $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
+            $this->_curl->setOption(CURLOPT_POSTFIELDS, $payload);
+            $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+            $this->_curl->addHeader('Content-type', 'application/json');
 
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/json']);
-
-            $response   = curl_exec($ch);
-            $responseInfo   = curl_getinfo($ch);
-            $responseCode   = $responseInfo['http_code'];
-            curl_close($ch);
+            $this->_curl->post($this->_urls[$event], $payload);
+            $response = $this->_curl->getBody();
+            $responseCode = $this->_curl->getStatus();
 
             if (!$this->isBetween($responseCode, 200, 299)) {
                 $this->_logger->addInfo("HTTP $responseCode response from Pixlee API");

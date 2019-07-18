@@ -7,6 +7,7 @@
 namespace Pixlee\Pixlee\Controller\Adminhtml\Product;
 
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\HTTP\Client\Curl;
 
 class Export extends \Magento\Backend\App\Action
 {
@@ -26,6 +27,7 @@ class Export extends \Magento\Backend\App\Action
         $this->request            = $request;
         $this->_pixleeData        = $pixleeData;
         $this->_logger            = $logger;
+        $this->_curl              = new Curl;
     }
 
     public function execute()
@@ -80,11 +82,11 @@ class Export extends \Magento\Backend\App\Action
             'platform' => 'magento_2'
         ];
 
-        $ch = curl_init('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/json' ]);
-        $response = curl_exec($ch);
+        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, json_encode($payload));
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->addHeader('Content-type', 'application/json');
+
+        $this->_curl->post('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key, $payload);
     }
 }
