@@ -13,6 +13,7 @@ use Magento\Sales\Model\Order\Item as SalesItem;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Sales\Model\Order as SalesOrder;
+use Pixlee\Pixlee\Helper\PixleeException;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -457,7 +458,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
             $this->getRegionalInformation($websiteId, $product),
-            intval($product->getId()),
+            (int) $product->getId(),
             $this->getAggregateStock($product),
             $this->getVariantsDict($product),
             $this->getExtraFields($product, $categoriesMap)
@@ -653,8 +654,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 );
 
                 $this->_logger->addInfo("Show Message that config was not saved");
-                throw new \Exception("Please check the credentials and try again. Your settings were not saved");
-
+                throw new PixleeException("Please check the credentials and try again. Your settings were not saved");
             }
         }
     }
