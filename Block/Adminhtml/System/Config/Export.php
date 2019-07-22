@@ -51,6 +51,11 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
         return $this->_pixleeData->getApiKey();
     }
 
+    public function getDataHelper()
+    {
+        return $this->_pixleeData;
+    }
+
     public function getButtonHtml()
     {
         $buttonData = [

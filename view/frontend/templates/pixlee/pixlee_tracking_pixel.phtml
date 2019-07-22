@@ -1,7 +1,5 @@
 <?php
-use Pixlee\Pixlee\Helper\Data;
-
-$helper = $this->helper(Data::class);
+$helper = $block->getDataHelper();
 $websiteId = $helper->getWebsiteId();
 $helper->initializePixleeAPI($websiteId);
 ?>

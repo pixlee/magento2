@@ -2,13 +2,13 @@
 
 namespace Pixlee\Pixlee\Block;
 
-use \Magento\Catalog\Block\Product\AbstractProduct;
+use Magento\Framework\View\Element\Template;
 
-class Gallery extends AbstractProduct
+class PixleeTrackingPixel extends Template
 {
     public function __construct(
-        \Magento\Catalog\Block\Product\Context $context,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
+        Template\Context $context,
         array $data = []
     ) {
         parent::__construct($context, $data);
