@@ -6,7 +6,7 @@
     The names are a little opaque, but if you're reading this you probably know what you're doing.
     -->
     <referenceContainer name="category.product.list.additional">
-        <block class="Pixlee\Pixlee\Block\Catalog"
+        <block class="Pixlee\Pixlee\Block\CatalogWidget"
             name="product.view.community_gallery"
             template="Pixlee_Pixlee::pixlee/category_gallery.phtml"
             after="-">

@@ -4,7 +4,7 @@ namespace Pixlee\Pixlee\Block;
 
 use \Magento\Catalog\Block\Category\View;
 
-class Catalog extends View
+class CatalogWidget extends View
 {
     public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
