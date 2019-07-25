@@ -150,7 +150,6 @@ class Pixlee
         $urlToHit = $this->baseURL . $uri;
 
         $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
-        $this->_curl->setOption(CURLOPT_POSTFIELDS, $payload);
         $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
         $headers = [
           "Content-Type" => "application/json",
