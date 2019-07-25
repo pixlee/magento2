@@ -156,7 +156,8 @@ class Pixlee
           "Content-Type" => "application/json",
           "X-Alt-Referer" => "magento2.pixlee.com",
           'Content-Length' => strlen($payload),
-          'Signature' => $this->generateSignature($payload)
+          'Signature' => $this->generateSignature($payload),
+          'Expect' => 0
         ];
         $this->_curl->setHeaders($headers);
 
