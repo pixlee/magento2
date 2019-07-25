@@ -5,8 +5,9 @@ $helper->initializePixleeAPI($websiteId);
 ?>
 
 <?php if ($helper->isActive()) : ?>
-    <script type="text/javascript" src="https://assets.pixlee.com/assets/pixlee_events.js" src_type="url"></script>
     <script type="text/javascript">
-        pixlee_analytics = new Pixlee_Analytics('<?= /* @noEscape */ $helper->getApiKey(); ?>');
+        require(["https://assets.pixlee.com/assets/pixlee_events.js"], function() {
+            window.pixlee_analytics = new Pixlee_Analytics('<?= /* @noEscape */ $helper->getApiKey(); ?>');
+        });
     </script>
 <?php endif; ?>
