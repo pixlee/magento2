@@ -125,7 +125,7 @@ class Pixlee
             $urlToHit     = $urlToHit . "&" . $queryString;
         }
 
-        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
+        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "GET");
         $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
         $headers = [
           "Content-Type" => "application/json",
@@ -133,7 +133,7 @@ class Pixlee
         ];
         $this->_curl->setHeaders($headers);
 
-        $this->_curl->post($urlToHit, []);
+        $this->_curl->get($urlToHit, []);
         $this->_logger->addInfo("Inside getFromAPI");
         $responseCode = $this->_curl->getStatus();
         $this->_logger->addInfo("Response code = {$responseCode}");

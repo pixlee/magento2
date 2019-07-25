@@ -635,22 +635,22 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_ACTIVE,
                     '0',
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    $this->websiteId
                 );
 
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_API_KEY,
                     '',
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    $this->websiteId
                 );
 
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_SECRET_KEY,
                     '',
-                    \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                    \Magento\Store\Model\Store::DEFAULT_STORE_ID
+                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    $this->websiteId
                 );
 
                 $this->_logger->addInfo("Show Message that config was not saved");
