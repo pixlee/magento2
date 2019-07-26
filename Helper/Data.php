@@ -215,7 +215,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->_logger->addInfo("This product has children");
 
             // Get aggregate stock of children
-            foreach($childProducts as $child) {
+            foreach ($childProducts as $child) {
                 $this->_logger->addInfo("Child ID: {$child->getId()}");
                 $this->_logger->addInfo("Child SKU: {$child->getSku()}");
                 // Then, try to actually get the stock count
@@ -256,7 +256,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         if (count($childProducts) > 0) {
             $this->_logger->addInfo("This product has children");
 
-            foreach($childProducts as $child) {
+            foreach ($childProducts as $child) {
                 $this->_logger->addInfo("Child ID: {$child->getId()}");
                 $this->_logger->addInfo("Child SKU: {$child->getSku()}");
 
@@ -647,7 +647,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
                     $this->websiteId
                 );
-
 
                 $this->_logger->addInfo("Show Message that config was not saved");
                 throw new PixleeException("Please check the credentials and try again. Your settings were not saved");
