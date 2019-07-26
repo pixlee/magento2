@@ -10,7 +10,7 @@ class AddToCartObserver implements ObserverInterface
     // A simple Trait to reuse Sentry Handler instantiation
     public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Psr\Log\LoggerInterface $logger,
+        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {

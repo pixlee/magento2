@@ -19,7 +19,7 @@ class Export extends \Magento\Backend\App\Action
         JsonFactory $resultJsonFactory,
         \Magento\Framework\App\Request\Http $request,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Psr\Log\LoggerInterface $logger
+        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger
     ) {
         parent::__construct($context);
         $this->resultJsonFactory  = $resultJsonFactory;

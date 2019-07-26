@@ -16,7 +16,7 @@ class CheckoutSuccessObserver implements ObserverInterface
         \Magento\Sales\Model\ResourceModel\Order\Collection $collection,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Psr\Log\LoggerInterface $logger,
+        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {

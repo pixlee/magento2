@@ -9,7 +9,7 @@ namespace Pixlee\Pixlee\Controller\Product;
 abstract class Export extends \Magento\Backend\App\Action
 {
   public function __construct(
-      \Psr\Log\LoggerInterface $logger
+      \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger
   ) {
       $this->_logger      = $logger;
   }

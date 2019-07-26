@@ -9,7 +9,7 @@ class CheckoutStartObserver implements ObserverInterface
 {
     public function __construct(
         \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Psr\Log\LoggerInterface $logger
+        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger
     ) {
         // $this->_checkoutCart = $checkoutCart;
         $this->_pixleeData  = $pixleeData;

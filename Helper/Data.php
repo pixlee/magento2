@@ -33,7 +33,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable $configurableProduct,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Psr\Log\LoggerInterface $logger,
+        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger,
         \Magento\Framework\ObjectManager\ObjectManager $objectManager,
         \Magento\Framework\View\Result\PageFactory $pageFactory,
         \Magento\Framework\Pricing\Helper\Data $pricingHelper,
