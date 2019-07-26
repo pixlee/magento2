@@ -24,8 +24,8 @@ class ValidateCredentialsObserver implements ObserverInterface
     }
 
     public function execute(EventObserver $observer)
-    {   
-        $this->_logger->addInfo("[Pixlee] :: start of Validation");
+    {
+        $this->_logger->addInfo("Start of Validation");
         $websiteId = $observer->getEvent()->getData('website');
         $this->_pixleeData->initializePixleeAPI($websiteId);
         $this->_pixleeData->_validateCredentials();

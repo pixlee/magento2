@@ -27,7 +27,7 @@ class SalesOrderObserver implements ObserverInterface
         // after it parsed the cart items, but doing it this way it's more obvious in the
         // /etc/events.xml that stock/inventory is updated in 2 places
 
-        $this->_logger->addInfo("[Pixlee] :: start of Stock update");
+        $this->_logger->addInfo("Start of Stock update");
 
         // If we're here from a conversion event, e.g.
         //      multishipping_checkout_controller_success_action or
@@ -54,10 +54,10 @@ class SalesOrderObserver implements ObserverInterface
                 foreach ($order->getAllVisibleItems() as $item) {
                     $product = $item->getProduct();
 
-                    $this->_logger->addDebug("Sales product class: " . get_class($product));
-                    $this->_logger->addDebug("Sales product ID: {$product->getId()}");
-                    $this->_logger->addDebug("Sales product SKU: {$product->getSku()}");
-                    $this->_logger->addDebug("Sales product type: {$product->getTypeId()}");
+                    $this->_logger->addInfo("Sales product class: " . get_class($product));
+                    $this->_logger->addInfo("Sales product ID: {$product->getId()}");
+                    $this->_logger->addInfo("Sales product SKU: {$product->getSku()}");
+                    $this->_logger->addInfo("Sales product type: {$product->getTypeId()}");
                     $categoriesMap = $this->_pixleeData->getCategoriesMap();
                     $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
                 }
@@ -67,10 +67,10 @@ class SalesOrderObserver implements ObserverInterface
             foreach ($order->getAllVisibleItems() as $item) {
                 $product = $item->getProduct();
 
-                $this->_logger->addDebug("Sales product class: " . get_class($product));
-                $this->_logger->addDebug("Sales product ID: {$product->getId()}");
-                $this->_logger->addDebug("Sales product SKU: {$product->getSku()}");
-                $this->_logger->addDebug("Sales product type: {$product->getTypeId()}");
+                $this->_logger->addInfo("Sales product class: " . get_class($product));
+                $this->_logger->addInfo("Sales product ID: {$product->getId()}");
+                $this->_logger->addInfo("Sales product SKU: {$product->getSku()}");
+                $this->_logger->addInfo("Sales product type: {$product->getTypeId()}");
                 $categoriesMap = $this->_pixleeData->getCategoriesMap();
                 $this->_pixleeData->exportProductToPixlee($product, $categoriesMap);
             }

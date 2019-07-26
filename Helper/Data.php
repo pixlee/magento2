@@ -90,11 +90,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
     }
 
-    private function _logPixleeMsg($message)
-    {
-        $this->_logger->addInfo("[Pixlee] :: ".$message);
-    }
-
     public function getApiKey()
     {
         return $this->_scopeConfig->getValue(
@@ -199,12 +194,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
         // For some reason !empty() doesn't work here
         if (count($childProducts) > 0) {
-            $this->_logger->addDebug("This product has children");
+            $this->_logger->addInfo("This product has children");
 
             // Get aggregate stock of children
             foreach($childProducts as $child) {
-                $this->_logger->addDebug("Child ID: {$child->getId()}");
-                $this->_logger->addDebug("Child SKU: {$child->getSku()}");
+                $this->_logger->addInfo("Child ID: {$child->getId()}");
+                $this->_logger->addInfo("Child SKU: {$child->getSku()}");
 
                 // Then, try to actually get the stock count
                 $stockItem = $this->_stockRegistry->getStockItem($child->getId(), $product->getStore()->getWebsiteId());
@@ -217,14 +212,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                     }
                 }
 
-                $this->_logger->addDebug("Aggregate stock after {$child->getId()}: {$aggregateStock}");
+                $this->_logger->addInfo("Aggregate stock after {$child->getId()}: {$aggregateStock}");
             }
         } else {
             $stockItem = $this->_stockRegistry->getStockItem($product->getId(), $product->getStore()->getWebsiteId());
             $aggregateStock = $stockItem->getQty();
         }
 
-        $this->_logger->addDebug("Product {$product->getId()} aggregate stock: {$aggregateStock}");
+        $this->_logger->addInfo("Product {$product->getId()} aggregate stock: {$aggregateStock}");
         return $aggregateStock;
     }
 
@@ -241,11 +236,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         // If we have no children products, just skip to the bottom where we'll
         // return variantsDict, untouched
         if (count($childProducts) > 0) {
-            $this->_logger->addDebug("This product has children");
+            $this->_logger->addInfo("This product has children");
 
             foreach($childProducts as $child) {
-                $this->_logger->addDebug("Child ID: {$child->getId()}");
-                $this->_logger->addDebug("Child SKU: {$child->getSku()}");
+                $this->_logger->addInfo("Child ID: {$child->getId()}");
+                $this->_logger->addInfo("Child SKU: {$child->getSku()}");
 
                 if (is_null($variantsDict)) {
                     $variantsDict = array();
@@ -258,7 +253,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 } else {
                   $variantStock = max(0, $stockItem->getQty());
                 }
-                $this->_logger->addDebug("Child Stock: {$variantStock}");
+                $this->_logger->addInfo("Child Stock: {$variantStock}");
 
                 $variantsDict[$child->getId()] = array(
                   'variant_stock' => $variantStock,
@@ -267,7 +262,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        $this->_logger->addDebug("Product {$product->getId()} variantsDict: " . json_encode($variantsDict));
+        $this->_logger->addInfo("Product {$product->getId()} variantsDict: " . json_encode($variantsDict));
         if (empty($variantsDict)) {
             return "{}";
         } else {
@@ -404,18 +399,18 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         return $result;
-    }    
+    }
 
     public function exportProductToPixlee($product, $categoriesMap, $websiteId)
-    {   
+    {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
         if ($product->getVisibility() <= 1) {
-            $this->_logger->addDebug("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
+            $this->_logger->addInfo("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
         }
 
-        $this->_logger->addDebug("Product ID {$product->getID()} class: " . get_class($product));
+        $this->_logger->addInfo("Product ID {$product->getID()} class: " . get_class($product));
 
         $productName = $product->getName();
         if($this->isInactive() || !isset($productName)) {
@@ -488,10 +483,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function _extractProduct($product)
     {
-        $this->_logger->addDebug("Passed product class: " . get_class($product));
-        $this->_logger->addDebug("Passed product ID: {$product->getId()}");
-        $this->_logger->addDebug("Passed product SKU: {$product->getSku()}");
-        $this->_logger->addDebug("Passed product type: {$product->getTypeId()}");
+        $this->_logger->addInfo("Passed product class: " . get_class($product));
+        $this->_logger->addInfo("Passed product ID: {$product->getId()}");
+        $this->_logger->addInfo("Passed product SKU: {$product->getSku()}");
+        $this->_logger->addInfo("Passed product type: {$product->getTypeId()}");
 
         $productData = array();
 
@@ -517,16 +512,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $maybeParentId = empty($maybeParentIds) ? NULL : $maybeParentIds[0];
             $maybeParentFromSkuProductObject = $myObjectManager->create('Magento\Catalog\Model\Product');
             $maybeParentFromSkuProduct = $maybeParentFromSkuProductObject->load($maybeParentId);
-            $this->_logger->addDebug("Maybe my parent class (from SKU): " . get_class($maybeParentFromSkuProduct));
-            $this->_logger->addDebug("Maybe my parent ID (from SKU): {$maybeParentFromSkuProduct->getId()}");
-            $this->_logger->addDebug("Maybe my parent SKU (from SKU): {$maybeParentFromSkuProduct->getSku()}");
-            $this->_logger->addDebug("Maybe my parent type (from SKU): {$maybeParentFromSkuProduct->getTypeId()}");
+            $this->_logger->addInfo("Maybe my parent class (from SKU): " . get_class($maybeParentFromSkuProduct));
+            $this->_logger->addInfo("Maybe my parent ID (from SKU): {$maybeParentFromSkuProduct->getId()}");
+            $this->_logger->addInfo("Maybe my parent SKU (from SKU): {$maybeParentFromSkuProduct->getSku()}");
+            $this->_logger->addInfo("Maybe my parent type (from SKU): {$maybeParentFromSkuProduct->getTypeId()}");
             // After all that logic, it's possible we have a null parent, in which case...
             // ...we are our own parent
             // awks
             $maybeParent = NULL;
             if (is_null($maybeParentFromSkuProduct->getId())) {
-                $this->_logger->addDebug("Ended up with null parent object, using self (probably 'simple' type)");
+                $this->_logger->addInfo("Ended up with null parent object, using self (probably 'simple' type)");
                 $maybeParent = $actualProduct;
             } else {
                 $maybeParent = $maybeParentFromSkuProduct;
@@ -553,7 +548,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 // ...when we COULD use with more data from 'simple' items
                 // It might be less robust? Let's see how we all feel about this
                 if ($item->getProduct()->getTypeId() == 'configurable') {
-                    $this->_logger->addDebug("Skipping configurable item: {$item->getId()}");
+                    $this->_logger->addInfo("Skipping configurable item: {$item->getId()}");
                 } else {
                     $cartData['cart_contents'][] = $this->_extractProduct($item);
                 }
@@ -602,10 +597,10 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         // I originally wanted to do this is a backend model where we can do stuff before save. But unfortunately, backend models are not avaialble for group of items.
         $this->_logger->addInfo("Validating Credentials");
         if ($this->isActive()) {
-            $this->_logger->addInfo("Making the call"); 
+            $this->_logger->addInfo("Making the call");
             $test_call_success = $this->_pixleeAPI->getAlbums();
             if ($test_call_success) {
-                $this->_logger->addInfo("Show Message that everything went fine"); 
+                $this->_logger->addInfo("Show Message that everything went fine");
             } else {
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_ACTIVE, 
@@ -629,7 +624,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 );
 
                 throw new \Exception("Please check the credentials and try again. Your settings were not saved");
-                $this->_logger->addInfo("Show Message that config was not saved"); 
+                $this->_logger->addInfo("Show Message that config was not saved");
             }
         }
     }
@@ -651,7 +646,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $payload['ecommerce_platform_version'] = '2.0.0';
             $payload['version_hash'] = $this->_getVersionHash();
             $payload['region_code'] = $this->_storeManager->getStore($storeId)->getCode();
-            $this->_logger->addDebug("Sending payload: " . json_encode($payload));
+            $this->_logger->addInfo("Sending payload: " . json_encode($payload));
             return json_encode($payload);
         }
         $this->_logger->addInfo("Analytics event not sent because the cookie wasn't found");

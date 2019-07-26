@@ -35,7 +35,7 @@ class CheckoutSuccessObserver implements ObserverInterface
         $pixleeEnabled = $this->_pixleeData->isActive();
 
         if ($pixleeEnabled) {
-            $this->_logger->addInfo("[Pixlee] :: start of Conversion");
+            $this->_logger->addInfo("Start of Conversion");
 
             $orderIds = $observer->getEvent()->getOrderIds();
             if (!$orderIds || !is_array($orderIds)) {
@@ -49,7 +49,7 @@ class CheckoutSuccessObserver implements ObserverInterface
                 $payload = $this->_pixleeData->_preparePayload($cartData, $storeId);
                 $this->_pixleeData->_sendPayload('checkoutSuccess', $payload);
             }
-            $this->_logger->addInfo("[Pixlee] :: checkoutSuccess ".json_encode($payload));
+            $this->_logger->addInfo("CheckoutSuccess ".json_encode($payload));
         }
     }
 }

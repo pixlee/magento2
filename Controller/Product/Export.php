@@ -16,7 +16,7 @@ abstract class Export extends \Magento\Backend\App\Action
 
   public function execute()
   {
-    $this->_logger->addInfo("[Pixlee] :: exporting!!");
+    $this->_logger->addInfo("Exporting!!");
   }
 
   // protected $_coreResource;
@@ -34,10 +34,6 @@ abstract class Export extends \Magento\Backend\App\Action
     // $this->_adminhtmlData = $adminhtmlData;
     // $this->_pixleeData  = $pixleeData;
     // $this->_logger            = $logger;
-  // }
-
-  // private function _logPixleeMsg($message){
-  //   $this->_logger->addInfo("[Pixlee] :: ".$message);
   // }
 
   // public function getNewPixlee() {

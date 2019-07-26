@@ -64,11 +64,6 @@ class Export extends \Magento\Backend\App\Action
         }
     }
 
-    private function _logPixleeMsg($message)
-    {
-        $this->_logger->addInfo("[Pixlee] :: ".$message);
-    }
-
     protected function notify_export_status($status, $job_id, $num_products) {
         $api_key = $this->_pixleeData->getApiKey();
         $payload = array(

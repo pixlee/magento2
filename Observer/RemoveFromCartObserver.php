@@ -22,6 +22,6 @@ class RemoveFromCartObserver implements ObserverInterface
         $payload = $this->_pixleeData->_preparePayload($productData);
         $this->_pixleeData->_sendPayload('removeFromCart', $payload);
 
-        $this->_logger->addInfo("[Pixlee] :: removeFromCart ".json_encode($payload));
+        $this->_logger->addInfo("RemoveFromCart ".json_encode($payload));
     }
 }

@@ -18,7 +18,7 @@ class CheckoutStartObserver implements ObserverInterface
 
     public function execute(EventObserver $observer)
     {
-        $this->_logger->addInfo("[Pixlee] :: start of checkoutStart");
+        $this->_logger->addInfo("Start of checkoutStart");
         $quote = $observer->getEvent()->getQuote();
         // $this->_logger->addInfo(implode("  |  ", get_class_methods($quote)));
         // $this->_logger->addInfo($quote->toJson());
@@ -27,6 +27,6 @@ class CheckoutStartObserver implements ObserverInterface
         // $payload = $this->_pixleeData->_preparePayload($payload);
         // $this->_pixleeData->_sendPayload('checkoutStart', $payload);
 
-        // $this->_logger->addInfo("[Pixlee] :: checkoutStart ".json_encode($payload));
+        // $this->_logger->addInfo("CheckoutStart ".json_encode($payload));
     }
 }

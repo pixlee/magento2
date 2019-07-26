@@ -29,7 +29,7 @@ class Pixlee
     }
     public function createProduct($product_name, $sku, $product_url , $product_image, $product_id = NULL, $aggregateStock = NULL, $variantsDict = NULL, $extraFields = NULL, $currencyCode, $price, $regionalInfo)
     {
-        $this->_logger->addDebug("* In createProduct");
+        $this->_logger->addInfo("* In createProduct");
         /*
             Converted from Rails API format to distillery API format
             Also, now sending _account_ 'api_key' instead of _user_ 'api_key'
@@ -133,13 +133,13 @@ class Pixlee
     }
 
     private function postToAPI($uri, $payload){
-        $this->_logger->addDebug("*** In postToAPI");
-        $this->_logger->addDebug("With this URI: {$uri}");
+        $this->_logger->addInfo("*** In postToAPI");
+        $this->_logger->addInfo("With this URI: {$uri}");
         $urlToHit = $this->baseURL . $uri;
 
         $ch = curl_init( $urlToHit );
-        $this->_logger->addDebug("Hitting URL: {$urlToHit}");
-        $this->_logger->addDebug("With payload: {$payload}");
+        $this->_logger->addInfo("Hitting URL: {$urlToHit}");
+        $this->_logger->addInfo("With payload: {$payload}");
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -152,7 +152,7 @@ class Pixlee
         );
         $response   = curl_exec($ch);
 
-        $this->_logger->addDebug("Got response: {$response}");
+        $this->_logger->addInfo("Got response: {$response}");
         return $this->handleResponse($response, $ch);
     }
 
@@ -174,7 +174,7 @@ class Pixlee
         //  Product updated.
         // Suppose we'll check the HTTP return code, but not expect a JSON 'status' field
         if( !$this->isBetween( $responseCode, 200, 299 ) ){
-            $this->_logger->addWarning("[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product");
+            $this->_logger->addWarning("HTTP $responseCode response from API. Not able to export/update product");
             return $theResult;
         } else {
             return $theResult;
