@@ -2,7 +2,7 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
 
   <referenceContainer name="head.additional">
-      <block class="Magento\Framework\View\Element\Template"
+      <block class="Pixlee\Pixlee\Block\PixleeTrackingPixel"
              name="trackingpixel" template="Pixlee_Pixlee::pixlee/pixlee_tracking_pixel.phtml"/>
   </referenceContainer>
 

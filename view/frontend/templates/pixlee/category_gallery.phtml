@@ -2,11 +2,11 @@
 /**
  * Category view template
  *
- * @var $block \Magento\Catalog\Block\Category\View
+ * @var $block Pixlee\Pixlee\Block\CatalogWidget
  */
 ?>
 <?php
-$helper = $this->helper('Pixlee\Pixlee\Helper\Data');
+$helper = $block->getDataHelper();
 $nativeCategoryId = $block->getCurrentCategory()->getId();
 $websiteId = $helper->getWebsiteId();
 $helper->initializePixleeAPI($websiteId);

@@ -1,5 +1,5 @@
 <?php
-$helper = $this->helper('Pixlee\Pixlee\Helper\Data');
+$helper = $block->getDataHelper();
 $websiteId = $helper->getWebsiteId();
 $helper->initializePixleeAPI($websiteId);
 ?>

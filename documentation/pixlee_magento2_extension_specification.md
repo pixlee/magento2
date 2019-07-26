@@ -202,17 +202,13 @@ The events in the table below are observed by the following classes:
 
 - Pixlee/Pixlee/Observer/AddToCartObserver.php
 - Pixlee/Pixlee/Observer/CheckoutSuccessObserver.php
-- Pixlee/Pixlee/Observer/RemoveFromCartObserver.php
-- Pixlee/Pixlee/Observer/CheckoutStartObserver.php
 - Pixlee/Pixlee/Observer/CreateProductTriggerObserver.php
 - Pixlee/Pixlee/Observer/ValidateCredentialsObserver.php
 
 | Event Name                                           | Observer                     |
 | :--------------------------------------------------- | :--------------------------- |
-| controller_action_predispatch_checkout_onepage_index | CheckoutStartObserver        | 
 | multishipping_checkout_controller_success_action     | CheckoutSuccessObserver      |
 | checkout_cart_add_product_complete                   | AddToCartObserver            | 
-| sales_quote_remove_item                              | RemoveFromCartObserver       |
 | catalog_product_save_after                           | CreateProductTriggerObserver |
 
 # 4.  List of Files Rewritten #

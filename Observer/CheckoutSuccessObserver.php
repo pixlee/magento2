@@ -46,7 +46,7 @@ class CheckoutSuccessObserver implements ObserverInterface
             $this->_collection->addFieldToFilter('entity_id', ['in' => $orderIds]);
             foreach ($this->_collection as $order) {
                 $cartData = $this->_pixleeData->_extractCart($order);
-                $payload = $this->_pixleeData->_preparePayload($cartData, $storeId);
+                $payload = $this->_pixleeData->_preparePayload($storeId, $cartData);
                 $this->_pixleeData->_sendPayload('checkoutSuccess', $payload);
             }
             $this->_logger->addInfo("[Pixlee] :: checkoutSuccess ".json_encode($payload));

@@ -36,14 +36,14 @@ class SalesOrderObserver implements ObserverInterface
         // to get an ARRAY OF ORDER IDS
         $orderIds = $observer->getEvent()->getOrderIds();
 
-        // But if we're here from 
+        // But if we're here from
         //      order_cancel_after
         // We need to instead use $observer->getEvent()->getOrder();
         // to instead get AN INDIVIDUAL ORDER
         $order = $observer->getEvent()->getOrder();
 
         // Coming from conversion
-        if (!is_null($orderIds)) {
+        if ($orderIds !== null) {
             $this->_collection->addFieldToFilter('entity_id', ['in' => $orderIds]);
             foreach ($this->_collection as $order) {
                 /*
@@ -63,7 +63,7 @@ class SalesOrderObserver implements ObserverInterface
                 }
             }
         // Coming from order cancelled
-        } else if (!is_null($order)) {
+        } elseif ($order !== null) {
             foreach ($order->getAllVisibleItems() as $item) {
                 $product = $item->getProduct();
 
