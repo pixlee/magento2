@@ -30,6 +30,7 @@ class Pixlee
     {
         return $this->getFromAPI("/albums");
     }
+
     public function createProduct(
         $product_name,
         $sku,
@@ -43,7 +44,7 @@ class Pixlee
         $variantsDict = null,
         $extraFields = null
     ) {
-        $this->_logger->addDebug("* In createProduct");
+        $this->_logger->addInfo("* In createProduct");
         /*
             Converted from Rails API format to distillery API format
             Also, now sending _account_ 'api_key' instead of _user_ 'api_key'
