@@ -26,6 +26,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
     protected $_urls = [];
 
+    const SINGLE_STORE_MODE_SCOPE = 'default';
+
     /**
     * Config paths
     */
@@ -96,7 +98,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
 
     public function initializePixleeAPI($websiteId)
     {
-        $this->websiteId = $websiteId;
+        $this->websiteId = 0;
         $pixleeKey = $this->getApiKey($websiteId);
         $pixleeSecretKey = $this->getSecretKey($websiteId);
         $this->_pixleeAPI = new \Pixlee\Pixlee\Helper\Pixlee($pixleeKey, $pixleeSecretKey, $this->_logger);
@@ -106,7 +108,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_API_KEY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            self::SINGLE_STORE_MODE_SCOPE,
             $this->websiteId
         );
     }
@@ -115,7 +117,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_SECRET_KEY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            self::SINGLE_STORE_MODE_SCOPE,
             $this->websiteId
         );
     }
@@ -124,7 +126,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_ACCOUNT_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            self::SINGLE_STORE_MODE_SCOPE,
             $this->websiteId
         );
     }
@@ -133,7 +135,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_PDP_WIDGET_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            self::SINGLE_STORE_MODE_SCOPE,
             $this->websiteId
         );
     }
@@ -142,7 +144,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return $this->_scopeConfig->getValue(
             self::PIXLEE_CDP_WIDGET_ID,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            self::SINGLE_STORE_MODE_SCOPE,
             $this->websiteId
         );
     }
@@ -151,7 +153,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         if ($this->_scopeConfig->isSetFlag(
             self::PIXLEE_ACTIVE,
-            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
+            self::SINGLE_STORE_MODE_SCOPE,
             $this->websiteId
         )) {
             return true;
@@ -170,7 +172,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $collection = $this->_catalogProduct->getCollection();
         $collection->addFieldToFilter('visibility', ['neq' => 1]);
         $collection->addFieldToFilter('status', ['neq' => 2]);
-        $collection->addWebsiteFilter($websiteId);
         $count = $collection->getSize();
         return $count;
     }
@@ -180,7 +181,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $products = $this->_catalogProduct->getCollection();
         $products->addFieldToFilter('visibility', ['neq' => 1]);
         $products->addFieldToFilter('status', ['neq' => 2]);
-        $products->addWebsiteFilter($websiteId);
         $products->getSelect()->limit($limit, $offset);
         $products->addAttributeToSelect('*');
         return $products;
@@ -630,21 +630,21 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_ACTIVE,
                     '0',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    self::SINGLE_STORE_MODE_SCOPE,
                     $this->websiteId
                 );
 
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_API_KEY,
                     '',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    self::SINGLE_STORE_MODE_SCOPE,
                     $this->websiteId
                 );
 
                 $this->resourceConfig->saveConfig(
                     self::PIXLEE_SECRET_KEY,
                     '',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITES,
+                    self::SINGLE_STORE_MODE_SCOPE,
                     $this->websiteId
                 );
 

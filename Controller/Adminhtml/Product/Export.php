@@ -32,9 +32,7 @@ class Export extends \Magento\Backend\App\Action
 
     public function execute()
     {
-        $url = $this->request->getRequestUri();
-        preg_match("/pixlee_export\/product\/export\/website_id\/(.*)\/key\//", $url, $matches);
-        $websiteId = (int) ($matches[1]);
+        $websiteId = 0;
         $this->_pixleeData->initializePixleeAPI($websiteId);
 
         if ($this->_pixleeData->isActive()) {
