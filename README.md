@@ -14,3 +14,7 @@ There are definitely ways you can get started with Magento 2 locally, but for a 
 3. Log into S3 and navigate to assets.pixlee.com > magento.
 4. Replace the current Pixlee_Magento2.zip with the one that we generated in step 2.
 5. Ensure that this file is public. Clear Instart cache, ask Jeff or Satnam on how to do that.
+
+# Single-Store Mode
+
+We have some customers who want to use the single-store mode in Magento 2. This mode is not currently supported in the master branch of our application. For those customers, send them the version of the app found in this branch: https://github.com/pixlee/magento2/tree/bug/CR-3530/kushal
