@@ -157,7 +157,7 @@ class Pixlee
           "X-Alt-Referer" => "magento2.pixlee.com",
           'Content-Length' => strlen($payload),
           'Signature' => $this->generateSignature($payload),
-          'Expect' => 0
+          'Expect' => '100-continue'
         ];
         $this->_curl->setHeaders($headers);
 
@@ -189,7 +189,7 @@ class Pixlee
         // On product update, we just get a string that says:
         //  Product updated.
         // Suppose we'll check the HTTP return code, but not expect a JSON 'status' field
-        if (!$this->isBetween($responseCode, 200, 299)) {
+        if (!$this->isBetween($responseCode, 100, 299)) {
             $this->_logger->addWarning(
                 "[Pixlee] :: HTTP $responseCode response from API. Not able to export/update product"
             );
