@@ -35,35 +35,7 @@ class Export extends \Magento\Backend\App\Action
         $url = $this->request->getRequestUri();
         preg_match("/pixlee_export\/product\/export\/website_id\/(.*)\/key\//", $url, $matches);
         $websiteId = (int) ($matches[1]);
-        $this->_pixleeData->initializePixleeAPI($websiteId);
-
-        if ($this->_pixleeData->isActive()) {
-
-            // Pagination variables
-            $num_products = $this->_pixleeData->getTotalProductsCount($websiteId);
-            $counter = 0;
-            $limit = 100;
-            $offset = 0;
-            $job_id = uniqid();
-            $this->notifyExportStatus('started', $job_id, $num_products);
-            $categoriesMap = $this->_pixleeData->getCategoriesMap();
-
-            while ($offset < $num_products) {
-                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset, $websiteId);
-                $offset = $offset + $limit;
-
-                foreach ($products as $product) {
-                    $counter++;
-                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap, $websiteId);
-                }
-            }
-
-            $this->notifyExportStatus('finished', $job_id, $counter);
-            $resultJson = $this->resultJsonFactory->create();
-            return $resultJson->setData([
-                'message' => 'Success!',
-            ]);
-        }
+        $this->_pixleeData->exportProducts($websiteId);
     }
 
     protected function notifyExportStatus($status, $job_id, $num_products)
