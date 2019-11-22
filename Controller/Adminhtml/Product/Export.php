@@ -37,23 +37,4 @@ class Export extends \Magento\Backend\App\Action
         $websiteId = (int) ($matches[1]);
         $this->_pixleeData->exportProducts($websiteId);
     }
-
-    protected function notifyExportStatus($status, $job_id, $num_products)
-    {
-        $api_key = $this->_pixleeData->getApiKey();
-        $payload = [
-            'api_key' => $api_key,
-            'status' => $status,
-            'job_id' => $job_id,
-            'num_products' => $num_products,
-            'platform' => 'magento_2'
-        ];
-
-        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
-        $this->_curl->setOption(CURLOPT_POSTFIELDS, json_encode($payload));
-        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
-        $this->_curl->addHeader('Content-type', 'application/json');
-
-        $this->_curl->post('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key, $payload);
-    }
 }
