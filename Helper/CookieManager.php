@@ -13,6 +13,7 @@ class CookieManager
      * Name of cookie that holds private content version
      */
     const COOKIE_NAME = 'pixlee_analytics_cookie';
+    const LEGACY_COOKIE_NAME = 'pixlee_analytics_cookie_legacy';
 
     /**
      * CookieManager
@@ -53,6 +54,10 @@ class CookieManager
      */
     public function get()
     {
-        return $this->cookieManager->getCookie(self::COOKIE_NAME);
+        $cookie = $this->cookieManager->getCookie(self::COOKIE_NAME);
+        if(!isset($cookie)) {
+          $cookie = $this->cookieManager->getCookie(self::LEGACY_COOKIE_NAME);
+        }
+        return $cookie;
     }
 }
