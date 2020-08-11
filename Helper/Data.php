@@ -14,6 +14,7 @@ use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Sales\Model\Order as SalesOrder;
 use Pixlee\Pixlee\Helper\PixleeException;
+use Magento\Framework\Controller\Result\JsonFactory;
 
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
@@ -53,7 +54,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         CategoryRepositoryInterface $categoryRepository,
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ProductFactory $productFactory,
-        \Magento\Framework\HTTP\Client\Curl $curl
+        \Magento\Framework\HTTP\Client\Curl $curl,
+        JsonFactory $resultJsonFactory
+
     ) {
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -77,6 +80,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->categoryFactory    = $categoryFactory;
         $this->productFactory     = $productFactory;
         $this->_curl              = $curl;
+        $this->resultJsonFactory  = $resultJsonFactory;
     }
 
     public function getStoreCode()
@@ -708,5 +712,57 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         } else {
             return false;
         }
+    }
+
+    public function exportProducts($websiteId)
+    {
+        $this->initializePixleeAPI($websiteId);
+
+        if ($this->isActive()) {
+            // Pagination variables
+            $num_products = $this->getTotalProductsCount($websiteId);
+            $counter = 0;
+            $limit = 100;
+            $offset = 0;
+            $job_id = uniqid();
+            $this->notifyExportStatus('started', $job_id, $num_products);
+            $categoriesMap = $this->getCategoriesMap();
+
+            while ($offset < $num_products) {
+                $products = $this->getPaginatedProducts($limit, $offset, $websiteId);
+                $offset = $offset + $limit;
+
+                foreach ($products as $product) {
+                    $counter++;
+                    $response = $this->exportProductToPixlee($product, $categoriesMap, $websiteId);
+                }
+            }
+
+            $this->notifyExportStatus('finished', $job_id, $counter);
+
+            $resultJson = $this->resultJsonFactory->create();
+            return $resultJson->setData([
+                'message' => 'Success!',
+            ]);
+        }
+    }
+
+    protected function notifyExportStatus($status, $job_id, $num_products)
+    {
+        $api_key = $this->getApiKey();
+        $payload = [
+            'api_key' => $api_key,
+            'status' => $status,
+            'job_id' => $job_id,
+            'num_products' => $num_products,
+            'platform' => 'magento_2'
+        ];
+
+        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
+        $this->_curl->setOption(CURLOPT_POSTFIELDS, json_encode($payload));
+        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
+        $this->_curl->addHeader('Content-type', 'application/json');
+
+        $this->_curl->post('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key, $payload);
     }
 }

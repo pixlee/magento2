@@ -35,53 +35,6 @@ class Export extends \Magento\Backend\App\Action
         $url = $this->request->getRequestUri();
         preg_match("/pixlee_export\/product\/export\/website_id\/(.*)\/key\//", $url, $matches);
         $websiteId = (int) ($matches[1]);
-        $this->_pixleeData->initializePixleeAPI($websiteId);
-
-        if ($this->_pixleeData->isActive()) {
-
-            // Pagination variables
-            $num_products = $this->_pixleeData->getTotalProductsCount($websiteId);
-            $counter = 0;
-            $limit = 100;
-            $offset = 0;
-            $job_id = uniqid();
-            $this->notifyExportStatus('started', $job_id, $num_products);
-            $categoriesMap = $this->_pixleeData->getCategoriesMap();
-
-            while ($offset < $num_products) {
-                $products = $this->_pixleeData->getPaginatedProducts($limit, $offset, $websiteId);
-                $offset = $offset + $limit;
-
-                foreach ($products as $product) {
-                    $counter++;
-                    $response = $this->_pixleeData->exportProductToPixlee($product, $categoriesMap, $websiteId);
-                }
-            }
-
-            $this->notifyExportStatus('finished', $job_id, $counter);
-            $resultJson = $this->resultJsonFactory->create();
-            return $resultJson->setData([
-                'message' => 'Success!',
-            ]);
-        }
-    }
-
-    protected function notifyExportStatus($status, $job_id, $num_products)
-    {
-        $api_key = $this->_pixleeData->getApiKey();
-        $payload = [
-            'api_key' => $api_key,
-            'status' => $status,
-            'job_id' => $job_id,
-            'num_products' => $num_products,
-            'platform' => 'magento_2'
-        ];
-
-        $this->_curl->setOption(CURLOPT_CUSTOMREQUEST, "POST");
-        $this->_curl->setOption(CURLOPT_POSTFIELDS, json_encode($payload));
-        $this->_curl->setOption(CURLOPT_RETURNTRANSFER, true);
-        $this->_curl->addHeader('Content-type', 'application/json');
-
-        $this->_curl->post('https://distillery.pixlee.com/api/v1/notifyExportStatus?api_key=' . $api_key, $payload);
+        $this->_pixleeData->exportProducts($websiteId);
     }
 }
