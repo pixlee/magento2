@@ -13,7 +13,10 @@ There are definitely ways you can get started with Magento 2 locally, but for a 
 2. Run `sh packager.sh <version>` after commiting your changes. Ensure that `<version>` is higher than the last number used. It should generate a new package, rename the file to `Pixlee_Magento2.zip`.
 3. Log into S3 and navigate to assets.pixlee.com > magento.
 4. Replace the current Pixlee_Magento2.zip with the one that we generated in step 2.
-5. Ensure that this file is public. Clear Instart cache, ask Jeff or Satnam on how to do that.
+5. Ensure that this file is public.
+6. bust fastly cache with
+
+curl -XPOST -H "Fastly-Key:<FASTLY_API_KEY>" "https://api.fastly.com/service/6ZOYO75DiAyHoS7rTHgcqk/purge_all"
 
 # Single-Store Mode
 
