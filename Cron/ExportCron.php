@@ -19,6 +19,6 @@ class ExportCron {
     */
     public function execute() {
         $this->_logger->info('Exporting products from Cron Job');
-        $this->_pixleeData->exportProducts(1);
+        $this->_pixleeData->exportProducts(0);
     }
 }

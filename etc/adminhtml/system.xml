@@ -20,7 +20,7 @@
 
 			<group id="not_a_customer" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
 				<!-- Group configs -->
-				<label>Not a Pixlee customer?!!!!!!!</label>
+				<label>Not a Pixlee customer?/label>
 				<attribute type="expanded">0</attribute>
 				<comment>Thank you for downloading Pixlee’s Magento 2 Pixlee Extension. Please enter your email address below and we will get in touch with you shortly. For immediate assistance, email us at hi@pixleeteam.com.</comment>
 
