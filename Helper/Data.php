@@ -185,7 +185,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $products = $this->_catalogProduct->getCollection();
         $products->addFieldToFilter('visibility', ['neq' => 1]);
         $products->addFieldToFilter('status', ['neq' => 2]);
-        $products->addWebsiteFilter($websiteId);
         $products->getSelect()->limit($limit, $offset);
         $products->addAttributeToSelect('*');
         return $products;
