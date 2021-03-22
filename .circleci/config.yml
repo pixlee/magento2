@@ -19,10 +19,10 @@ jobs:
       # - image: redis:2.8.19
 
     steps:
-      - test-step
+      - test_step
 
 commands:
-  test-step:
+  test_step:
     steps:
       - run:
           name: Echo used for testing
