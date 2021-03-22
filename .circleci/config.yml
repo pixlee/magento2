@@ -19,11 +19,4 @@ jobs:
       # - image: redis:2.8.19
 
     steps:
-      - test
-
-commands:
-  test:
-    steps:
-      - run:
-          name: Echo used for testing
-          command: echo "test magento 2"
+      - run: echo "test magento 2"
