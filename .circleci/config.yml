@@ -48,6 +48,8 @@ jobs:
       # run tests with phpunit or codecept
       - run: pwd
       - run: ls
+      - run: ls vendor
+      - run: ls vendor/bin
       - run: echo ${PATH_TO_MAGENTO}
       - run: ./vendor/bin/phpunit
       # - run: ./vendor/bin/codecept build
