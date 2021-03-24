@@ -50,8 +50,8 @@ jobs:
       - run: composer require --dev phpunit/phpunit
       - run: ls
       - run: ls vendor
-      - run: ls ./vendor/phpunit
+      - run: ls -R ./vendor/phpunit
       - run: ./vendor/phpunit/phpunit
-      - run: ls ./vendor/phpunit
+      - run: ls ./vendor/phpunit/phpunit
       # - run: ./vendor/bin/codecept build
       # - run: ./vendor/bin/codecept run
