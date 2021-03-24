@@ -48,9 +48,10 @@ jobs:
       # run tests with phpunit or codecept
       - run: pwd
       - run:
-        name: Run Unit tests
-        command: |
-            echo ${PATH_TO_MAGENTO}
-            cd ${PATH_TO_MAGENTO}
+          name: Run Unit tests
+          command: |
+              echo ${PATH_TO_MAGENTO}
+              cd ${PATH_TO_MAGENTO}
+      - run: ./vendor/bin/phpunit
       # - run: ./vendor/bin/codecept build
       # - run: ./vendor/bin/codecept run
