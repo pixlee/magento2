@@ -52,6 +52,6 @@ jobs:
       - run: ls vendor
       - run: ls -R ./vendor/phpunit
       - run: ./vendor/phpunit/phpunit
-      - run: ls ./vendor/phpunit/phpunit
+      - run: ls ./vendor/phpunit/phpunit/phpunit
       # - run: ./vendor/bin/codecept build
       # - run: ./vendor/bin/codecept run
