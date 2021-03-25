@@ -29,7 +29,7 @@ commands:
       - run:
           name: download and install Magento 2
           command: git clone -b 2.3 https://github.com/magento/magento2 ./ && composer install magento2 && mkdir -p magento2/app/code/Pixlee/Pixlee
-  checkout-repo:
+  copy-repo:
     steps:
       - run:
           name: checkout extension repo to proper directory
