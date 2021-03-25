@@ -25,7 +25,7 @@ commands:
     steps:
       - run:
           name: download and install Magento 2
-          command: git clone -b 2.3 https://github.com/magento/magento2 ./ && cd magento2 && composer install && mkdir -p app/code/Pixlee/Pixlee
+          command: git clone -b 2.3 https://github.com/magento/magento2 && ls && ls -R && cd magento2 && composer install && mkdir -p app/code/Pixlee/Pixlee
   copy-repo:
     steps:
       - run:
