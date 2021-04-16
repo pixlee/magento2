@@ -35,6 +35,10 @@ class Export extends \Magento\Backend\App\Action
         $url = $this->request->getRequestUri();
         preg_match("/pixlee_export\/product\/export\/website_id\/(.*)\/key\//", $url, $matches);
         $websiteId = (int) ($matches[1]);
-        $this->_pixleeData->exportProducts($websiteId);
+        $this->_logger->addInfo("GOT THE ID METHOD 1: {$websiteId}");
+        $webId2 = $this->_pixleeData->getWebsiteId();
+
+        $this->_logger->addInfo("GOTTT ID METHOD 2: {$webId2}");
+        $this->_pixleeData->exportProducts($webId2);
     }
 }
