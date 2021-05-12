@@ -22,7 +22,7 @@ class Pixlee
         $this->_logger   = $logger;
         $this->apiKey    = $apiKey;
         $this->secretKey = $secretKey;
-        $this->baseURL   = "http://distillery.pixlee.com/api/v2";
+        $this->baseURL   = "https://distillery.pixlee.com/api/v2";
         $this->_curl     = new Curl;
     }
 
