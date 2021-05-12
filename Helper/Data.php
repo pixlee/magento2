@@ -490,7 +490,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected function getProductUrl($product, $websiteId) {
         // Pixlee works off of website ID, but for this we want a store ID. This fetches the default store from
         // the website ID
-        $storeId = $this->storeManager->getWebsite($websiteId)->getDefaultStore()->getId();
+        $storeId = $this->_storeManager->getWebsite($websiteId)->getDefaultStore()->getId();
 
         // Ported from TurnTo Magento Extension
         // Due to core bug, it is necessary to retrieve url using this method (see https://github.com/magento/magento2/issues/3074)
@@ -508,6 +508,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         } else {
             return $product->getProductUrl();
         }
+    }
+
+    protected function getAbsoluteUrl($relativeUrl, $storeId)
+    {
+        $storeUrl = $this->_storeManager->getStore($storeId)->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
+        return rtrim($storeUrl, '/') . '/' . ltrim($relativeUrl, '/');
     }
 
     public function _sendPayload($event, $payload)
