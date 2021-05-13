@@ -24,6 +24,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_objectManager;
     protected $_logger;
 
+    /**
+     * @var \Magento\UrlRewrite\Model\UrlFinderInterface
+     */
+    protected $_urlFinder;
+
     const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/events/';
     protected $_urls = [];
 
@@ -55,8 +60,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\CategoryFactory $categoryFactory,
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Framework\HTTP\Client\Curl $curl,
-        JsonFactory $resultJsonFactory
-
+        JsonFactory $resultJsonFactory,
+        \Magento\UrlRewrite\Model\UrlFinderInterface $urlFinder
     ) {
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -81,6 +86,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->productFactory     = $productFactory;
         $this->_curl              = $curl;
         $this->resultJsonFactory  = $resultJsonFactory;
+        $this->_urlFinder         = $urlFinder;
     }
 
     public function getStoreCode()
@@ -445,12 +451,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             return false;
         }
 
+        $productUrl = $this->getProductUrl($product, $websiteId);
+
         $pixlee = $this->_pixleeAPI;
 
         $response = $pixlee->createProduct(
             $product->getName(),
             $product->getSku(),
-            $product->getProductUrl(),
+            $productUrl,
             $this->_mediaConfig->getMediaUrl($product->getImage()),
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
@@ -477,6 +485,35 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             'categories_last_updated_at' => time()
         ]);
         return $extraFields;
+    }
+
+    protected function getProductUrl($product, $websiteId) {
+        // Pixlee works off of website ID, but for this we want a store ID. This fetches the default store from
+        // the website ID
+        $storeId = $this->_storeManager->getWebsite($websiteId)->getDefaultStore()->getId();
+
+        // Ported from TurnTo Magento Extension
+        // Due to core bug, it is necessary to retrieve url using this method (see https://github.com/magento/magento2/issues/3074)
+        $urlRewrite = $this->_urlFinder->findOneByData(
+            [
+                \Magento\UrlRewrite\Service\V1\Data\UrlRewrite::ENTITY_ID => $product->getId(),
+                \Magento\UrlRewrite\Service\V1\Data\UrlRewrite::ENTITY_TYPE =>
+                    \Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator::ENTITY_TYPE,
+                \Magento\UrlRewrite\Service\V1\Data\UrlRewrite::STORE_ID => $storeId
+            ]
+        );
+
+        if (isset($urlRewrite)) {
+            return $this->getAbsoluteUrl($urlRewrite->getRequestPath(), $storeId);
+        } else {
+            return $product->getProductUrl();
+        }
+    }
+
+    protected function getAbsoluteUrl($relativeUrl, $storeId)
+    {
+        $storeUrl = $this->_storeManager->getStore($storeId)->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_LINK);
+        return rtrim($storeUrl, '/') . '/' . ltrim($relativeUrl, '/');
     }
 
     public function _sendPayload($event, $payload)
