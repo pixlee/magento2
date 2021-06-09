@@ -25,6 +25,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_logger;
 
     /**
+     * @var \Magento\Store\Api\StoreWebsiteRelationInterface
+     */
+    protected $storeWebsiteRelationship;
+
+    /**
+     * @var \Magento\Catalog\Model\ProductFactory
+     */
+    protected $productFactory;
+
+    /**
      * @var \Magento\UrlRewrite\Model\UrlFinderInterface
      */
     protected $_urlFinder;
@@ -61,7 +71,8 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Framework\HTTP\Client\Curl $curl,
         JsonFactory $resultJsonFactory,
-        \Magento\UrlRewrite\Model\UrlFinderInterface $urlFinder
+        \Magento\UrlRewrite\Model\UrlFinderInterface $urlFinder,
+        \Magento\Store\Api\StoreWebsiteRelationInterface $storeWebsiteRelation
     ) {
         $this->_urls['addToCart'] = self::ANALYTICS_BASE_URL . 'addToCart';
         $this->_urls['removeFromCart'] = self::ANALYTICS_BASE_URL . 'removeFromCart';
@@ -87,6 +98,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->_curl              = $curl;
         $this->resultJsonFactory  = $resultJsonFactory;
         $this->_urlFinder         = $urlFinder;
+        $this->storeWebsiteRelationship = $storeWebsiteRelation;
     }
 
     public function getStoreCode()
@@ -175,25 +187,36 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return !$this->isActive();
     }
 
-    public function getTotalProductsCount($websiteId)
+    public function getTotalProductsCount($storeId)
     {
-        $collection = $this->_catalogProduct->getCollection();
+        /**
+         * @var $collection \Magento\Catalog\Model\ResourceModel\Product\Collection
+         */
+        $collection = $this->productFactory->getCollection();
+
         $collection->addFieldToFilter('visibility', ['neq' => 1]);
         $collection->addFieldToFilter('status', ['neq' => 2]);
-        $collection->addWebsiteFilter($websiteId);
+        $collection->addStoreFilter($storeId);
         $count = $collection->getSize();
         return $count;
     }
 
-    public function getPaginatedProducts($limit, $offset, $websiteId)
+    public function getPaginatedProducts($limit, $offset, $storeId)
     {
-        $products = $this->_catalogProduct->getCollection();
-        $products->addFieldToFilter('visibility', ['neq' => 1]);
-        $products->addFieldToFilter('status', ['neq' => 2]);
-        $products->addWebsiteFilter($websiteId);
-        $products->getSelect()->limit($limit, $offset);
-        $products->addAttributeToSelect('*');
-        return $products;
+        /**
+         * @var $collection \Magento\Catalog\Model\ResourceModel\Product\Collection
+         */
+        $collection = $this->productFactory->getCollection();
+        $collection->addAttributeToSelect('*');
+
+        $collection->addFieldToFilter('visibility', ['neq' => 1]);
+        $collection->addFieldToFilter('status', ['neq' => 2]);
+
+        $collection->addStoreFilter($storeId);
+
+        $collection->getSelect()->limit($limit, $offset);
+
+        return $collection;
     }
 
     public function getPixleeRemainingText()
@@ -435,7 +458,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $result;
     }
 
-    public function exportProductToPixlee($product, $categoriesMap, $websiteId)
+    public function exportProductToPixlee($product, $categoriesMap, $storeId)
     {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
@@ -451,7 +474,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             return false;
         }
 
-        $productUrl = $this->getProductUrl($product, $websiteId);
+        $productUrl = $this->getProductUrl($product, $storeId);
 
         $pixlee = $this->_pixleeAPI;
 
@@ -462,7 +485,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             $this->_mediaConfig->getMediaUrl($product->getImage()),
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
-            $this->getRegionalInformation($websiteId, $product),
+            $this->getRegionalInformation($storeId, $product),
             (int) $product->getId(),
             $this->getAggregateStock($product),
             $this->getVariantsDict($product),
@@ -487,10 +510,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         return $extraFields;
     }
 
-    protected function getProductUrl($product, $websiteId) {
-        // Pixlee works off of website ID, but for this we want a store ID. This fetches the default store from
-        // the website ID
-        $storeId = $this->_storeManager->getWebsite($websiteId)->getDefaultStore()->getId();
+    protected function getProductUrl($product, $storeId) {
 
         // Ported from TurnTo Magento Extension
         // Due to core bug, it is necessary to retrieve url using this method (see https://github.com/magento/magento2/issues/3074)
@@ -755,32 +775,37 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         $this->initializePixleeAPI($websiteId);
 
+        $stores = $this->storeWebsiteRelationship->getStoreByWebsiteId($websiteId);
+
         if ($this->isActive()) {
-            // Pagination variables
-            $num_products = $this->getTotalProductsCount($websiteId);
-            $counter = 0;
-            $limit = 100;
-            $offset = 0;
-            $job_id = uniqid();
-            $this->notifyExportStatus('started', $job_id, $num_products);
-            $categoriesMap = $this->getCategoriesMap();
+            foreach($stores as $store) {
+                $storeId = $store->getId();
+                // Pagination variables
+                $num_products = $this->getTotalProductsCount($storeId);
+                $counter = 0;
+                $limit = 100;
+                $offset = 0;
+                $job_id = uniqid();
+                $this->notifyExportStatus('started', $job_id, $num_products);
+                $categoriesMap = $this->getCategoriesMap();
 
-            while ($offset < $num_products) {
-                $products = $this->getPaginatedProducts($limit, $offset, $websiteId);
-                $offset = $offset + $limit;
+                while ($offset < $num_products) {
+                    $products = $this->getPaginatedProducts($limit, $offset, $storeId);
+                    $offset = $offset + $limit;
 
-                foreach ($products as $product) {
-                    $counter++;
-                    $response = $this->exportProductToPixlee($product, $categoriesMap, $websiteId);
+                    foreach ($products as $product) {
+                        $counter++;
+                        $response = $this->exportProductToPixlee($product, $categoriesMap, $storeId);
+                    }
                 }
+
+                $this->notifyExportStatus('finished', $job_id, $counter);
+
+                $resultJson = $this->resultJsonFactory->create();
+                return $resultJson->setData([
+                    'message' => 'Success!',
+                ]);
             }
-
-            $this->notifyExportStatus('finished', $job_id, $counter);
-
-            $resultJson = $this->resultJsonFactory->create();
-            return $resultJson->setData([
-                'message' => 'Success!',
-            ]);
         }
     }
 
