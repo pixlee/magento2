@@ -304,9 +304,15 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $productCategories = $product->getCategoryIds();
 
         foreach ($productCategories as $categoryId) {
-            $parent_ids = $categoriesMap[$categoryId]['parent_ids'];
-            foreach ($parent_ids as $parent_id) {
-                array_push($allCategoriesIds, $parent_id);
+            // Check to make sure the category is in the categoriesMap before accessing
+            // This should always be the case, but there seems to be a bug causing
+            // Some Ids not to be found
+            $categoryInMap = isset($categoriesMap[$categoryId]);
+            if ($categoryInMap) {
+                $parent_ids = $categoriesMap[$categoryId]['parent_ids'];
+                foreach ($parent_ids as $parent_id) {
+                    array_push($allCategoriesIds, $parent_id);
+                }
             }
         }
 
