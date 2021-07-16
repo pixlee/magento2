@@ -1,6 +1,9 @@
 Magento 2
 =========
 
+To view these docs online, navigate to:
+https://developers.pixlee.com/docs/magento-2
+
 Documentation for setting up your Magento 2 store to work with Pixlee
 
 Suggest Edits
@@ -21,7 +24,7 @@ Before installing the Pixlee Magento 2 extension, you will need your **API Key**
 
 (Alternatively, point your browser to [https://app.pixlee.com/app#settings/account\_settings](https://app.pixlee.com/app#settings/account_settings) while logged in).
 
-![](https://files.readme.io/35a1ef3-01_09_pixlee_dashboard.png "01_09_pixlee_dashboard.png")![](https://files.readme.io/35a1ef3-01_09_pixlee_dashboard.png "Click to close...")  
+![](https://files.readme.io/35a1ef3-01_09_pixlee_dashboard.png "01_09_pixlee_dashboard.png")
 
 The settings page should look like this:
 
