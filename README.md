@@ -28,7 +28,7 @@ Before installing the Pixlee Magento 2 extension, you will need your **API Key**
 
 The settings page should look like this:
 
-![](https://files.readme.io/47d7746-01_10_account_settings.png "01_10_account_settings.png")![](https://files.readme.io/47d7746-01_10_account_settings.png "Click to close...")  
+![](https://files.readme.io/47d7746-01_10_account_settings.png "01_10_account_settings.png")  
 
 2.  Click on **Pixlee API** on the lefthand navigation bar.
 
@@ -36,7 +36,7 @@ From this page, record the values of **Account ID**, **Account API Key**, and **
 
 We'll need these later.
 
-![](https://files.readme.io/e34dfe7-01_11_pixlee_api.png "01_11_pixlee_api.png")![](https://files.readme.io/e34dfe7-01_11_pixlee_api.png "Click to close...")  
+![](https://files.readme.io/e34dfe7-01_11_pixlee_api.png "01_11_pixlee_api.png")  
 
 3.  **Now's a good time to download the [Pixlee\_Magento2.zip](https://assets.pixlee.com/magento/Pixlee_Magento2.zip) extension file if you don't have it.**
 
@@ -73,7 +73,7 @@ Clear the Magento 2 Cache and Cache Storage
 
 7.  Open the Magento 2 Admin Panel and go to **'System'** and click on **Cache Management** on the popup menu.
 
-![](https://files.readme.io/74cb5e3-04_01_magento2_admin_panel.png "04_01_magento2_admin_panel.png")![](https://files.readme.io/74cb5e3-04_01_magento2_admin_panel.png "Click to close...")
+![](https://files.readme.io/74cb5e3-04_01_magento2_admin_panel.png "04_01_magento2_admin_panel.png")
 
 Click on **Flush Cache Storage** and after that **Flush Magento Cache** to clear the cache.
 
@@ -96,11 +96,11 @@ Select the website on which you'd like to install Pixlee, using the store view d
 > 
 > If you keep the **Store View** as **Default Config** then the **Pixlee Tab** will not appear.
 
-![](https://files.readme.io/ac7397d-04_10_magento2_store_view.png "04_10_magento2_store_view.png")![](https://files.readme.io/ac7397d-04_10_magento2_store_view.png "Click to close...")
+![](https://files.readme.io/ac7397d-04_10_magento2_store_view.png "04_10_magento2_store_view.png")
 
 On the Navigation panel on the left, click on **Pixlee** and then **Existing Customers**. You should be redirected to the **Pixlee Account Settings page**.
 
-![](https://files.readme.io/38d8841-04_02_magento2_configuration.png "04_02_magento2_configuration.png")![](https://files.readme.io/38d8841-04_02_magento2_configuration.png "Click to close...")  
+![](https://files.readme.io/38d8841-04_02_magento2_configuration.png "04_02_magento2_configuration.png")  
 
 Now it's time to use the keys we saved from [pixlee.com](pixlee.com) in step 2.
 
@@ -119,7 +119,7 @@ Conveniently, the **Export Products to Pixlee button** is right here!
 
 Click it to complete the **Pixlee Magento Extension** installation.
 
-![](https://files.readme.io/0ad06cc-04_03_magento2_export_pressed.png "04_03_magento2_export_pressed.png")![](https://files.readme.io/0ad06cc-04_03_magento2_export_pressed.png "Click to close...")
+![](https://files.readme.io/0ad06cc-04_03_magento2_export_pressed.png "04_03_magento2_export_pressed.png")
 
 You can export your Magento 2 products to Pixlee at any time from the **Export Products to Pixlee** button on the **Pixlee Account Settings page**.
 
@@ -148,11 +148,11 @@ Assuming that all of your products are in sync with Pixlee, you can embed a PDP 
 
 2.  Click the "Install Product Displays" and it should present you with a lightbox that looks like following.
 
-![](https://files.readme.io/ded63e5-Add_PDP_lightbox.png "Add PDP lightbox.png")![](https://files.readme.io/ded63e5-Add_PDP_lightbox.png "Click to close...")  
+![](https://files.readme.io/ded63e5-Add_PDP_lightbox.png "Add PDP lightbox.png")  
 
 3.  Customize the widget as you wish. At the end, press the "Generate Embed Code" button and you'll be presented with an embed code. Note - We recommend that you leave the "Load Priority" setting to "Low priority" when customizing.
 
-![](https://files.readme.io/046e7a9-01_01_pdp_widget_result.png "01_01_pdp_widget_result.png")![](https://files.readme.io/046e7a9-01_01_pdp_widget_result.png "Click to close...")
+![](https://files.readme.io/046e7a9-01_01_pdp_widget_result.png "01_01_pdp_widget_result.png")
 
 Copy the value for **widgetId** in the resulting code snippet. Fill in this value in the Widget ID field inside Admin > System > Configuration > Pixlee Account Configuration. This the same field that we skipped over in Step 10.
 
@@ -162,13 +162,13 @@ Copy the value for **widgetId** in the resulting code snippet. Fill in this valu
 
 Click **Save Config** on the top right corner of the page to save your Account Settings.
 
-![](https://files.readme.io/eb8b0b0-04_04_magento2_pdp_widget_configuration.png "04_04_magento2_pdp_widget_configuration.png")![](https://files.readme.io/eb8b0b0-04_04_magento2_pdp_widget_configuration.png "Click to close...")  
+![](https://files.readme.io/eb8b0b0-04_04_magento2_pdp_widget_configuration.png "04_04_magento2_pdp_widget_configuration.png")  
 
 With that, any product that has tagged photos in its Pixlee album should now have a widget gallery appear on its product description page.
 
 To further customize, you can re-publish your PDP widget using Pixlee's **Design Editor**, and use that resulting **widgetId** instead!
 
-![](https://files.readme.io/f0dcdaa-04_05_magento2_pdp_widget_example.png "04_05_magento2_pdp_widget_example.png")![](https://files.readme.io/f0dcdaa-04_05_magento2_pdp_widget_example.png "Click to close...")  
+![](https://files.readme.io/f0dcdaa-04_05_magento2_pdp_widget_example.png "04_05_magento2_pdp_widget_example.png")  
 
 5.  Furthermore, if you'd like to **customize the placement** of the PDP widget, modify _catalog\_product\_view.xml_.
 
@@ -194,11 +194,11 @@ The first three steps are exactly the same as embedding a PDP widget as they onl
 
 2.  Click the "Install Product Displays", and it should present you with a lightbox that looks like following.
 
-![](https://files.readme.io/f7cc7cc-Add_PDP_lightbox.png "Add PDP lightbox.png")![](https://files.readme.io/f7cc7cc-Add_PDP_lightbox.png "Click to close...")  
+![](https://files.readme.io/f7cc7cc-Add_PDP_lightbox.png "Add PDP lightbox.png")  
 
 3.  Customize the widget as you wish. At the end, press the "Generate Embed Code" button and you'll be presented with an embed code. Note - We recommend that you leave the "Load Priority" setting to "Low priority" when customizing.
 
-![](https://files.readme.io/3f7f450-01_01_pdp_widget_result.png "01_01_pdp_widget_result.png")![](https://files.readme.io/3f7f450-01_01_pdp_widget_result.png "Click to close...")
+![](https://files.readme.io/3f7f450-01_01_pdp_widget_result.png "01_01_pdp_widget_result.png")
 
 Copy the value for **widgetId** in the resulting code snippet.
 
@@ -208,13 +208,13 @@ Copy the value for **widgetId** in the resulting code snippet.
 
 Click **Save Config** on the top right corner of the page to save your Account Settings.
 
-![](https://files.readme.io/304bbf8-04_04_magento2_pdp_widget_configuration.png "04_04_magento2_pdp_widget_configuration.png")![](https://files.readme.io/304bbf8-04_04_magento2_pdp_widget_configuration.png "Click to close...")  
+![](https://files.readme.io/304bbf8-04_04_magento2_pdp_widget_configuration.png "04_04_magento2_pdp_widget_configuration.png")  
 
 With that, any product that has tagged photos in its Pixlee album should now have a widget gallery appear on its product description page.
 
 To further customize, you can re-publish your PDP widget using Pixlee's **Design Editor**, and use that resulting **widgetId** instead!
 
-![](https://files.readme.io/97edd93-04_06_magento2_cdp_widget_example.png "04_06_magento2_cdp_widget_example.png")![](https://files.readme.io/97edd93-04_06_magento2_cdp_widget_example.png "Click to close...")  
+![](https://files.readme.io/97edd93-04_06_magento2_cdp_widget_example.png "04_06_magento2_cdp_widget_example.png")  
 
 5.  Furthermore, if you'd like to **customize the placement** of the CDP widget, modify _catalog\_category\_view.xml_.
 
@@ -309,14 +309,14 @@ Before testing, please make sure that the Pixlee Product Exports job has at leas
 
 1.  In order to run it manually. Open Admin Panel > Stores > Configuration > Pixlee > Existing Customers. Press the **Export Products to Pixlee** button to start the exports.
 
-![](https://files.readme.io/5315bbd-04_03_magento2_export_pressed.png "04_03_magento2_export_pressed.png")![](https://files.readme.io/5315bbd-04_03_magento2_export_pressed.png "Click to close...")
+![](https://files.readme.io/5315bbd-04_03_magento2_export_pressed.png "04_03_magento2_export_pressed.png")
 
 2.  Login to [Pixlee](https://app.pixlee.com) and navigate to **Products** under the **Album** tab. [Alternatively, click this link.](https://app.pixlee.com/app#products).
     
 3.  You should see a list of products on this page.
     
 
-![](https://files.readme.io/9546c5f-01_64_demandware_products.png "01_64_demandware_products.png")![](https://files.readme.io/9546c5f-01_64_demandware_products.png "Click to close...")
+![](https://files.readme.io/9546c5f-01_64_demandware_products.png "01_64_demandware_products.png")
 
 5.  Try searching for a few products on this page that you know exist in your catalog.
     
@@ -356,14 +356,14 @@ API calls are made to Pixlee API when a customer adds something to their cart an
 
 1.  Open your favorite browser and open a product page of your store. And click **Add to Cart**.
 
-![](https://files.readme.io/4c7ccb4-04_07_magento2_product_page.png "04_07_magento2_product_page.png")![](https://files.readme.io/4c7ccb4-04_07_magento2_product_page.png "Click to close...")
+![](https://files.readme.io/4c7ccb4-04_07_magento2_product_page.png "04_07_magento2_product_page.png")
 
 2.  Open the **pixlee.log** file located at **$Magento\_Root$/var/log** using your favorite text editor and scroll down to the very end.
     
 3.  There should be an entry beginning with **AddToCart**
     
 
-![](https://files.readme.io/0abe8fa-Screen_Shot_2019-10-10_at_7.36.19_PM.png "Screen Shot 2019-10-10 at 7.36.19 PM.png")![](https://files.readme.io/0abe8fa-Screen_Shot_2019-10-10_at_7.36.19_PM.png "Click to close...")
+![](https://files.readme.io/0abe8fa-Screen_Shot_2019-10-10_at_7.36.19_PM.png "Screen Shot 2019-10-10 at 7.36.19 PM.png")
 
 4.  If you found the **AddToCart** calls then your analytics were integrated correctly. If not, contact us at support@pixleeteam.com and attach the **pixlee.log** file with the email.
     
@@ -374,7 +374,7 @@ API calls are made to Pixlee API when a customer adds something to their cart an
 7.  This time look for log entries beginning with **CheckoutSuccess**
     
 
-![](https://files.readme.io/f02da02-Screen_Shot_2019-10-10_at_7.47.20_PM.png "Screen Shot 2019-10-10 at 7.47.20 PM.png")![](https://files.readme.io/f02da02-Screen_Shot_2019-10-10_at_7.47.20_PM.png "Click to close...")
+![](https://files.readme.io/f02da02-Screen_Shot_2019-10-10_at_7.47.20_PM.png "Screen Shot 2019-10-10 at 7.47.20 PM.png")
 
 8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@pixleeteam.com and attach the **pixlee.log** file with the email.
 
@@ -396,7 +396,7 @@ To verify that you are encountering this issue, do the following:
 2.  Open the developer tools for your browser, navigate to the console tab and verify that you are seeing this error:
     
 
-![](https://files.readme.io/d16d7f3-Screen_Shot_2019-10-16_at_1.23.55_PM.png "Screen Shot 2019-10-16 at 1.23.55 PM.png")![](https://files.readme.io/d16d7f3-Screen_Shot_2019-10-16_at_1.23.55_PM.png "Click to close...")
+![](https://files.readme.io/d16d7f3-Screen_Shot_2019-10-16_at_1.23.55_PM.png "Screen Shot 2019-10-16 at 1.23.55 PM.png")
 
 > ### 🚧
 > 
@@ -406,7 +406,7 @@ To verify that you are encountering this issue, do the following:
 
 3.  Find the generated embed code for the widget. It should look like this:
 
-![](https://files.readme.io/f1d47d5-Screen_Shot_2019-10-16_at_1.16.58_PM.png "Screen Shot 2019-10-16 at 1.16.58 PM.png")![](https://files.readme.io/f1d47d5-Screen_Shot_2019-10-16_at_1.16.58_PM.png "Click to close...")
+![](https://files.readme.io/f1d47d5-Screen_Shot_2019-10-16_at_1.16.58_PM.png "Screen Shot 2019-10-16 at 1.16.58 PM.png")
 
 Here is a formatted version of the above code:
 
