@@ -1,5 +1,5 @@
 {
-    "name": "pixlee-team/magento2",
+    "name": "pixlee/magento2",
     "description": "Social commerce platform to collect, curate, and display user-generated content to enhance your Magento store",
     "type": "magento2-module",
     "version": "1.2.2",
