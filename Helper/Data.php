@@ -178,7 +178,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getTotalProductsCount($websiteId)
     {
         $collection = $this->_catalogProduct->getCollection();
-        $collection->addFieldToFilter('visibility', ['neq' => 1]);
+        $collection->addFieldToFilter(
+            'visibility',
+            [
+                'in' =>
+                    [
+                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH,
+                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_IN_CATALOG
+                    ]
+            ]
+        );
         $collection->addFieldToFilter('status', ['neq' => 2]);
         $collection->addWebsiteFilter($websiteId);
         $count = $collection->getSize();
@@ -188,7 +197,16 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     public function getPaginatedProducts($limit, $offset, $websiteId)
     {
         $products = $this->_catalogProduct->getCollection();
-        $products->addFieldToFilter('visibility', ['neq' => 1]);
+        $products->addFieldToFilter(
+            'visibility',
+            [
+                'in' =>
+                    [
+                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH,
+                        \Magento\Catalog\Model\Product\Visibility::VISIBILITY_IN_CATALOG
+                    ]
+            ]
+        );
         $products->addFieldToFilter('status', ['neq' => 2]);
         $products->addWebsiteFilter($websiteId);
         $products->getSelect()->limit($limit, $offset);
@@ -445,7 +463,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     {
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
-        if ($product->getVisibility() <= 1) {
+        if ($product->getVisibility() == \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE) {
             $this->_logger->addInfo("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
         }
