@@ -476,14 +476,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         }
 
         $productUrl = $this->getProductUrl($product, $websiteId);
-
+        $productImageUrl = $product->getImage() ? $this->_mediaConfig->getMediaUrl($product->getImage()) : '';
         $pixlee = $this->_pixleeAPI;
 
         $response = $pixlee->createProduct(
             $product->getName(),
             $product->getSku(),
             $productUrl,
-            $this->_mediaConfig->getMediaUrl($product->getImage()),
+            $productImageUrl,
             $this->_storeManager->getStore()->getCurrentCurrency()->getCode(),
             $product->getFinalPrice(),
             $this->getRegionalInformation($websiteId, $product),
