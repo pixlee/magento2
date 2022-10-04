@@ -8,4 +8,14 @@ class PixleeLogger extends \Monolog\Logger
     ) {
         parent::__construct("PixleeLogger", [$handler]);
     }
+
+    /**
+     * @param string|Stringable $message
+     * @param array $context
+     * @return void
+     */
+    public function addInfo(string|Stringable $message, array $context = []): void
+    {
+        $this->info($message, $context);
+    }
 }
