@@ -1,15 +1,19 @@
 <?xml version="1.0"?>
-<body>
-    <!--
-    If you want to move the PDP widget around, change the referenceContainer name here,
-    along with the "after" inside the block tags.
-    The names are a little opaque, but if you're reading this you probably know what you're doing.
-    -->
-    <referenceContainer name="product.info.media">
-        <block class="Pixlee\Pixlee\Block\ProductWidget"
-            name="product.view.community_gallery"
-            template="Pixlee_Pixlee::pixlee/product_gallery.phtml"
-            after="-">
-        </block>
-    </referenceContainer>
-</body>
+<!--
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="product.info.media">
+            <block class="Magento\Catalog\Block\Product\View" name="product.view.community_gallery"
+                template="Pixlee_Pixlee::pixlee/product_gallery.phtml" after="-">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Pixlee\Pixlee\ViewModel\ProductWidget</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

@@ -1,38 +1,82 @@
 <?php
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
 
 namespace Pixlee\Pixlee\Observer;
 
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Model\StoreManagerInterface;
+use Pixlee\Pixlee\Model\Logger\PixleeLogger;
+use Pixlee\Pixlee\Model\Cart;
+use Pixlee\Pixlee\Model\Config\Api;
+use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 
 class AddToCartObserver implements ObserverInterface
 {
-    // A simple Trait to reuse Sentry Handler instantiation
+    /**
+     * @var Cart
+     */
+    protected Cart $pixleeCart;
+    /**
+     * @var Api
+     */
+    protected Api $apiConfig;
+    /**
+     * @var PixleeLogger
+     */
+    protected PixleeLogger $logger;
+    /**
+     * @var StoreManagerInterface
+     */
+    protected StoreManagerInterface $storeManager;
+    /**
+     * @var AnalyticsServiceInterface
+     */
+    protected AnalyticsServiceInterface $analytics;
+
+    /**
+     * @param PixleeLogger $logger
+     * @param StoreManagerInterface $storeManager
+     * @param Cart $pixleeCart
+     * @param Api $apiConfig
+     * @param AnalyticsServiceInterface $analytics
+     */
     public function __construct(
-        \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        PixleeLogger $logger,
+        StoreManagerInterface $storeManager,
+        Cart $pixleeCart,
+        Api $apiConfig,
+        AnalyticsServiceInterface $analytics
     ) {
-        $this->_pixleeData  = $pixleeData;
-        $this->_logger      = $logger;
-        $this->_scopeConfig = $scopeConfig;
-        $this->_storeManager = $storeManager;
+        $this->logger = $logger;
+        $this->storeManager = $storeManager;
+        $this->pixleeCart = $pixleeCart;
+        $this->apiConfig = $apiConfig;
+        $this->analytics = $analytics;
     }
 
+    /**
+     * @param EventObserver $observer
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function execute(EventObserver $observer)
     {
-        $websiteId = $this->_storeManager->getWebsite()->getWebsiteId();
-        $this->_pixleeData->initializePixleeAPI($websiteId);
-        $pixleeEnabled = $this->_pixleeData->isActive();
+        $websiteId = $this->storeManager->getWebsite()->getWebsiteId();
 
-        if ($pixleeEnabled) {
+        if ($this->apiConfig->isActive($websiteId)) {
             $product = $observer->getEvent()->getProduct();
-            $productData = $this->_pixleeData->_extractProduct($product);
-            $storeId = $this->_storeManager->getStore()->getStoreId();
-            $payload = $this->_pixleeData->_preparePayload($storeId, $productData);
-            $this->_pixleeData->_sendPayload('addToCart', $payload);
-            $this->_logger->addInfo("AddToCart ".json_encode($payload));
+            $productData = $this->pixleeCart->extractProduct($product);
+            $storeId = $this->storeManager->getStore()->getStoreId();
+            $payload = $this->pixleeCart->preparePayload($storeId, $productData);
+            $this->analytics->sendEvent('addToCart', $payload);
+            $this->logger->addInfo('AddToCart ' . json_encode($payload));
         }
     }
 }

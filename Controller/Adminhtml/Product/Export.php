@@ -1,38 +1,49 @@
 <?php
 /**
- * Copyright © 2015 Pixlee
- * @author teemingchew
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Controller\Adminhtml\Product;
 
-use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\HTTP\Client\Curl;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Pixlee\Pixlee\Model\Export\Product;
 
-class Export extends \Magento\Backend\App\Action
+class Export extends Action
 {
-    protected $resultJsonFactory;
-    protected $_pixleeData;
-    protected $_logger;
+    /**
+     * @var Product
+     */
+    protected Product $product;
 
+    /**
+     * Constructor
+     *
+     * @param Context $context
+     * @param Product $product
+     */
     public function __construct(
-        \Magento\Backend\App\Action\Context $context,
-        JsonFactory $resultJsonFactory,
-        \Magento\Framework\App\Request\Http $request,
-        \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger
+        Context $context,
+        Product $product
     ) {
         parent::__construct($context);
-        $this->resultJsonFactory  = $resultJsonFactory;
-        $this->request            = $request;
-        $this->_pixleeData        = $pixleeData;
-        $this->_logger            = $logger;
-        $this->_curl              = new Curl;
+        $this->product = $product;
     }
 
-    public function execute()
+    /**
+     * Export products to Pixlee
+     *
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function execute(): void
     {
-        $websiteId = $this->_pixleeData->getWebsiteId();
-        $this->_pixleeData->exportProducts($websiteId);
+        $websiteId = $this->_request->getParam('website_id');
+        $this->product->exportProducts($websiteId);
     }
 }

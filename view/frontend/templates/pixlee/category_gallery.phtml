@@ -1,24 +1,21 @@
 <?php
 /**
- * Category view template
- *
- * @var $block Pixlee\Pixlee\Block\CatalogWidget
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
  */
-?>
-<?php
-$helper = $block->getDataHelper();
+/* @var \Magento\Catalog\Block\Category\View $block */
+/* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
+$viewModel = $block->getViewModel();
 $nativeCategoryId = $block->getCurrentCategory()->getId();
-$websiteId = $helper->getWebsiteId();
-$helper->initializePixleeAPI($websiteId);
 ?>
-<?php if ($helper->isActive() && $helper->getCDPWidgetId() != "") : ?>
+<?php if ($viewModel->isActive() && !empty($viewModel->getCDPWidgetId())) : ?>
     <div id="pixlee_container"></div>
     <div id="pixlee_widget_master_container"></div>
     <script id="pixlee_script" type="text/javascript">
         require(['https://assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js'],function (pixlee){
-            Pixlee.init({apiKey: '<?= /* @noEscape */ $helper->getApiKey(); ?>'});
+            Pixlee.init({apiKey: '<?= /* @noEscape */ $viewModel->getApiKey(); ?>'});
             Pixlee.addCategoryWidget({
-                widgetId: <?= /* @noEscape */ $helper->getCDPWidgetId(); ?>,
+                widgetId: <?= /* @noEscape */ $viewModel->getCDPWidgetId(); ?>,
                 nativeCategoryId: <?= /* @noEscape */ $nativeCategoryId; ?>,
                 ecomm_platform: 'magento'
             });

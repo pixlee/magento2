@@ -1,26 +1,27 @@
 <?php
-$jsonHelper = $block->getDataHelper();
+/* @var \Pixlee\Pixlee\Block\Adminhtml\System\Config\Export $block */
 ?>
 
 <script>
 require(['prototype'], function () {
 
     window.exportToPixlee = function(url){
-      if($('pixlee_export_button').hasClassName('disabled')) {
+      var $button = $('pixlee_export_button')
+      if($button.hasClassName('disabled')) {
         return;
       }
-      
-      $('pixlee_export_button').addClassName('disabled');
+
+      $button.addClassName('disabled');
       new Ajax.Request('<?= /* @noEscape */ $block->getAjaxExportUrl() ?>', {
         // method:    'get',
         onSuccess: function(response){
           if (response.responseText){
             var json = response.responseText.evalJSON(true);
-            
+
             if(json.pixlee_remaining_text) {
               $('pixlee_remaining').update(json.pixlee_remaining_text);
             }
-            if(json.action == 'continue' && json.url) {
+            if(json.action === 'continue' && json.url) {
               $('pixlee_export_button').removeClassName('disabled');
               exportToPixlee(json.url);
             }
@@ -32,4 +33,4 @@ require(['prototype'], function () {
 </script>
 
 <?= $block->getButtonHtml() ?>
-<p class="note"><span id="pixlee_remaining"><?= /* @noEscape */ $jsonHelper->getPixleeRemainingText(); ?></span></p>
+<p class="note"><span id="pixlee_remaining"><?= /* @noEscape */ $block->getPixleeRemainingText(); ?></span></p>

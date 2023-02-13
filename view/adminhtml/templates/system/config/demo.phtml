@@ -24,7 +24,7 @@ require(['prototype', 'jquery'], function () {
                 website: website
             },
             success: function (data) {
-                if (data.result === "Successful") {
+                if (data.result === 'Successful') {
                     $('pixlee_request_demo').addClassName('disabled');
                     alert('Thanks for requesting a demo. We will get in touch with you shortly.');
                 } else {

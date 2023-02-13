@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<csp_whitelist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Csp:etc/csp_whitelist.xsd">
+    <policies>
+        <policy id="frame-src">
+            <values>
+                <value id="pixlee_photos" type="host">photos.pixlee.co</value>
+
+                <value id="pixlee_domain" type="host">pixlee.com</value>
+                <value id="pixlee_subdomain" type="host">*.pixlee.com</value>
+                <value id="pixlee_co" type="host">*.pixlee.co</value>
+            </values>
+        </policy>
+        <policy id="img-src">
+            <values>
+                <value id="pixlee_domain" type="host">pixlee.com</value>
+                <value id="pixlee_subdomain" type="host">*.pixlee.com</value>
+                <value id="pixlee_co" type="host">*.pixlee.co</value>
+            </values>
+        </policy>
+        <policy id="script-src">
+            <values>
+                <value id="pixlee_cdn" type="host">*.pxlecdn.com</value>
+
+                <value id="pixlee_domain" type="host">pixlee.com</value>
+                <value id="pixlee_subdomain" type="host">*.pixlee.com</value>
+                <value id="pixlee_co" type="host">*.pixlee.co</value>
+            </values>
+        </policy>
+    </policies>
+</csp_whitelist>
