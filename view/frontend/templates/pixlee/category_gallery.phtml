@@ -4,6 +4,7 @@
  * See COPYING.txt for license details.
  */
 /* @var \Magento\Catalog\Block\Category\View $block */
+/* @var \Magento\Framework\Escaper $escaper */
 /* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
 $viewModel = $block->getViewModel();
 $nativeCategoryId = $block->getCurrentCategory()->getId();
@@ -11,15 +12,16 @@ $nativeCategoryId = $block->getCurrentCategory()->getId();
 <?php if ($viewModel->isActive() && !empty($viewModel->getCDPWidgetId())) : ?>
     <div id="pixlee_container"></div>
     <div id="pixlee_widget_master_container"></div>
-    <script id="pixlee_script" type="text/javascript">
-        require(['https://assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js'],function (pixlee){
-            Pixlee.init({apiKey: '<?= /* @noEscape */ $viewModel->getApiKey(); ?>'});
-            Pixlee.addCategoryWidget({
-                widgetId: <?= /* @noEscape */ $viewModel->getCDPWidgetId(); ?>,
-                nativeCategoryId: <?= /* @noEscape */ $nativeCategoryId; ?>,
-                ecomm_platform: 'magento'
-            });
-            Pixlee.resizeWidget();
-        });
+
+    <script type="text/x-magento-init">
+        {
+            "*": {
+                "Pixlee_Pixlee/js/catalog-widget":{
+                    "apiKey": "<?= $escaper->escapeJs($viewModel->getApiKey()) ?>",
+                    "widgetId": <?= $escaper->escapeJs($viewModel->getCDPWidgetId()) ?>,
+                    "nativeCategoryId": <?= $escaper->escapeJs($nativeCategoryId) ?>
+                }
+            }
+        }
     </script>
 <?php endif; ?>

@@ -4,16 +4,19 @@
  * See COPYING.txt for license details.
  */
 /* @var \Magento\Framework\View\Element\Template $block */
+/* @var \Magento\Framework\Escaper $escaper */
 /* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
 $viewModel = $block->getViewModel();
 ?>
 
 <?php if ($viewModel->isActive()) : ?>
-    <script type="text/javascript">
-        require(["https://assets.pixlee.com/assets/pixlee_events.js"], function() {
-        	if (typeof Pixlee_Analytics !== 'undefined') {
-	            window.pixlee_analytics = new Pixlee_Analytics('<?= /* @noEscape */ $viewModel->getApiKey(); ?>');
-	        }
-        });
+    <script type="text/x-magento-init">
+        {
+            "*": {
+                "Pixlee_Pixlee/js/analytics":{
+                    "apiKey": "<?= $escaper->escapeJs($viewModel->getApiKey()) ?>"
+                }
+            }
+        }
     </script>
 <?php endif; ?>
