@@ -18,6 +18,7 @@ use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
@@ -28,20 +29,79 @@ use Pixlee\Pixlee\Api\PixleeServiceInterface;
 
 class Product
 {
-    protected PixleeServiceInterface $pixleeService;
-    protected Api $apiConfig;
-    protected ProductResource\CollectionFactory $productCollection;
-    protected PixleeLogger $logger;
-    protected Config $mediaConfig;
-    protected StoreManagerInterface $storeManager;
-    protected CollectionFactory $categoryCollection;
-    protected ProductFactory $productFactory;
-    protected StockRegistryInterface $stockRegistry;
-    protected Configurable $configurableProduct;
-    protected ProductRepository $productRepository;
-    protected UrlFinderInterface $urlFinder;
-    protected ProductResource $productResource;
+    /**
+     * @var PixleeServiceInterface
+     */
+    protected $pixleeService;
+    /**
+     * @var Api
+     */
+    protected $apiConfig;
+    /**
+     * @var ProductResource\CollectionFactory
+     */
+    protected $productCollection;
+    /**
+     * @var PixleeLogger
+     */
+    protected $logger;
+    /**
+     * @var Config
+     */
+    protected $mediaConfig;
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+    /**
+     * @var CollectionFactory
+     */
+    protected $categoryCollection;
+    /**
+     * @var ProductFactory
+     */
+    protected $productFactory;
+    /**
+     * @var StockRegistryInterface
+     */
+    protected $stockRegistry;
+    /**
+     * @var Configurable
+     */
+    protected $configurableProduct;
+    /**
+     * @var ProductRepository
+     */
+    protected $productRepository;
+    /**
+     * @var UrlFinderInterface
+     */
+    protected $urlFinder;
+    /**
+     * @var ProductResource
+     */
+    protected $productResource;
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
 
+    /**
+     * @param Config $mediaConfig
+     * @param Configurable $configurableProduct
+     * @param ProductResource\CollectionFactory $productCollection
+     * @param CollectionFactory $categoryCollection
+     * @param ProductFactory $productFactory
+     * @param ProductResource $productResource
+     * @param ProductRepository $productRepository
+     * @param StockRegistryInterface $stockRegistry
+     * @param StoreManagerInterface $storeManager
+     * @param SerializerInterface $serializer
+     * @param UrlFinderInterface $urlFinder
+     * @param Api $apiConfig
+     * @param PixleeServiceInterface $pixleeService
+     * @param PixleeLogger $logger
+     */
     public function __construct(
         Config $mediaConfig,
         Configurable $configurableProduct,
@@ -52,6 +112,7 @@ class Product
         ProductRepository $productRepository,
         StockRegistryInterface $stockRegistry,
         StoreManagerInterface $storeManager,
+        SerializerInterface $serializer,
         UrlFinderInterface $urlFinder,
         Api $apiConfig,
         PixleeServiceInterface $pixleeService,
@@ -66,6 +127,7 @@ class Product
         $this->productRepository = $productRepository;
         $this->stockRegistry = $stockRegistry;
         $this->storeManager = $storeManager;
+        $this->serializer = $serializer;
         $this->urlFinder = $urlFinder;
         $this->apiConfig = $apiConfig;
         $this->pixleeService = $pixleeService;
@@ -413,11 +475,11 @@ class Product
             }
         }
 
-        $this->logger->addInfo("Product {$product->getId()} variantsDict: " . json_encode($variantsDict));
+        $this->logger->addInfo("Product {$product->getId()} variantsDict: " . $this->serializer->serialize($variantsDict));
         if (empty($variantsDict)) {
             return '{}';
         } else {
-            return json_encode($variantsDict);
+            return $this->serializer->serialize($variantsDict);
         }
     }
 
@@ -432,7 +494,7 @@ class Product
         $categoriesList = $this->getCategories($product, $categoriesMap);
         $productPhotos = $this->getAllPhotos($product);
 
-        return json_encode([
+        return $this->serializer->serialize([
             'product_photos' => $productPhotos,
             'categories' => $categoriesList,
             'ecommerce_platform' => 'magento_2',

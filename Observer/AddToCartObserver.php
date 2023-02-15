@@ -10,6 +10,7 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Cart;
@@ -21,27 +22,32 @@ class AddToCartObserver implements ObserverInterface
     /**
      * @var Cart
      */
-    protected Cart $pixleeCart;
+    protected $pixleeCart;
     /**
      * @var Api
      */
-    protected Api $apiConfig;
+    protected $apiConfig;
     /**
      * @var PixleeLogger
      */
-    protected PixleeLogger $logger;
+    protected $logger;
     /**
      * @var StoreManagerInterface
      */
-    protected StoreManagerInterface $storeManager;
+    protected $storeManager;
     /**
      * @var AnalyticsServiceInterface
      */
-    protected AnalyticsServiceInterface $analytics;
+    protected $analytics;
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
 
     /**
      * @param PixleeLogger $logger
      * @param StoreManagerInterface $storeManager
+     * @param SerializerInterface $serializer
      * @param Cart $pixleeCart
      * @param Api $apiConfig
      * @param AnalyticsServiceInterface $analytics
@@ -49,12 +55,14 @@ class AddToCartObserver implements ObserverInterface
     public function __construct(
         PixleeLogger $logger,
         StoreManagerInterface $storeManager,
+        SerializerInterface $serializer,
         Cart $pixleeCart,
         Api $apiConfig,
         AnalyticsServiceInterface $analytics
     ) {
         $this->logger = $logger;
         $this->storeManager = $storeManager;
+        $this->serializer = $serializer;
         $this->pixleeCart = $pixleeCart;
         $this->apiConfig = $apiConfig;
         $this->analytics = $analytics;
@@ -76,7 +84,7 @@ class AddToCartObserver implements ObserverInterface
             $storeId = $this->storeManager->getStore()->getStoreId();
             $payload = $this->pixleeCart->preparePayload($storeId, $productData);
             $this->analytics->sendEvent('addToCart', $payload);
-            $this->logger->addInfo('AddToCart ' . json_encode($payload));
+            $this->logger->addInfo('AddToCart ' . $this->serializer->serialize($payload));
         }
     }
 }

@@ -23,7 +23,7 @@ class PixleeLogger extends Logger
      * @param array $context
      * @return void
      */
-    public function addInfo(string|Stringable $message, array $context = []): void
+    public function addInfo($message, array $context = []): void
     {
         $this->info($message, $context);
     }

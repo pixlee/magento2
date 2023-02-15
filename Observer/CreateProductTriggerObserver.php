@@ -19,15 +19,15 @@ class CreateProductTriggerObserver implements ObserverInterface
     /**
      * @var Product
      */
-    protected Product $productExport;
+    protected $productExport;
     /**
      * @var Api
      */
-    protected Api $apiConfig;
+    protected $apiConfig;
     /**
      * @var LoggerInterface
      */
-    protected LoggerInterface $logger;
+    protected $logger;
 
     public function __construct(
         Product $productExport,

@@ -42,7 +42,6 @@
                 <group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="0" showInWebsite="1" showInStore="0">
 					<!-- Group configs -->
 					<label>API Settings</label>
-					<attribute type="expanded">1</attribute>
 					<comment>Please enable Pixlee API using credentials from "Pixlee API" found in your Pixlee account Settings.</comment>
 
 					<!-- Module enable -->
@@ -71,7 +70,6 @@
 				<group id="pdp_widget_settings" translate="label" type="text" sortOrder="2" showInDefault="0" showInWebsite="1" showInStore="0">
 					<!-- Group configs -->
 					<label>Widget Settings</label>
-					<attribute type="expanded">0</attribute>
 					<comment>To enable widgets on Product and Category pages, create the widgets in your Pixlee account
                         Publish Center and add the widget IDs below.</comment>
 

@@ -14,6 +14,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Module\Dir;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
+use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Sales\Model\Order as SalesOrder;
 use Magento\Sales\Model\Order\Item as SalesItem;
 use Magento\Store\Model\StoreManagerInterface;
@@ -25,41 +26,46 @@ class Cart
     /**
      * @var PixleeLogger
      */
-    protected PixleeLogger $logger;
+    protected $logger;
     /**
      * @var CatalogProduct
      */
-    protected CatalogProduct $catalogProduct;
+    protected $catalogProduct;
     /**
      * @var Configurable
      */
-    protected Configurable $configurableProduct;
+    protected $configurableProduct;
     /**
      * @var PricingHelper
      */
-    protected PricingHelper $pricingHelper;
+    protected $pricingHelper;
     /**
      * @var StoreManagerInterface
      */
-    protected StoreManagerInterface $storeManager;
+    protected $storeManager;
     /**
      * @var CookieManager
      */
-    protected CookieManager $cookieManager;
+    protected $cookieManager;
     /**
      * @var Dir
      */
-    protected Dir $moduleDirs;
+    protected $moduleDirs;
     /**
      * @var Api
      */
-    protected Api $apiConfig;
+    protected $apiConfig;
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
 
     /**
      * @param CatalogProduct $catalogProduct
      * @param Configurable $configurableProduct
      * @param PricingHelper $pricingHelper
      * @param StoreManagerInterface $storeManager
+     * @param SerializerInterface $serializer
      * @param CookieManager $cookieManager
      * @param Dir $moduleDirs
      * @param Api $apiConfig
@@ -70,6 +76,7 @@ class Cart
         Configurable $configurableProduct,
         PricingHelper $pricingHelper,
         StoreManagerInterface $storeManager,
+        SerializerInterface $serializer,
         CookieManager $cookieManager,
         Dir $moduleDirs,
         Api $apiConfig,
@@ -79,6 +86,7 @@ class Cart
         $this->configurableProduct = $configurableProduct;
         $this->pricingHelper = $pricingHelper;
         $this->storeManager = $storeManager;
+        $this->serializer = $serializer;
         $this->cookieManager = $cookieManager;
         $this->moduleDirs = $moduleDirs;
         $this->apiConfig = $apiConfig;
@@ -171,7 +179,7 @@ class Cart
             $cartData['shipping_address'] = $this->extractAddress($quote->getShippingAddress());
             $cartData['order_id'] = (int) $quote->getData('entity_id');
             $cartData['currency'] = $quote->getData('base_currency_code');
-            $this->logger->addInfo(json_encode($cartData));
+            $this->logger->addInfo($this->serializer->serialize($cartData));
             return $cartData;
         }
 
@@ -199,7 +207,7 @@ class Cart
                 'zipcode'   => $address->getPostcode()
             ];
         }
-        $jsonAddress = json_encode($sortedAddress);
+        $jsonAddress = $this->serializer->serialize($sortedAddress);
         return $jsonAddress ?: '{}';
     }
 
@@ -227,8 +235,8 @@ class Cart
             $payload['ecommerce_platform_version'] = '2.0.0';
             $payload['version_hash'] = $this->getVersionHash();
             $payload['region_code'] = $store->getCode();
-            $this->logger->addInfo("Sending payload: " . json_encode($payload));
-            return json_encode($payload);
+            $this->logger->addInfo("Sending payload: " . $this->serializer->serialize($payload));
+            return $this->serializer->serialize($payload);
         }
         $this->logger->addInfo("Analytics event not sent because the cookie wasn't found");
         return false; // No cookie exists,
@@ -253,7 +261,7 @@ class Cart
     {
         $cookie = $this->cookieManager->get();
         if (isset($cookie)) {
-            return json_decode($cookie, true);
+            return $this->serializer->serialize($cookie, true);
         }
 
         return false;

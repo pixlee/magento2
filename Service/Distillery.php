@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Service;
 
 use Magento\Framework\HTTP\Client\Curl;
+use Magento\Framework\Serialize\SerializerInterface;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -15,22 +16,38 @@ use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 class Distillery implements PixleeServiceInterface
 {
     public const DISTILLERY_BASE_URL = 'https://distillery.pixlee.com/api/v1/';
-    protected Api $apiConfig;
-    protected Curl $curl;
-    protected PixleeLogger $logger;
+    /**
+     * @var Api
+     */
+    protected $apiConfig;
+    /**
+     * @var Curl
+     */
+    protected $curl;
+    /**
+     * @var PixleeLogger
+     */
+    protected $logger;
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
     protected $websiteId;
 
     /**
      * @param Curl $curl
+     * @param SerializerInterface $serializer
      * @param Api $apiConfig
      * @param PixleeLogger $logger
      */
     public function __construct(
         Curl $curl,
+        SerializerInterface $serializer,
         Api $apiConfig,
         PixleeLogger $logger
     ) {
         $this->apiConfig = $apiConfig;
+        $this->serializer = $serializer;
         $this->curl = $curl;
         $this->logger = $logger;
     }
@@ -120,7 +137,7 @@ class Distillery implements PixleeServiceInterface
 
         $response = $this->post('albums', $payload);
 
-        return json_decode($response);
+        return $this->serializer->serialize($response);
     }
 
     /**

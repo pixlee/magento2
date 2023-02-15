@@ -21,7 +21,7 @@ class Widget
     /**
      * @var ScopeConfigInterface
      */
-    protected ScopeConfigInterface $scopeConfig;
+    protected $scopeConfig;
 
 
     /**

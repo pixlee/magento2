@@ -17,19 +17,19 @@ class ProductWidget implements \Magento\Framework\View\Element\Block\ArgumentInt
     /**
      * @var int
      */
-    protected int $websiteId;
+    protected $websiteId;
     /**
      * @var StoreManagerInterface
      */
-    protected StoreManagerInterface $storeManager;
+    protected $storeManager;
     /**
      * @var Api
      */
-    protected Api $apiConfig;
+    protected $apiConfig;
     /**
      * @var Widget
      */
-    protected Widget $widgetConfig;
+    protected $widgetConfig;
 
     /**
      * @param Api $apiConfig

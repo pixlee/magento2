@@ -19,15 +19,15 @@ class ValidateCredentialsObserver implements ObserverInterface
     /**
      * @var Api
      */
-    protected Api $apiConfig;
+    protected $apiConfig;
     /**
      * @var PixleeServiceInterface
      */
-    protected PixleeServiceInterface $pixleeService;
+    protected $pixleeService;
     /**
      * @var PixleeLogger
      */
-    protected PixleeLogger $logger;
+    protected $logger;
 
     /**
      * @param Api $apiConfig

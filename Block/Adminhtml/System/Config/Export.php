@@ -15,8 +15,14 @@ use Pixlee\Pixlee\Model\Config\Api;
 
 class Export extends Field
 {
-    protected Api $apiConfig;
-    protected int $websiteId;
+    /**
+     * @var Api
+     */
+    protected $apiConfig;
+    /**
+     * @var int
+     */
+    protected $websiteId;
 
     public function __construct(
         Api $apiConfig,

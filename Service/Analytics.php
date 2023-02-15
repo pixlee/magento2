@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Service;
 
 use Magento\Framework\HTTP\Client\Curl;
+use Magento\Framework\Serialize\SerializerInterface;
 use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
@@ -17,21 +18,28 @@ class Analytics implements AnalyticsServiceInterface
     /**
      * @var Curl
      */
-    protected Curl $curl;
+    protected $curl;
     /**
      * @var PixleeLogger
      */
-    protected PixleeLogger $logger;
+    protected $logger;
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
 
     /**
      * @param Curl $curl
+     * @param SerializerInterface $serializer
      * @param PixleeLogger $logger
      */
     public function __construct(
         Curl $curl,
+        SerializerInterface $serializer,
         PixleeLogger $logger
     ) {
         $this->curl = $curl;
+        $this->serializer = $serializer;
         $this->logger = $logger;
     }
 
@@ -56,7 +64,7 @@ class Analytics implements AnalyticsServiceInterface
             }
         }
 
-        $this->logger->addInfo("Pixlee Analytics: Event not sent - ".json_encode($payload));
+        $this->logger->addInfo("Pixlee Analytics: Event not sent - " . $this->serializer->serialize($payload));
         return false;
     }
 

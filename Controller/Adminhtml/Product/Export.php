@@ -18,7 +18,7 @@ class Export extends Action
     /**
      * @var Product
      */
-    protected Product $product;
+    protected $product;
 
     /**
      * Constructor

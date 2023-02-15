@@ -13,8 +13,14 @@ use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Export\Product;
 
 class ExportCron {
-    protected PixleeLogger $logger;
-    protected Product $product;
+    /**
+     * @var PixleeLogger
+     */
+    protected $logger;
+    /**
+     * @var Product
+     */
+    protected $product;
 
     public function __construct(
         PixleeLogger $logger,

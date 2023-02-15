@@ -10,6 +10,7 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -22,32 +23,37 @@ class CheckoutSuccessObserver implements ObserverInterface
     /**
      * @var Collection
      */
-    protected Collection $orderCollection;
+    protected $orderCollection;
     /**
      * @var Cart
      */
-    protected Cart $pixleeCart;
+    protected $pixleeCart;
     /**
      * @var Api
      */
-    protected Api $apiConfig;
+    protected $apiConfig;
     /**
      * @var PixleeLogger
      */
-    protected PixleeLogger $logger;
+    protected $logger;
     /**
      * @var StoreManagerInterface
      */
-    protected StoreManagerInterface $storeManager;
+    protected $storeManager;
+    /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
     /**
      * @var AnalyticsServiceInterface
      */
-    protected AnalyticsServiceInterface $analytics;
+    protected $analytics;
 
     /**
      * @param Collection $orderCollection
      * @param PixleeLogger $logger
      * @param StoreManagerInterface $storeManager
+     * @param SerializerInterface $serializer
      * @param Cart $pixleeCart
      * @param Api $apiConfig
      * @param AnalyticsServiceInterface $analytics
@@ -56,6 +62,7 @@ class CheckoutSuccessObserver implements ObserverInterface
         Collection $orderCollection,
         PixleeLogger $logger,
         StoreManagerInterface $storeManager,
+        SerializerInterface $serializer,
         Cart $pixleeCart,
         Api $apiConfig,
         AnalyticsServiceInterface $analytics
@@ -63,6 +70,7 @@ class CheckoutSuccessObserver implements ObserverInterface
         $this->orderCollection = $orderCollection;
         $this->logger = $logger;
         $this->storeManager = $storeManager;
+        $this->serializer = $serializer;
         $this->pixleeCart = $pixleeCart;
         $this->apiConfig = $apiConfig;
         $this->analytics = $analytics;
@@ -90,7 +98,7 @@ class CheckoutSuccessObserver implements ObserverInterface
                 $cartData = $this->pixleeCart->extractCart($order);
                 $payload = $this->pixleeCart->preparePayload($storeId, $cartData);
                 $this->analytics->sendEvent('checkoutSuccess', $payload);
-                $this->logger->addInfo('CheckoutSuccess ' . json_encode($payload));
+                $this->logger->addInfo('CheckoutSuccess ' . $this->serializer->serialize($payload));
             }
         }
     }
