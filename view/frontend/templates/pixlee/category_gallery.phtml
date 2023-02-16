@@ -4,7 +4,6 @@
  * See COPYING.txt for license details.
  */
 /* @var \Magento\Catalog\Block\Category\View $block */
-/* @var \Magento\Framework\Escaper $escaper */
 /* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
 $viewModel = $block->getViewModel();
 $nativeCategoryId = $block->getCurrentCategory()->getId();
@@ -17,9 +16,9 @@ $nativeCategoryId = $block->getCurrentCategory()->getId();
         {
             "*": {
                 "Pixlee_Pixlee/js/catalog-widget":{
-                    "apiKey": "<?= $escaper->escapeJs($viewModel->getApiKey()) ?>",
-                    "widgetId": <?= $escaper->escapeJs($viewModel->getCDPWidgetId()) ?>,
-                    "nativeCategoryId": <?= $escaper->escapeJs($nativeCategoryId) ?>
+                    "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>",
+                    "widgetId": <?= $block->escapeJs($viewModel->getCDPWidgetId()) ?>,
+                    "nativeCategoryId": <?= $block->escapeJs($nativeCategoryId) ?>
                 }
             }
         }

@@ -4,7 +4,6 @@
  * See COPYING.txt for license details.
  */
 /* @var \Magento\Catalog\Block\Product\View $block */
-/* @var \Magento\Framework\Escaper $escaper */
 /* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
 $viewModel = $block->getViewModel();
 $product = $block->getProduct();
@@ -17,10 +16,10 @@ $product = $block->getProduct();
         {
             "*": {
                 "Pixlee_Pixlee/js/product-widget":{
-                    "apiKey": "<?= $escaper->escapeJs($viewModel->getApiKey()) ?>",
-                    "widgetId": <?= $escaper->escapeJs($viewModel->getPDPWidgetId()) ?>,
-                    "skuId": "<?= $escaper->escapeJs($product->getSku()) ?>",
-                    "accountId": <?= $escaper->escapeJs($viewModel->getAccountId()) ?>
+                    "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>",
+                    "widgetId": <?= $block->escapeJs($viewModel->getPDPWidgetId()) ?>,
+                    "skuId": "<?= $block->escapeJs($product->getSku()) ?>",
+                    "accountId": <?= $block->escapeJs($viewModel->getAccountId()) ?>
                 }
             }
         }

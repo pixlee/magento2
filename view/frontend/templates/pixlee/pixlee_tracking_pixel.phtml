@@ -4,7 +4,6 @@
  * See COPYING.txt for license details.
  */
 /* @var \Magento\Framework\View\Element\Template $block */
-/* @var \Magento\Framework\Escaper $escaper */
 /* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
 $viewModel = $block->getViewModel();
 ?>
@@ -14,7 +13,7 @@ $viewModel = $block->getViewModel();
         {
             "*": {
                 "Pixlee_Pixlee/js/analytics":{
-                    "apiKey": "<?= $escaper->escapeJs($viewModel->getApiKey()) ?>"
+                    "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>"
                 }
             }
         }
