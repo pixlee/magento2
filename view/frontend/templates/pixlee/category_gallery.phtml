@@ -15,7 +15,7 @@ $nativeCategoryId = $block->getCurrentCategory()->getId();
     <script type="text/x-magento-init">
         {
             "*": {
-                "Pixlee_Pixlee/js/catalog-widget":{
+                "Pixlee_Pixlee/js/cdp-widget":{
                     "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>",
                     "widgetId": <?= $block->escapeJs($viewModel->getCDPWidgetId()) ?>,
                     "nativeCategoryId": <?= $block->escapeJs($nativeCategoryId) ?>

@@ -15,7 +15,7 @@ $product = $block->getProduct();
     <script type="text/x-magento-init">
         {
             "*": {
-                "Pixlee_Pixlee/js/product-widget":{
+                "Pixlee_Pixlee/js/pdp-widget":{
                     "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>",
                     "widgetId": <?= $block->escapeJs($viewModel->getPDPWidgetId()) ?>,
                     "skuId": "<?= $block->escapeJs($product->getSku()) ?>",
