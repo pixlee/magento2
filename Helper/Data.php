@@ -450,7 +450,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 'price' => $convertedPrice,
                 'stock' => $this->getAggregateStock($product),
                 'currency' => $storeCurrency->getCode(),
-                'description' => $storeProduct->getDescription(),
                 'variants_json' => $this->getVariantsDict($storeProduct),
                 'region_code' => $storeCode
             ]);
