@@ -7,4 +7,5 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="Pixlee\Pixlee\Api\PixleeServiceInterface" type="Pixlee\Pixlee\Service\Distillery" />
+    <preference for="Pixlee\Pixlee\Api\AnalyticsServiceInterface" type="Pixlee\Pixlee\Service\Analytics" />
 </config>
