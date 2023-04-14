@@ -12,7 +12,7 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Export\Product;
-use Psr\Log\LoggerInterface;
+use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
 class CreateProductTriggerObserver implements ObserverInterface
 {
@@ -25,29 +25,39 @@ class CreateProductTriggerObserver implements ObserverInterface
      */
     protected $apiConfig;
     /**
-     * @var LoggerInterface
+     * @var PixleeLogger
      */
     protected $logger;
 
+    /**
+     * @param Product $productExport
+     * @param Api $apiConfig
+     * @param PixleeLogger $logger
+     */
     public function __construct(
         Product $productExport,
         Api $apiConfig,
-        LoggerInterface $logger
+        PixleeLogger $logger
     ) {
         $this->productExport = $productExport;
         $this->apiConfig = $apiConfig;
         $this->logger = $logger;
     }
 
+    /**
+     * @param EventObserver $observer
+     * @return void
+     */
     public function execute(EventObserver $observer)
     {
+        /** @var \Magento\Catalog\Model\Product\Interceptor $product */
         $product = $observer->getEvent()->getProduct();
         $websiteIds = $product->getWebsiteIds();
         foreach ($websiteIds as $websiteId) {
             try {
                 $pixleeEnabled = $this->apiConfig->isActive($websiteId);
 
-                if ($pixleeEnabled && $product->getStatus() == 1) {
+                if ($pixleeEnabled && (int)$product->getStatus() === 1) {
                     $categoriesMap = $this->productExport->getCategoriesMap();
                     $this->productExport->exportProductToPixlee($product, $categoriesMap, $websiteId);
                 }

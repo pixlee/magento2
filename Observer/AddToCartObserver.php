@@ -6,10 +6,9 @@
 
 namespace Pixlee\Pixlee\Observer;
 
+use Exception;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -71,20 +70,22 @@ class AddToCartObserver implements ObserverInterface
     /**
      * @param EventObserver $observer
      * @return void
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
     public function execute(EventObserver $observer)
     {
-        $websiteId = $this->storeManager->getWebsite()->getWebsiteId();
+        try {
+            $websiteId = $this->storeManager->getWebsite()->getWebsiteId();
 
-        if ($this->apiConfig->isActive($websiteId)) {
-            $product = $observer->getEvent()->getProduct();
-            $productData = $this->pixleeCart->extractProduct($product);
-            $storeId = $this->storeManager->getStore()->getStoreId();
-            $payload = $this->pixleeCart->preparePayload($storeId, $productData);
-            $this->analytics->sendEvent('addToCart', $payload);
-            $this->logger->addInfo('AddToCart ' . $this->serializer->serialize($payload));
+            if ($this->apiConfig->isActive($websiteId)) {
+                $product = $observer->getEvent()->getProduct();
+                $productData = $this->pixleeCart->extractProduct($product);
+                $storeId = $this->storeManager->getStore()->getStoreId();
+                $payload = $this->pixleeCart->preparePayload($storeId, $productData);
+                $this->analytics->sendEvent('addToCart', $payload);
+                $this->logger->addInfo('AddToCart ' . $this->serializer->serialize($payload));
+            }
+        } catch (Exception $e) {
+            $this->logger->error($e->getMessage(), ['exception' => $e]);
         }
     }
 }
