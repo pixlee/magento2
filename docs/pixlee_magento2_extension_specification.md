@@ -1,7 +1,7 @@
 ---
-title: Pixlee Magento 2 Extension Specification
-author: Pixlee
-date: \today
+title: Pixlee TurnTo Social UGC Magento 2 Extension Specification
+author: Pixlee TurnTo
+date: 2023-04-14
 ---
 
 # 1. Overview #

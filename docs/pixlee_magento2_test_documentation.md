@@ -1,7 +1,7 @@
 ---
-title: Pixlee Magento 2 Test Documentation
-author: Pixlee
-date: \today
+title: Pixlee TurnTo Social UGC Magento 2 Test Documentation
+author: Pixlee TurnTo
+date: 2023-04-14
 ---
 
 # Test Add to Cart  #
