@@ -22,6 +22,10 @@ class ExportCron {
      */
     protected $product;
 
+    /**
+     * @param PixleeLogger $logger
+     * @param Product $product
+     */
     public function __construct(
         PixleeLogger $logger,
         Product $product

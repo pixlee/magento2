@@ -37,31 +37,13 @@ Interface PixleeServiceInterface
     public function notifyExportStatus($status, $jobId, $numProducts, $websiteId);
 
     /**
-     * @param $product_name
-     * @param $sku
-     * @param $product_url
-     * @param $product_image
-     * @param $currencyCode
-     * @param $price
-     * @param $regionalInfo
-     * @param $product_id
-     * @param $aggregateStock
-     * @param $variantsDict
-     * @param $extraFields
+     * @param $websiteId
+     * @param array $productInfo
      * @return mixed
      */
     public function createProduct(
-        $product_name,
-        $sku,
-        $product_url,
-        $product_image,
-        $currencyCode,
-        $price,
-        $regionalInfo,
-        $product_id = null,
-        $aggregateStock = null,
-        $variantsDict = null,
-        $extraFields = null
+        $websiteId,
+        array $productInfo
     );
 
     /**
@@ -72,10 +54,10 @@ Interface PixleeServiceInterface
     public function get($path, $options = null);
 
     /**
-     * @param $path
-     * @param $payload
-     * @param $options
+     * @param string $path
+     * @param string $payload
+     * @param object|array|null $options
      * @return mixed
      */
-    public function post($path, $payload, $options = null);
+    public function post(string $path, string $payload, $options = null);
 }

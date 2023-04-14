@@ -15,7 +15,7 @@ use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
 class Distillery implements PixleeServiceInterface
 {
-    public const DISTILLERY_BASE_URL = 'https://distillery.pixlee.com/api/v1/';
+    public const DISTILLERY_BASE_URL = 'https://distillery.pixlee.co/api/';
     /**
      * @var Api
      */
@@ -75,7 +75,7 @@ class Distillery implements PixleeServiceInterface
      */
     public function getAlbums($options = null)
     {
-        return $this->get('albums', $options);
+        return $this->get('v2/albums', $options);
     }
 
     /**
@@ -83,7 +83,8 @@ class Distillery implements PixleeServiceInterface
      */
     public function notifyExportStatus($status, $jobId, $numProducts, $websiteId)
     {
-        $path = 'notifyExportStatus';
+        $this->setWebsiteId($websiteId);
+        $path = 'v1/notifyExportStatus';
         $payload = [
             'api_key' => $this->apiConfig->getApiKey($websiteId),
             'status' => $status,
@@ -92,50 +93,43 @@ class Distillery implements PixleeServiceInterface
             'platform' => 'magento_2'
         ];
 
-        $this->post($path, $payload);
+        $this->post($path, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 
     /**
      * @inheritdoc
      */
     public function createProduct(
-        $product_name,
-        $sku,
-        $product_url,
-        $product_image,
-        $currencyCode,
-        $price,
-        $regionalInfo,
-        $product_id = null,
-        $aggregateStock = null,
-        $variantsDict = null,
-        $extraFields = null
+        $websiteId,
+        array $productInfo
     ) {
+        $this->setWebsiteId($websiteId);
         $this->logger->addInfo("* In createProduct");
         $product = [
-            'name' => $product_name,
-            'sku' => $sku,
-            'buy_now_link_url' => $product_url,
-            'product_photo' => $product_image,
-            'stock' => $aggregateStock,
-            'native_product_id' => $product_id,
-            'variants_json' => $variantsDict,
-            'extra_fields' => $extraFields,
-            'currency' => $currencyCode,
-            'price' => $price,
-            'regional_info' => $regionalInfo
+            'name' => $productInfo['name'],
+            'sku' => $productInfo['sku'],
+            'buy_now_link_url' => $productInfo['product_url'],
+            'product_photo' => $productInfo['product_image'],
+            'native_product_id' => $productInfo['product_id'],
+            'currency' => $productInfo['currency_code'],
+            'price' => $productInfo['price'],
+            'regional_info' => $productInfo['regional_info'],
+            'stock' => $productInfo['stock'],
+            'variants_json' => $productInfo['variants'],
+            'extra_fields' => $productInfo['extra_fields']
         ];
 
+
         $payload = [
-            'title' => $product_name,
+            'title' => $productInfo['name'],
             'album_type' => 'product',
             'live_update' => false,
-            'num_photo' => 0,
-            'num_inbox_photo' => 0,
+            'num_photos' => 0,
+            'num_inbox_photos' => 0,
             'product' => $product
         ];
 
-        $response = $this->post('albums', $payload);
+        $response = $this->post('v2/albums', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return $this->serializer->serialize($response);
     }
@@ -168,7 +162,7 @@ class Distillery implements PixleeServiceInterface
     /**
      * @inheritdoc
      */
-    public function post($path, $payload, $options = null)
+    public function post(string $path, string $payload, $options = null)
     {
         $queryString = $this->getRequiredQueryString();
 

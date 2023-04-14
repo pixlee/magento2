@@ -188,7 +188,6 @@ class Product
         return $collection->getSize();
     }
 
-
     /**
      * @return array
      * @throws LocalizedException
@@ -275,12 +274,12 @@ class Product
         }
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
         // later on in the code, but since now I need $product to be reasonable in order to
-        if ($product->getVisibility() == Visibility::VISIBILITY_NOT_VISIBLE) {
+        if ((int)$product->getVisibility() === Visibility::VISIBILITY_NOT_VISIBLE) {
             $this->logger->addInfo("*** Product ID {$product->getId()} not visible in catalog, NOT EXPORTING");
             return;
         }
 
-        $this->logger->addInfo("Product ID {$product->getID()} class: " . get_class($product));
+        $this->logger->addInfo("Exporting Product ID {$product->getID()}");
 
         $productName = $product->getName();
         if (!isset($productName)) {
@@ -288,20 +287,20 @@ class Product
         }
 
         $productImageUrl = $product->getImage() ? $this->mediaConfig->getMediaUrl($product->getImage()) : '';
-        $this->pixleeService->setWebsiteId($websiteId);
-        $this->pixleeService->createProduct(
-            $product->getName(),
-            $product->getSku(),
-            $this->getProductUrl($product, $websiteId),
-            $productImageUrl,
-            $this->storeManager->getStore()->getCurrentCurrency()->getCode(),
-            $product->getFinalPrice(),
-            $this->getRegionalInformation($websiteId, $product),
-            (int) $product->getId(),
-            $this->getAggregateStock($product),
-            $this->getVariantsDict($product),
-            $this->getExtraFields($product, $categoriesMap)
-        );
+        $productInfo = [
+            'name' => $product->getName(),
+            'sku' => $product->getSku(),
+            'product_url' => $this->getProductUrl($product, $websiteId),
+            'product_image' => $productImageUrl,
+            'product_id' => (int) $product->getId(),
+            'currency_code' => $this->storeManager->getStore()->getCurrentCurrency()->getCode(),
+            'price' => $product->getFinalPrice(),
+            'regional_info' => $this->getRegionalInformation($websiteId, $product),
+            'stock' => $this->getAggregateStock($product),
+            'variants' => $this->getVariantsDict($product),
+            'extra_fields' => $this->getExtraFields($product, $categoriesMap)
+        ];
+        $this->pixleeService->createProduct($websiteId, $productInfo);
 
         $this->logger->addInfo("Product Exported to Pixlee");
     }
@@ -375,7 +374,6 @@ class Product
                 'price' => $convertedPrice,
                 'stock' => $this->getAggregateStock($product),
                 'currency' => $storeCurrency->getCode(),
-                'description' => $storeProduct->getDescription(),
                 'variants_json' => $this->getVariantsDict($storeProduct),
                 'region_code' => $store->getCode()
             ];
@@ -386,7 +384,7 @@ class Product
 
     /**
      * @param $product
-     * @return float|mixed|null
+     * @return float|null
      */
     public function getAggregateStock($product)
     {
