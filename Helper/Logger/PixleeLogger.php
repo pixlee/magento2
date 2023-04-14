@@ -10,11 +10,11 @@ class PixleeLogger extends \Monolog\Logger
     }
 
     /**
-     * @param string|Stringable $message
+     * @param string|\Stringable $message
      * @param array $context
      * @return void
      */
-    public function addInfo(string|Stringable $message, array $context = []): void
+    public function addInfo($message, array $context = []): void
     {
         $this->info($message, $context);
     }
