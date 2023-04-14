@@ -1,7 +1,7 @@
 ---
-title: Pixlee Magento 2 Release Notes
-author: Pixlee
-date: \today
+title: Pixlee TurnTo Social UGC Magento 2 Release Notes
+author: Pixlee TurnTo
+date: 2023-04-14
 ---
 
 # 1.0.1 #
