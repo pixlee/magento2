@@ -1,7 +1,7 @@
 ---
-title: Pixlee Magento 2 User Guide
-author: Pixlee
-date: \today
+title: Pixlee TurnTo Social UGC Magento 2 User Guide
+author: Pixlee TurnTo
+date: 2023-04-14
 ---
 
 # 1. Module Installation #
