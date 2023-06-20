@@ -344,7 +344,7 @@ Before testing, please make sure that the Pixlee Product Exports job has at leas
 
 13.  If you found a similar log entry please increase the **max\_execution\_time** setting inside your **php.ini** file to at least 3600. And then try exporting the products again.
     
-14.  If at this point you're still not able to see any products exported to Pixlee, please contact us at support@pixleeteam.com and attach the both **pixlee.log** and **php\_error.log** with the email.
+14.  If at this point you're still not able to see any products exported to Pixlee, please contact us at support@pixleeturnto.com and attach the both **pixlee.log** and **php\_error.log** with the email.
     
 
 Are API calls being successfully made to the Pixlee API?
@@ -365,7 +365,7 @@ API calls are made to Pixlee API when a customer adds something to their cart an
 
 ![](https://files.readme.io/0abe8fa-Screen_Shot_2019-10-10_at_7.36.19_PM.png "Screen Shot 2019-10-10 at 7.36.19 PM.png")
 
-4.  If you found the **AddToCart** calls then your analytics were integrated correctly. If not, contact us at support@pixleeteam.com and attach the **pixlee.log** file with the email.
+4.  If you found the **AddToCart** calls then your analytics were integrated correctly. If not, contact us at support@pixleeturnto.com and attach the **pixlee.log** file with the email.
     
 5.  Switch back to the browser and proceed to checkout and buy the product that you added to cart previously. Use a test payment method for the checkout.
     
@@ -376,7 +376,7 @@ API calls are made to Pixlee API when a customer adds something to their cart an
 
 ![](https://files.readme.io/f02da02-Screen_Shot_2019-10-10_at_7.47.20_PM.png "Screen Shot 2019-10-10 at 7.47.20 PM.png")
 
-8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@pixleeteam.com and attach the **pixlee.log** file with the email.
+8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@pixleeturnto.com and attach the **pixlee.log** file with the email.
 
 > ### 🚧
 > 

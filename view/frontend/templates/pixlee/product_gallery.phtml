@@ -1,22 +1,27 @@
-<?php /* @var $block \Pixlee\Pixlee\Block\ProductWidget */?>
 <?php
-$helper = $block->getDataHelper();
-$websiteId = $helper->getWebsiteId();
-$helper->initializePixleeAPI($websiteId);
-$_product = $block->getProduct();
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+/* @var \Magento\Catalog\Block\Product\View $block */
+/* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
+$viewModel = $block->getViewModel();
+$product = $block->getProduct();
 ?>
-<?php if ($helper->isActive() && $helper->getPDPWidgetId() != "") : ?>
+<?php if ($viewModel->isActive() && !empty($viewModel->getPDPWidgetId())) : ?>
     <div id="pixlee_container"></div>
     <div id="pixlee_widget_master_container"></div>
-    <script id="pixlee_script" type="text/javascript">
-        require(['https://assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js'], function (pixlee) {
-            Pixlee.init({apiKey: '<?= /* @noEscape */ $helper->getApiKey(); ?>'});
-            Pixlee.addProductWidget({
-                widgetId: <?= /* @noEscape */ $helper->getPDPWidgetId(); ?>,
-                skuId: '<?= /* @noEscape */ $_product->getSku(); ?>',
-                accountId:<?= /* @noEscape */ $helper->getAccountId(); ?>
-            });
-            Pixlee.resizeWidget();
-        });
+
+    <script type="text/x-magento-init">
+        {
+            "*": {
+                "Pixlee_Pixlee/js/pdp-widget":{
+                    "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>",
+                    "widgetId": <?= $block->escapeJs($viewModel->getPDPWidgetId()) ?>,
+                    "skuId": "<?= $block->escapeJs($product->getSku()) ?>",
+                    "accountId": <?= $block->escapeJs($viewModel->getAccountId()) ?>
+                }
+            }
+        }
     </script>
 <?php endif; ?>

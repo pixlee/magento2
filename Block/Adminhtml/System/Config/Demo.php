@@ -1,51 +1,74 @@
 <?php
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Block\Adminhtml\System\Config;
 
 use Magento\Backend\Block\Widget\Button;
+use Magento\Config\Block\System\Config\Form\Field;
+use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\Exception\LocalizedException;
 
-class Demo extends \Magento\Config\Block\System\Config\Form\Field
+class Demo extends Field
 {
-
-    public function __construct(
-        \Magento\Backend\Block\Template\Context $context,
-        array $data = []
-    ) {
-        $this->_logger = $context->getLogger();
-        parent::__construct($context, $data);
-    }
-
+    /**
+     * @return void
+     */
     protected function _construct()
     {
         parent::_construct();
-        $this->setTemplate('system/config/demo.phtml');
+        $this->setTemplate('Pixlee_Pixlee::system/config/demo.phtml');
     }
 
-    protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    /**
+     * @param AbstractElement $element
+     * @return string
+     */
+    protected function _getElementHtml(AbstractElement $element)
     {
         return $this->_toHtml();
     }
 
+    /**
+     * Get endpoint url
+     *
+     * @return string
+     */
     public function getRequestDemoUrl()
     {
-        return "https://app.pixlee.com/leads/add";
+        return 'https://app.pixlee.com/leads/add';
     }
 
+    /**
+     * Generate button html
+     *
+     * @return string
+     * @throws LocalizedException
+     */
     public function getButtonHtml()
     {
-        $buttonData = [
-            'id' => 'pixlee_request_demo',
-            'label' => __('Request Access'),
-            'onclick' => 'javascript:requestPixleeDemo(\''.$this->getRequestDemoUrl().'\'); return false;'
-        ];
+        $button = $this->getLayout()->createBlock(Button::class)->setData(
+            [
+                'id' => 'pixlee_request_demo',
+                'label' => __('Request Access'),
+                'onclick' => 'javascript:requestPixleeDemo(\'' . $this->getRequestDemoUrl() . '\'); return false;'
+            ]
+        );
 
-        $button = $this->getLayout()->createBlock(Button::class)->setData($buttonData);
         return $button->toHtml();
     }
 
+    /**
+     * Remove scope from label
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
     public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
     {
-        // Remove scope label
         $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
         return parent::render($element);
     }

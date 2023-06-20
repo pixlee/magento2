@@ -1,24 +1,48 @@
 <?php
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
+
 namespace Pixlee\Pixlee\Cron;
 
-class ExportCron {
-    protected $logger;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Pixlee\Pixlee\Model\Logger\PixleeLogger;
+use Pixlee\Pixlee\Model\Export\Product;
 
+class ExportCron {
+    /**
+     * @var PixleeLogger
+     */
+    protected $logger;
+    /**
+     * @var Product
+     */
+    protected $product;
+
+    /**
+     * @param PixleeLogger $logger
+     * @param Product $product
+     */
     public function __construct(
-      \Pixlee\Pixlee\Helper\Logger\PixleeLogger $logger,
-      \Pixlee\Pixlee\Helper\Data $pixleeData
+        PixleeLogger $logger,
+        Product $product
     ) {
-        $this->_logger = $logger;
-        $this->_pixleeData = $pixleeData;
+        $this->logger = $logger;
+        $this->product = $product;
     }
 
-   /**
-    * Export products
-    *
-    * @return void
-    */
+    /**
+     * Export products
+     *
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function execute() {
-        $this->_logger->info('Exporting products from Cron Job');
-        $this->_pixleeData->exportProducts(1);
+        $this->logger->info('Exporting products from Cron Job');
+        $this->product->exportProducts(1);
     }
 }

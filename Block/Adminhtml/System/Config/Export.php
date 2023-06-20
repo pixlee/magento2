@@ -1,29 +1,36 @@
 <?php
-
 /**
- *
- *
- * @author teemingchew
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Block\Adminhtml\System\Config;
 
+use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
+use Magento\Config\Block\System\Config\Form\Field;
+use Magento\Framework\App\Request\Http;
+use Pixlee\Pixlee\Model\Config\Api;
 
-class Export extends \Magento\Config\Block\System\Config\Form\Field
+class Export extends Field
 {
-    protected $_exportButtonLabel = "Export Products to Pixlee";
+    /**
+     * @var Api
+     */
+    protected $apiConfig;
+    /**
+     * @var int
+     */
+    protected $websiteId;
 
     public function __construct(
-        \Magento\Backend\Helper\Data $adminhtmlData,
-        \Pixlee\Pixlee\Helper\Data $pixleeData,
-        \Magento\Backend\Block\Template\Context $context,
-        \Magento\Framework\App\Request\Http $request,
+        Api $apiConfig,
+        Http $request,
+        Context $context,
         array $data = []
     ) {
-        $this->_adminhtmlData = $adminhtmlData;
-        $this->_pixleeData  = $pixleeData;
-        $this->_logger = $context->getLogger();
+        $this->apiConfig = $apiConfig;
         $this->websiteId = (int) $request->getParam('website');
         parent::__construct($context, $data);
     }
@@ -44,14 +51,12 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
         return $this->getUrl('pixlee_export/product/export', [ 'website_id' => (string) $this->websiteId ]);
     }
 
-    public function getAPIKey()
+    public function getPixleeRemainingText()
     {
-        return $this->_pixleeData->getApiKey();
-    }
-
-    public function getDataHelper()
-    {
-        return $this->_pixleeData;
+        if ($this->apiConfig->isActive($this->websiteId)) {
+            return 'Export your products to Pixlee and start collecting photos.';
+        }
+        return 'Export products for current website to Pixlee';
     }
 
     public function getButtonHtml()
@@ -62,8 +67,7 @@ class Export extends \Magento\Config\Block\System\Config\Form\Field
             'onclick' => 'javascript:exportToPixlee(\''.$this->getAjaxExportUrl().'\'); return false;'
         ];
 
-        $this->_pixleeData->initializePixleeAPI($this->websiteId);
-        if ($this->_pixleeData->isInactive()) {
+        if (!$this->apiConfig->isActive($this->websiteId)) {
             $buttonData['class'] = 'disabled';
         }
 

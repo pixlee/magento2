@@ -1,35 +1,19 @@
 <?php
-$jsonHelper = $block->getDataHelper();
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+/* @var \Pixlee\Pixlee\Block\Adminhtml\System\Config\Export $block */
 ?>
 
-<script>
-require(['prototype'], function () {
-
-    window.exportToPixlee = function(url){
-      if($('pixlee_export_button').hasClassName('disabled')) {
-        return;
-      }
-      
-      $('pixlee_export_button').addClassName('disabled');
-      new Ajax.Request('<?= /* @noEscape */ $block->getAjaxExportUrl() ?>', {
-        // method:    'get',
-        onSuccess: function(response){
-          if (response.responseText){
-            var json = response.responseText.evalJSON(true);
-            
-            if(json.pixlee_remaining_text) {
-              $('pixlee_remaining').update(json.pixlee_remaining_text);
-            }
-            if(json.action == 'continue' && json.url) {
-              $('pixlee_export_button').removeClassName('disabled');
-              exportToPixlee(json.url);
-            }
-          }
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Pixlee_Pixlee/js/export-button":{}
         }
-      });
     }
-  });
 </script>
-
 <?= $block->getButtonHtml() ?>
-<p class="note"><span id="pixlee_remaining"><?= /* @noEscape */ $jsonHelper->getPixleeRemainingText(); ?></span></p>
+<p class="note">
+    <span id="pixlee_remaining"><?= $block->escapeHtml($block->getPixleeRemainingText()) ?></span>
+</p>
