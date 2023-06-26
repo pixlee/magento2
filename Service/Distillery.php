@@ -131,7 +131,7 @@ class Distillery implements PixleeServiceInterface
 
         $response = $this->post('v2/albums', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-        return $this->serializer->serialize($response);
+        return $this->serializer->unserialize($response);
     }
 
     /**

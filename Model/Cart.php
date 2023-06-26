@@ -261,7 +261,7 @@ class Cart
     {
         $cookie = $this->cookieManager->get();
         if (isset($cookie)) {
-            return $this->serializer->serialize($cookie, true);
+            return $this->serializer->unserialize($cookie, true);
         }
 
         return false;
