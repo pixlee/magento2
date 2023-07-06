@@ -32,6 +32,9 @@ class Distillery implements PixleeServiceInterface
      * @var SerializerInterface
      */
     protected $serializer;
+    /**
+     * @var mixed
+     */
     protected $websiteId;
 
     /**
@@ -151,7 +154,7 @@ class Distillery implements PixleeServiceInterface
             'X-Alt-Referer' => 'magento2.pixlee.com'
         ];
         $this->curl->setHeaders($headers);
-        $this->curl->get($requestUrl, []);
+        $this->curl->get($requestUrl);
         if (!$this->isValidResponse($path)) {
             return false;
         }
@@ -177,6 +180,8 @@ class Distillery implements PixleeServiceInterface
             'Signature' => $this->generateSignature($payload),
         ];
         $this->curl->setHeaders($headers);
+        // Needed for 100-continue response
+        $this->curl->addHeader('Expect', '');
         $this->curl->post($requestUrl, $payload);
         if (!$this->isValidResponse($path)) {
             return false;

@@ -11,19 +11,19 @@ Interface PixleeServiceInterface
 {
     /**
      * @param $websiteId
-     * @return mixed
+     * @return void
      */
     public function setWebsiteId($websiteId);
 
     /**
      * @param $websiteId
-     * @return mixed
+     * @return false|string
      */
     public function validateCredentials($websiteId);
 
     /**
      * @param $options
-     * @return mixed
+     * @return false|string
      */
     public function getAlbums($options = null);
 
@@ -32,7 +32,7 @@ Interface PixleeServiceInterface
      * @param $jobId
      * @param $numProducts
      * @param $websiteId
-     * @return mixed
+     * @return void
      */
     public function notifyExportStatus($status, $jobId, $numProducts, $websiteId);
 
@@ -49,7 +49,7 @@ Interface PixleeServiceInterface
     /**
      * @param $path
      * @param $options
-     * @return mixed
+     * @return false|string
      */
     public function get($path, $options = null);
 
@@ -57,7 +57,7 @@ Interface PixleeServiceInterface
      * @param string $path
      * @param string $payload
      * @param object|array|null $options
-     * @return mixed
+     * @return false|string
      */
     public function post(string $path, string $payload, $options = null);
 }
