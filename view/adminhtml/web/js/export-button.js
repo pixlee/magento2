@@ -3,24 +3,32 @@
  * See COPYING.txt for license details.
  */
 
-define(['jquery'], function ($) {
+define([
+    'jquery',
+    'Magento_Ui/js/modal/alert'
+], function ($, alert) {
     'use strict'
 
     window.exportToPixlee = function(url){
-        var $button = $('#pixlee_export_button')
-        if($button.hasClass('disabled')) {
+        let $button = $('#pixlee_export_button')
+        if ($button.hasClass('disabled')) {
             return
         }
+        $button.addClass('disabled')
 
         $.ajax({
             url: url,
             data: {
                 'form_key': FORM_KEY
             },
-        }).done(function(data, textStatus, jqXHR) {
-            $button.addClass('disabled');
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            alert('There was an issue that prevented export.')
+            showLoader: true
+        }).done(function(data, textStatus) {
+            console.log("Export Status: " + textStatus)
+        }).fail(function() {
+            $button.removeClass('disabled');
+            alert({
+                content: 'There was an issue that prevented export.'
+            })
         })
     }
 });
