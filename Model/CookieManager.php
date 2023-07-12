@@ -1,6 +1,11 @@
 <?php
+/**
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
 
-namespace Pixlee\Pixlee\Helper;
+namespace Pixlee\Pixlee\Model;
 
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
@@ -20,17 +25,17 @@ class CookieManager
      *
      * @var CookieManagerInterface
      */
-    private $cookieManager;
+    protected $cookieManager;
 
     /**
      * @var CookieMetadataFactory
      */
-    private $cookieMetadataFactory;
+    protected $cookieMetadataFactory;
 
     /**
      * @var SessionManagerInterface
      */
-    private $sessionManager;
+    protected $sessionManager;
 
     /**
      * @param CookieManagerInterface $cookieManager

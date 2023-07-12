@@ -1,11 +1,10 @@
 <?php
 /**
- * Copyright © 2015 Pixlee. All rights reserved.
+ * Copyright © Pixlee TurnTo, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
-\Magento\Framework\Component\ComponentRegistrar::register(
-    \Magento\Framework\Component\ComponentRegistrar::MODULE,
-    'Pixlee_Pixlee',
-    __DIR__
-);
+use Magento\Framework\Component\ComponentRegistrar;
+
+ComponentRegistrar::register(ComponentRegistrar::MODULE, 'Pixlee_Pixlee', __DIR__);

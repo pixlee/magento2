@@ -1,21 +1,34 @@
 {
     "name": "pixlee/magento2",
+    "version": "1.3.0",
     "description": "Social commerce platform to collect, curate, and display user-generated content to enhance your Magento store",
     "type": "magento2-module",
-    "version": "1.2.5",
     "authors": [
         {
-            "name": "Pixlee Team",
-            "email": "magento@pixleeturnto.com",
-            "homepage": "http://www.pixlee.com"
+            "name": "Pixlee TurnTo an Emplifi Company",
+            "email": "ecomm-ugc@emplifi.io",
+            "homepage": "https://www.pixlee.com"
         }
     ],
+    "require": {
+        "magento/framework": "*",
+        "magento/module-backend": "101.0.*|102.0.*",
+        "magento/module-catalog": "103.0.*|104.0.*",
+        "magento/module-config": "101.1.*|101.2.*",
+        "magento/module-configurable-product": "100.3.*|100.4.*",
+        "magento/module-cron": "100.3.*|100.4.*",
+        "magento/module-sales": "102.0.*|103.0.*",
+        "magento/module-store": "101.0.*|101.1.*",
+        "magento/module-url-rewrite": "101.1.*|102.0.*",
+        "php": "^7.1.3|~8.0.0|~8.1.0|~8.2.0"
+    },
     "license": [
-        "OSL-3.0",
-        "AFL-3.0"
+        "OSL-3.0"
     ],
     "autoload": {
-        "files": [ "registration.php" ],
+        "files": [
+            "registration.php"
+        ],
         "psr-4": {
             "Pixlee\\Pixlee\\": ""
         }
