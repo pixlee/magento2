@@ -7,17 +7,18 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\ViewModel;
 
-use Magento\Framework\Exception\LocalizedException;
+use Exception;
+use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Config\Widget;
 
-class ProductWidget implements \Magento\Framework\View\Element\Block\ArgumentInterface
+class ProductWidget implements ArgumentInterface
 {
     /**
-     * @var int
+     * @var array
      */
-    protected $websiteId;
+    protected $scope;
     /**
      * @var StoreManagerInterface
      */
@@ -47,60 +48,64 @@ class ProductWidget implements \Magento\Framework\View\Element\Block\ArgumentInt
     }
 
     /**
-     * @return int
-     * @throws LocalizedException
-     */
-    public function getWebsiteId()
-    {
-        if (empty($this->websiteId)) {
-            $this->websiteId = (int)$this->storeManager->getWebsite()->getId();
-        }
-
-        return $this->websiteId;
-    }
-
-    /**
      * @return bool
-     * @throws LocalizedException
      */
     public function isActive()
     {
-        return $this->apiConfig->isActive($this->getWebsiteId());
+        $scope = $this->getScope();
+        return $this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode']);
     }
 
     /**
      * @return mixed
-     * @throws LocalizedException
      */
     public function getApiKey()
     {
-        return $this->apiConfig->getApiKey($this->getWebsiteId());
+        $scope = $this->getScope();
+        return $this->apiConfig->getApiKey($scope['scopeType'], $scope['scopeCode']);
     }
 
     /**
      * @return mixed
-     * @throws LocalizedException
      */
     public function getAccountId()
     {
-        return $this->widgetConfig->getAccountId($this->getWebsiteId());
+        $scope = $this->getScope();
+        return $this->widgetConfig->getAccountId($scope['scopeType'], $scope['scopeCode']);
     }
 
     /**
      * @return mixed
-     * @throws LocalizedException
      */
     public function getCDPWidgetId()
     {
-        return $this->widgetConfig->getCDPWidgetId($this->getWebsiteId());
+        $scope = $this->getScope();
+        return $this->widgetConfig->getCDPWidgetId($scope['scopeType'], $scope['scopeCode']);
     }
 
     /**
      * @return mixed
-     * @throws LocalizedException
      */
     public function getPDPWidgetId()
     {
-        return $this->widgetConfig->getPDPWidgetId($this->getWebsiteId());
+        $scope = $this->getScope();
+        return $this->widgetConfig->getPDPWidgetId($scope['scopeType'], $scope['scopeCode']);
+    }
+
+    /**
+     * @return array
+     */
+    protected function getScope()
+    {
+        if (empty($this->scope)) {
+            try {
+                $websiteId = $this->storeManager->getWebsite()->getId();
+            } catch (Exception) {
+                $websiteId = $this->storeManager->getDefaultStoreView()->getWebsiteId();
+            }
+            $this->scope = $this->apiConfig->getScope($websiteId);
+        }
+
+        return $this->scope;
     }
 }

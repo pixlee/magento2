@@ -17,6 +17,7 @@ use Magento\Framework\Pricing\Helper\Data as PricingHelper;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Sales\Model\Order as SalesOrder;
 use Magento\Sales\Model\Order\Item as SalesItem;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Config\Api;
@@ -212,34 +213,32 @@ class Cart
     }
 
     /**
-     * @param $storeId
+     * @param $store
      * @param $extraData
      * @return false|string
-     * @throws NoSuchEntityException
      */
-    public function preparePayload($storeId, $extraData = [])
+    public function preparePayload($store, $extraData = [])
     {
         if ($payload = $this->getPixleeCookie()) {
-            // Append all extra data to the payload
             foreach ($extraData as $key => $value) {
-                // Don't accidentally overwrite existing data.
+                // Don't overwrite existing data.
                 if (!isset($payload[$key])) {
                     $payload[$key] = $value;
                 }
             }
-            $store = $this->storeManager->getStore($storeId);
             // Required key/value pairs not in the payload by default.
-            $payload['API_KEY']= $this->apiConfig->getApiKey($store->getWebsiteId());
+            $payload['API_KEY']= $this->apiConfig->getApiKey(ScopeInterface::SCOPE_STORES, $store->getId());
             $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
             $payload['ecommerce_platform'] = 'magento_2';
             $payload['ecommerce_platform_version'] = '2.0.0';
             $payload['version_hash'] = $this->getVersionHash();
             $payload['region_code'] = $store->getCode();
-            $this->logger->addInfo("Sending payload: " . $this->serializer->serialize($payload));
-            return $this->serializer->serialize($payload);
+            $serializedPayload = $this->serializer->serialize($payload);
+            $this->logger->addInfo("Sending payload: " . $serializedPayload);
+            return $serializedPayload;
         }
         $this->logger->addInfo("Analytics event not sent because the cookie wasn't found");
-        return false; // No cookie exists,
+        return false;
     }
 
     /**
@@ -255,13 +254,13 @@ class Cart
     }
 
     /**
-     * @return false|mixed
+     * @return array|bool|float|int|string|null
      */
     protected function getPixleeCookie()
     {
         $cookie = $this->cookieManager->get();
         if (isset($cookie)) {
-            return $this->serializer->unserialize($cookie, true);
+            return $this->serializer->unserialize($cookie);
         }
 
         return false;

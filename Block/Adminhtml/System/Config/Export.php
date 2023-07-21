@@ -31,7 +31,7 @@ class Export extends Field
         array $data = []
     ) {
         $this->apiConfig = $apiConfig;
-        $this->websiteId = (int) $request->getParam('website');
+        $this->websiteId = $request->getParam('website');
         parent::__construct($context, $data);
     }
 
@@ -48,12 +48,13 @@ class Export extends Field
 
     public function getAjaxExportUrl()
     {
-        return $this->getUrl('pixlee_export/product/export', [ 'website_id' => (string) $this->websiteId ]);
+        return $this->getUrl('pixlee_export/product/export', [ 'website_id' => $this->websiteId ]);
     }
 
     public function getPixleeRemainingText()
     {
-        if ($this->apiConfig->isActive($this->websiteId)) {
+        $scope = $this->apiConfig->getScope($this->websiteId);
+        if ($this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
             return 'Export your products to Pixlee and start collecting photos.';
         }
         return 'Export products for current website to Pixlee';
@@ -67,7 +68,8 @@ class Export extends Field
             'onclick' => 'javascript:exportToPixlee(\''.$this->getAjaxExportUrl().'\'); return false;'
         ];
 
-        if (!$this->apiConfig->isActive($this->websiteId)) {
+        $scope = $this->apiConfig->getScope($this->websiteId);
+        if (!$this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
             $buttonData['class'] = 'disabled';
         }
 

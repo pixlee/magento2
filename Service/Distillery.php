@@ -33,9 +33,13 @@ class Distillery implements PixleeServiceInterface
      */
     protected $serializer;
     /**
-     * @var mixed
+     * @var int|null|string
      */
-    protected $websiteId;
+    protected $scopeCode;
+    /**
+     * @var string
+     */
+    protected $scopeType;
 
     /**
      * @param Curl $curl
@@ -58,18 +62,17 @@ class Distillery implements PixleeServiceInterface
     /**
      * @inheritdoc
      */
-    public function setWebsiteId($websiteId)
+    public function setScope($scopeType, $scopeCode)
     {
-        $this->websiteId = $websiteId;
+        $this->scopeType = $scopeType;
+        $this->scopeCode = $scopeCode;
     }
 
     /**
      * @inheritdoc
      */
-    public function validateCredentials($websiteId)
+    public function validateCredentials()
     {
-        $this->setWebsiteId($websiteId);
-
         return $this->getAlbums(['page' => '1', 'per_page' => '1']);
     }
 
@@ -84,12 +87,11 @@ class Distillery implements PixleeServiceInterface
     /**
      * @inheritdoc
      */
-    public function notifyExportStatus($status, $jobId, $numProducts, $websiteId)
+    public function notifyExportStatus($status, $jobId, $numProducts)
     {
-        $this->setWebsiteId($websiteId);
         $path = 'v1/notifyExportStatus';
         $payload = [
-            'api_key' => $this->apiConfig->getApiKey($websiteId),
+            'api_key' => $this->apiConfig->getApiKey($this->scopeType, $this->scopeCode),
             'status' => $status,
             'job_id' => $jobId,
             'num_products' => $numProducts,
@@ -103,10 +105,8 @@ class Distillery implements PixleeServiceInterface
      * @inheritdoc
      */
     public function createProduct(
-        $websiteId,
         array $productInfo
     ) {
-        $this->setWebsiteId($websiteId);
         $this->logger->addInfo("* In createProduct");
         $product = [
             'name' => $productInfo['name'],
@@ -195,7 +195,7 @@ class Distillery implements PixleeServiceInterface
      */
     protected function getRequiredQueryString()
     {
-        return '?api_key=' . $this->apiConfig->getApiKey($this->websiteId);
+        return '?api_key=' . $this->apiConfig->getApiKey($this->scopeType, $this->scopeCode);
     }
 
     /**
@@ -221,7 +221,7 @@ class Distillery implements PixleeServiceInterface
      */
     protected function generateSignature($data)
     {
-        return base64_encode(hash_hmac('sha1', $data, $this->apiConfig->getSecretKey($this->websiteId), true));
+        return base64_encode(hash_hmac('sha1', $data, $this->apiConfig->getSecretKey($this->scopeType, $this->scopeCode), true));
     }
 
     /**

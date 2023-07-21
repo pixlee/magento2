@@ -10,19 +10,19 @@ namespace Pixlee\Pixlee\Api;
 Interface PixleeServiceInterface
 {
     /**
-     * @param $websiteId
+     * @param null|string $scopeType
+     * @param int|null|string $scopeCode
      * @return void
      */
-    public function setWebsiteId($websiteId);
+    public function setScope($scopeType, $scopeCode);
 
     /**
-     * @param $websiteId
      * @return false|string
      */
-    public function validateCredentials($websiteId);
+    public function validateCredentials();
 
     /**
-     * @param $options
+     * @param null $options
      * @return false|string
      */
     public function getAlbums($options = null);
@@ -31,20 +31,15 @@ Interface PixleeServiceInterface
      * @param $status
      * @param $jobId
      * @param $numProducts
-     * @param $websiteId
      * @return void
      */
-    public function notifyExportStatus($status, $jobId, $numProducts, $websiteId);
+    public function notifyExportStatus($status, $jobId, $numProducts);
 
     /**
-     * @param $websiteId
      * @param array $productInfo
      * @return mixed
      */
-    public function createProduct(
-        $websiteId,
-        array $productInfo
-    );
+    public function createProduct(array $productInfo);
 
     /**
      * @param $path
