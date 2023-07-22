@@ -35,10 +35,10 @@ define(['jquery'], function ($) {
                 $('#pixlee_request_demo').addClass('disabled');
                 alert('Thanks for requesting a demo. We will get in touch with you shortly.');
             } else {
-                alert('Opps! Something went wrong. While we are working on resolving the issue, feel free to reach us at hi@pixleeturnto.com');
+                alert('Oops! Something went wrong. While we are working on resolving the issue, feel free to reach us at hi@pixleeturnto.com');
             }
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            alert('Opps! Something went wrong. While we are working on resolving the issue, feel free to reach us at hi@pixleeturnto.com');
+            alert('Oops! Something went wrong. While we are working on resolving the issue, feel free to reach us at hi@pixleeturnto.com');
         })
     }
 });

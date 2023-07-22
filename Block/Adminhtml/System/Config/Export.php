@@ -11,6 +11,7 @@ use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Data\Form\Element\AbstractElement;
 use Pixlee\Pixlee\Model\Config\Api;
 
 class Export extends Field
@@ -41,7 +42,7 @@ class Export extends Field
         $this->setTemplate('system/config/export_button.phtml');
     }
 
-    protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    protected function _getElementHtml(AbstractElement $element)
     {
         return $this->_toHtml();
     }
@@ -77,7 +78,7 @@ class Export extends Field
         return $button->toHtml();
     }
 
-    public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    public function render(AbstractElement $element)
     {
         // Remove scope label
         $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();

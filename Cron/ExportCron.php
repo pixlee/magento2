@@ -26,7 +26,7 @@ class ExportCron
     /**
 * @var StoreManagerInterface
      */
-    private StoreManagerInterface $storeManager;
+    protected $storeManager;
 
     /**
      * @param PixleeLogger $logger

@@ -230,7 +230,7 @@ class Product
         }
 
         // Format
-        // Hashmap where keys are category_ids and values are a hashmp with name and url keys
+        // Hashmap where keys are category_ids and values are a hashmap with name and url keys
         return $allCategories;
     }
 
@@ -345,7 +345,7 @@ class Product
      */
     protected function getAbsoluteUrl($relativeUrl, $storeId)
     {
-        $storeUrl = $this->storeManager->getStore($storeId)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+        $storeUrl = $this->storeManager->getStore($storeId)->getBaseUrl();
         return rtrim($storeUrl, '/') . '/' . ltrim($relativeUrl, '/');
     }
 

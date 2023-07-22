@@ -100,7 +100,7 @@ class ProductWidget implements ArgumentInterface
         if (empty($this->scope)) {
             try {
                 $websiteId = $this->storeManager->getWebsite()->getId();
-            } catch (Exception) {
+            } catch (Exception $e) {
                 $websiteId = $this->storeManager->getDefaultStoreView()->getWebsiteId();
             }
             $this->scope = $this->apiConfig->getScope($websiteId);

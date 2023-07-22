@@ -9,7 +9,6 @@ namespace Pixlee\Pixlee\Model;
 
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
-use Magento\Framework\Stdlib\Cookie\PublicCookieMetadata;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 
 class CookieManager
@@ -55,9 +54,9 @@ class CookieManager
     /**
      * Get form key cookie
      *
-     * @return string
+     * @return string|null
      */
-    public function get()
+    public function get(): ?string
     {
         $cookie = $this->cookieManager->getCookie(self::COOKIE_NAME);
         if(!isset($cookie)) {

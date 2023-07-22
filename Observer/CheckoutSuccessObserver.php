@@ -16,7 +16,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Cart;
 use Pixlee\Pixlee\Model\Config\Api;
-use Pixlee\Pixlee\Api\AnalyticsServiceInterface;;
+use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 
 class CheckoutSuccessObserver implements ObserverInterface
 {

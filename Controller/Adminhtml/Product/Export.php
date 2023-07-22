@@ -23,7 +23,7 @@ class Export extends Action
     /**
      * @var StoreManagerInterface
      */
-    protected StoreManagerInterface $storeManager;
+    protected $storeManager;
 
     /**
      * Constructor
