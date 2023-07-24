@@ -45,7 +45,7 @@ class Pixlee
         ComponentRegistrarInterface $componentRegistrar,
         ReadFactory $readFactory,
         ModuleList $moduleList,
-        PixleeLogger $logger,
+        PixleeLogger $logger
     ) {
         $this->componentRegistrar = $componentRegistrar;
         $this->readFactory = $readFactory;
