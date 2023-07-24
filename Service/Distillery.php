@@ -12,6 +12,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
+use Pixlee\Pixlee\Model\Pixlee;
 
 class Distillery implements PixleeServiceInterface
 {
@@ -93,7 +94,7 @@ class Distillery implements PixleeServiceInterface
             'status' => $status,
             'job_id' => $jobId,
             'num_products' => $numProducts,
-            'platform' => 'magento_2'
+            'platform' => Pixlee::PLATFORM
         ];
 
         $this->post($path, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
