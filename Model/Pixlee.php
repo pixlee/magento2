@@ -12,6 +12,7 @@ use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Component\ComponentRegistrarInterface;
 use Magento\Framework\Filesystem\Directory\ReadFactory;
 use Magento\Framework\Module\ModuleList;
+use Magento\Framework\Serialize\SerializerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
 class Pixlee
@@ -34,23 +35,30 @@ class Pixlee
      * @var PixleeLogger
      */
     protected $logger;
+    /**
+     * @var SerializerInterface
+     */
+    protected SerializerInterface $serializer;
 
     /**
      * @param ComponentRegistrarInterface $componentRegistrar
      * @param ReadFactory $readFactory
      * @param ModuleList $moduleList
      * @param PixleeLogger $logger
+     * @param SerializerInterface $serializer
      */
     public function __construct(
         ComponentRegistrarInterface $componentRegistrar,
         ReadFactory $readFactory,
         ModuleList $moduleList,
-        PixleeLogger $logger
+        PixleeLogger $logger,
+        SerializerInterface $serializer
     ) {
         $this->componentRegistrar = $componentRegistrar;
         $this->readFactory = $readFactory;
         $this->moduleList = $moduleList;
         $this->logger = $logger;
+        $this->serializer = $serializer;
     }
 
     /**
@@ -69,8 +77,8 @@ class Pixlee
                 $fileName = 'composer.json';
                 if ($reader->isExist($fileName) && $reader->isReadable($fileName)) {
                     $composerJsonData = $reader->readFile($fileName);
-                    $data = json_decode($composerJsonData);
-                    $this->version = $data->version;
+                    $data = $this->serializer->unserialize($composerJsonData);
+                    $this->version = $data['version'];
                     return $this->version;
                 }
             } catch (Exception $e) {
