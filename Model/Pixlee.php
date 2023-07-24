@@ -38,7 +38,7 @@ class Pixlee
     /**
      * @var SerializerInterface
      */
-    protected SerializerInterface $serializer;
+    protected $serializer;
 
     /**
      * @param ComponentRegistrarInterface $componentRegistrar
