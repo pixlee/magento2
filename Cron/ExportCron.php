@@ -24,7 +24,7 @@ class ExportCron
      */
     protected $product;
     /**
-* @var StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $storeManager;
 
