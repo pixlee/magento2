@@ -10,6 +10,7 @@ namespace Pixlee\Pixlee\Model;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Interceptor;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Module\Dir;
@@ -60,6 +61,14 @@ class Cart
      * @var SerializerInterface
      */
     protected $serializer;
+    /**
+     * @var ProductMetadataInterface
+     */
+    protected $productMetadata;
+    /**
+     * @var Pixlee
+     */
+    protected $pixlee;
 
     /**
      * @param CatalogProduct $catalogProduct
@@ -71,6 +80,8 @@ class Cart
      * @param Dir $moduleDirs
      * @param Api $apiConfig
      * @param PixleeLogger $logger
+     * @param ProductMetadataInterface $productMetadata
+     * @param Pixlee $pixlee
      */
     public function __construct(
         CatalogProduct $catalogProduct,
@@ -81,7 +92,9 @@ class Cart
         CookieManager $cookieManager,
         Dir $moduleDirs,
         Api $apiConfig,
-        PixleeLogger $logger
+        PixleeLogger $logger,
+        ProductMetadataInterface $productMetadata,
+        Pixlee $pixlee
     ) {
         $this->catalogProduct = $catalogProduct;
         $this->configurableProduct = $configurableProduct;
@@ -92,6 +105,8 @@ class Cart
         $this->moduleDirs = $moduleDirs;
         $this->apiConfig = $apiConfig;
         $this->logger = $logger;
+        $this->productMetadata = $productMetadata;
+        $this->pixlee = $pixlee;
     }
 
     /**
@@ -174,7 +189,7 @@ class Cart
 
             $cartData['cart_total'] = $quote->getGrandTotal();
             $cartData['email'] = $quote->getCustomerEmail();
-            $cartData['cart_type'] = 'magento_2';
+            $cartData['cart_type'] = Pixlee::PLATFORM;
             $cartData['cart_total_quantity'] = (int) $quote->getData('total_qty_ordered');
             $cartData['billing_address'] = $this->extractAddress($quote->getBillingAddress());
             $cartData['shipping_address'] = $this->extractAddress($quote->getShippingAddress());
@@ -229,9 +244,9 @@ class Cart
             // Required key/value pairs not in the payload by default.
             $payload['API_KEY']= $this->apiConfig->getApiKey(ScopeInterface::SCOPE_STORES, $store->getId());
             $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
-            $payload['ecommerce_platform'] = 'magento_2';
-            $payload['ecommerce_platform_version'] = '2.0.0';
-            $payload['version_hash'] = $this->getVersionHash();
+            $payload['ecommerce_platform'] = Pixlee::PLATFORM;
+            $payload['ecommerce_platform_version'] = $this->productMetadata->getVersion();
+            $payload['version_hash'] = $this->pixlee->getExtensionVersion();
             $payload['region_code'] = $store->getCode();
             $serializedPayload = $this->serializer->serialize($payload);
             $this->logger->addInfo("Sending payload: " . $serializedPayload);
@@ -242,19 +257,7 @@ class Cart
     }
 
     /**
-     * @return string
-     */
-    protected function getVersionHash()
-    {
-        $version_hash = file_get_contents(
-            $this->moduleDirs->getDir('Pixlee_Pixlee') . '/version.txt'
-        );
-
-        return trim($version_hash);
-    }
-
-    /**
-     * @return array|bool|float|int|string|null
+     * @return array|null
      */
     protected function getPixleeCookie()
     {
