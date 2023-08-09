@@ -16,6 +16,7 @@ use Magento\Catalog\Model\ResourceModel\Product as ProductResource;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogUrlRewrite\Model\ProductUrlRewriteGenerator;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface;
@@ -26,6 +27,7 @@ use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
+use Pixlee\Pixlee\Model\Pixlee;
 
 class Product
 {
@@ -85,6 +87,14 @@ class Product
      * @var SerializerInterface
      */
     protected $serializer;
+    /**
+     * @var ProductMetadataInterface
+     */
+    protected $productMetadata;
+    /**
+     * @var Pixlee
+     */
+    protected $pixlee;
 
     /**
      * @param Config $mediaConfig
@@ -101,6 +111,8 @@ class Product
      * @param Api $apiConfig
      * @param PixleeServiceInterface $pixleeService
      * @param PixleeLogger $logger
+     * @param ProductMetadataInterface $productMetadata
+     * @param Pixlee $pixlee
      */
     public function __construct(
         Config $mediaConfig,
@@ -116,7 +128,9 @@ class Product
         UrlFinderInterface $urlFinder,
         Api $apiConfig,
         PixleeServiceInterface $pixleeService,
-        PixleeLogger $logger
+        PixleeLogger $logger,
+        ProductMetadataInterface $productMetadata,
+        Pixlee $pixlee
     ) {
         $this->mediaConfig = $mediaConfig;
         $this->configurableProduct = $configurableProduct;
@@ -132,6 +146,8 @@ class Product
         $this->apiConfig = $apiConfig;
         $this->pixleeService = $pixleeService;
         $this->logger = $logger;
+        $this->productMetadata = $productMetadata;
+        $this->pixlee = $pixlee;
     }
 
     /**
@@ -495,7 +511,9 @@ class Product
         return $this->serializer->serialize([
             'product_photos' => $productPhotos,
             'categories' => $categoriesList,
-            'ecommerce_platform' => 'magento_2',
+            'ecommerce_platform' => Pixlee::PLATFORM,
+            'ecommerce_platform_version' => $this->productMetadata->getVersion(),
+            'version_hash' => $this->pixlee->getExtensionVersion(),
             'categories_last_updated_at' => time()
         ]);
     }
