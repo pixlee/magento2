@@ -7,88 +7,71 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
 	<system>
-		<tab id="pixlee" translate="label" sortOrder="300">
+		<tab id="pixlee" translate="label" sortOrder="400">
 			<label>Pixlee</label>
 		</tab>
-		<section id="pixlee_demo" translate="label" type="text" sortOrder="1100" showInDefault="0" showInWebsite="1" showInStore="0">
-			<label>Request Account</label>
+		<section id="pixlee_pixlee" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+			<label>UGC</label>
 			<tab>pixlee</tab>
 			<resource>Pixlee_Pixlee::config_pixlee_pixlee</resource>
-			<group id="not_a_customer" translate="label" type="text" sortOrder="2" showInDefault="0" showInWebsite="1" showInStore="0">
-				<label>Not a Pixlee TurnTo customer?</label>
-				<comment>Thank you for downloading Pixlee TurnTo’s Magento 2 Pixlee Extension. Please enter your email address below, and we will get in touch with you shortly. For immediate assistance, email us at hi@pixleeturnto.com.</comment>
-                <field id="name" translate="label" type="text" sortOrder="1"  showInDefault="0" showInWebsite="1" showInStore="0">
-                    <label>Your Name</label>
-                </field>
-                <field id="email_address" translate="label" type="text" sortOrder="2"  showInDefault="0" showInWebsite="1" showInStore="0">
-                    <label>Your Email Address</label>
-                </field>
-                <field id="website" translate="label" type="text" sortOrder="3"  showInDefault="0" showInWebsite="1" showInStore="0">
-                    <label>Your Company Website</label>
-                </field>
-				<field id="request_demo" translate="label comment" type="button" sortOrder="4" showInDefault="0" showInWebsite="1" showInStore="0">
-                    <frontend_model>Pixlee\Pixlee\Block\Adminhtml\System\Config\Demo</frontend_model>
-                    <label>Submit</label>
-                </field>
-			</group>
-		</section>
-
-		<section id="pixlee_pixlee" translate="label" type="text" sortOrder="1200" showInDefault="0" showInWebsite="1" showInStore="0">
-			<label>Existing Customers</label>
-			<tab>pixlee</tab>
-			<resource>Pixlee_Pixlee::config_pixlee_pixlee</resource>
-			<group id="existing_customers" translate="label" type="text" sortOrder="1" showInDefault="0" showInWebsite="1" showInStore="0">
-                <label>Settings</label>
-                <group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="0" showInWebsite="1" showInStore="0">
+			<group id="existing_customers" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>UGC Settings</label>
+                <group id="account_settings" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
 					<!-- Group configs -->
 					<label>API Settings</label>
 					<comment>Please enable Pixlee API using credentials from "Pixlee API" found in your Pixlee account Settings.</comment>
 
 					<!-- Module enable -->
-					<field id="active" translate="label" type="select" sortOrder="1" showInDefault="0" showInWebsite="1" showInStore="0">
+					<field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
 						<label>Enabled</label>
 						<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
 					</field>
 
 					<!-- API Key -->
-					<field id="api_key" translate="label" type="text" sortOrder="3"  showInDefault="0" showInWebsite="1" showInStore="0">
+					<field id="api_key" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>API Key</label>
+                        <depends>
+                            <field id="active">1</field>
+                        </depends>
 	                </field>
 
 					<!-- Secret Key -->
-					<field id="secret_key" translate="label" type="text" sortOrder="4"  showInDefault="0" showInWebsite="1" showInStore="0">
+					<field id="secret_key" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>Secret Key</label>
+                        <depends>
+                            <field id="active">1</field>
+                        </depends>
 	                </field>
 
 	                <!-- Export Products -->
-	                <field id="export_products" translate="label comment" type="button" sortOrder="7" showInDefault="0" showInWebsite="1" showInStore="0">
+	                <field id="export_products" translate="label comment" type="button" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>Export Products</label>
 	                    <frontend_model>Pixlee\Pixlee\Block\Adminhtml\System\Config\Export</frontend_model>
+                        <depends>
+                            <field id="active">1</field>
+                        </depends>
 	                </field>
 				</group>
 
-				<group id="pdp_widget_settings" translate="label" type="text" sortOrder="2" showInDefault="0" showInWebsite="1" showInStore="0">
+				<group id="pdp_widget_settings" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
 					<!-- Group configs -->
 					<label>Widget Settings</label>
 					<comment>To enable widgets on Product and Category pages, create the widgets in your Pixlee account
-                        Publish Center and add the widget IDs below.</comment>
+                        Publish Center and add the widget IDs below. Remove IDs to disable.</comment>
 
 	                <!-- Account ID -->
-	                <field id="account_id" translate="label" type="text" sortOrder="5"  showInDefault="0" showInWebsite="1" showInStore="0">
+	                <field id="account_id" translate="label" type="text" sortOrder="5"  showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>Account ID</label>
-	                    <comment>Get Account ID from "Pixlee API" found in your Pixlee account Settings.</comment>
 	                </field>
 
 	                <!-- PDP Widget ID -->
-	                <field id="pdp_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="0" showInWebsite="1" showInStore="0">
+	                <field id="pdp_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>PDP Widget ID</label>
-                        <comment>Leave blank to disable widget.</comment>
 	                </field>
 
 	                <!-- CDP Widget ID -->
-	                <field id="cdp_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="0" showInWebsite="1" showInStore="0">
+	                <field id="cdp_widget_id" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>CDP Widget ID</label>
-                        <comment>Leave blank to disable widget.</comment>
                     </field>
 				</group>
 			</group>

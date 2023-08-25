@@ -59,7 +59,7 @@ To connect to Pixlee, you will need your **API Key** and **Secret Key** from [ht
 
    ![](https://files.readme.io/47d7746-01_10_account_settings.png "01_10_account_settings.png")
 
-3. Click on **Pixlee API** on the lefthand navigation bar.
+3. Click on **Pixlee API** on the left-hand navigation bar.
 
    From this page, record the values of **Account ID**, **Account API Key**, and **Account Secret Key** to be used in the Magento store configurations.
 

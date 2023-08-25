@@ -39,86 +39,102 @@ class Api
     }
 
     /**
-     * @param int|null|string $scopeId
      * @param null|string $scopeType
+     * @param int|null|string $scopeCode
      * @return bool
      */
-    public function isActive($scopeId, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function isActive($scopeType, $scopeCode)
     {
         return $this->scopeConfig->isSetFlag(
             self::PIXLEE_ACTIVE,
             $scopeType,
-            $scopeId
+            $scopeCode
         );
     }
 
     /**
-     * @param int|null|string $scopeId
+     * @param int|null|string $scopeCode
      * @param null|string $scopeType
      * @return void
      */
-    public function deleteActive($scopeId, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function deleteActive($scopeType, $scopeCode)
     {
         $this->configWriter->delete(
             self::PIXLEE_ACTIVE,
             $scopeType,
-            $scopeId
+            $scopeCode
         );
     }
 
     /**
-     * @param int|null|string $scopeId
+     * @param int|null|string $scopeCode
      * @param null|string $scopeType
      * @return mixed
      */
-    public function getApiKey($scopeId, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function getApiKey($scopeType, $scopeCode)
     {
         return $this->scopeConfig->getValue(
             self::PIXLEE_API_KEY,
             $scopeType,
-            $scopeId
+            $scopeCode
         );
     }
 
     /**
-     * @param int|null|string $scopeId
+     * @param int|null|string $scopeCode
      * @param null|string $scopeType
      * @return void
      */
-    public function deleteApiKey($scopeId, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function deleteApiKey($scopeType, $scopeCode)
     {
         $this->configWriter->delete(
             self::PIXLEE_API_KEY,
             $scopeType,
-            $scopeId
+            $scopeCode
         );
     }
 
     /**
-     * @param int|null|string $scopeId
+     * @param int|null|string $scopeCode
      * @param null|string $scopeType
      * @return mixed
      */
-    public function getSecretKey($scopeId, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function getSecretKey($scopeType, $scopeCode)
     {
         return $this->scopeConfig->getValue(
             self::PIXLEE_SECRET_KEY,
             $scopeType,
-            $scopeId
+            $scopeCode
         );
     }
 
     /**
-     * @param int|null|string $scopeId
+     * @param int|null|string $scopeCode
      * @param null|string $scopeType
      * @return void
      */
-    public function deleteSecretKey($scopeId = null, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function deleteSecretKey($scopeType, $scopeCode)
     {
         $this->configWriter->delete(
             self::PIXLEE_SECRET_KEY,
             $scopeType,
-            $scopeId
+            $scopeCode
         );
+    }
+
+    /**
+     * @param $websiteId
+     * @return array
+     */
+    public function getScope($websiteId)
+    {
+        $scope['scopeCode'] = null;
+        $scope['scopeType'] = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+        if (!empty($websiteId)) {
+            $scope['scopeCode'] = $websiteId;
+            $scope['scopeType'] = ScopeInterface::SCOPE_WEBSITES;
+        }
+
+        return $scope;
     }
 }

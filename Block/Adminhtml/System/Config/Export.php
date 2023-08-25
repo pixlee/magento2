@@ -11,6 +11,7 @@ use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Data\Form\Element\AbstractElement;
 use Pixlee\Pixlee\Model\Config\Api;
 
 class Export extends Field
@@ -31,7 +32,7 @@ class Export extends Field
         array $data = []
     ) {
         $this->apiConfig = $apiConfig;
-        $this->websiteId = (int) $request->getParam('website');
+        $this->websiteId = $request->getParam('website');
         parent::__construct($context, $data);
     }
 
@@ -41,19 +42,20 @@ class Export extends Field
         $this->setTemplate('system/config/export_button.phtml');
     }
 
-    protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    protected function _getElementHtml(AbstractElement $element)
     {
         return $this->_toHtml();
     }
 
     public function getAjaxExportUrl()
     {
-        return $this->getUrl('pixlee_export/product/export', [ 'website_id' => (string) $this->websiteId ]);
+        return $this->getUrl('pixlee_export/product/export', [ 'website_id' => $this->websiteId ]);
     }
 
     public function getPixleeRemainingText()
     {
-        if ($this->apiConfig->isActive($this->websiteId)) {
+        $scope = $this->apiConfig->getScope($this->websiteId);
+        if ($this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
             return 'Export your products to Pixlee and start collecting photos.';
         }
         return 'Export products for current website to Pixlee';
@@ -67,7 +69,8 @@ class Export extends Field
             'onclick' => 'javascript:exportToPixlee(\''.$this->getAjaxExportUrl().'\'); return false;'
         ];
 
-        if (!$this->apiConfig->isActive($this->websiteId)) {
+        $scope = $this->apiConfig->getScope($this->websiteId);
+        if (!$this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
             $buttonData['class'] = 'disabled';
         }
 
@@ -75,7 +78,7 @@ class Export extends Field
         return $button->toHtml();
     }
 
-    public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    public function render(AbstractElement $element)
     {
         // Remove scope label
         $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();

@@ -10,7 +10,6 @@ namespace Pixlee\Pixlee\Observer;
 use Exception;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
-use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
 
@@ -24,24 +23,17 @@ class ValidateCredentialsObserver implements ObserverInterface
      * @var PixleeServiceInterface
      */
     protected $pixleeService;
-    /**
-     * @var PixleeLogger
-     */
-    protected $logger;
 
     /**
      * @param Api $apiConfig
      * @param PixleeServiceInterface $pixleeService
-     * @param PixleeLogger $logger
      */
     public function __construct(
         Api $apiConfig,
-        PixleeServiceInterface $pixleeService,
-        PixleeLogger $logger
+        PixleeServiceInterface $pixleeService
     ) {
         $this->apiConfig = $apiConfig;
         $this->pixleeService = $pixleeService;
-        $this->logger = $logger;
     }
 
     /**
@@ -56,20 +48,21 @@ class ValidateCredentialsObserver implements ObserverInterface
     }
 
     /**
-     * @param int|string $websiteId
+     * @param string $websiteId
      * @return void
      * @throws Exception
      */
     public function validateCredentials($websiteId)
     {
         // Backend models are not available for group of items.
-        if ($this->apiConfig->isActive($websiteId)) {
-            $this->logger->addInfo('Validating Credentials');
-            $validated = $this->pixleeService->validateCredentials($websiteId);
+        $scope = $this->apiConfig->getScope($websiteId);
+        if ($this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
+            $this->pixleeService->setScope($scope['scopeType'], $scope['scopeCode']);
+            $validated = $this->pixleeService->validateCredentials();
             if ($validated === false) {
-                $this->apiConfig->deleteActive($websiteId);
-                $this->apiConfig->deleteApiKey($websiteId);
-                $this->apiConfig->deleteSecretKey($websiteId);
+                $this->apiConfig->deleteActive($scope['scopeType'], $scope['scopeCode']);
+                $this->apiConfig->deleteApiKey($scope['scopeType'], $scope['scopeCode']);
+                $this->apiConfig->deleteSecretKey($scope['scopeType'], $scope['scopeCode']);
 
                 throw new Exception('Invalid API key or secret.');
             }

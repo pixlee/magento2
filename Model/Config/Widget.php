@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Model\Config;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\ScopeInterface;
 
 class Widget
 {
@@ -23,7 +22,6 @@ class Widget
      */
     protected $scopeConfig;
 
-
     /**
      * @param ScopeConfigInterface $scopeConfig
      */
@@ -34,11 +32,11 @@ class Widget
     }
 
     /**
-     * @param int|null|string $scopeCode
      * @param null|string $scopeType
+     * @param int|null|string $scopeCode
      * @return mixed
      */
-    public function getAccountId($scopeCode = null, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function getAccountId($scopeType, $scopeCode)
     {
         return $this->scopeConfig->getValue(
             self::PIXLEE_ACCOUNT_ID,
@@ -48,11 +46,11 @@ class Widget
     }
 
     /**
-     * @param int|null|string $scopeCode
      * @param null|string $scopeType
+     * @param int|null|string $scopeCode
      * @return mixed
      */
-    public function getPDPWidgetId($scopeCode = null, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function getPDPWidgetId($scopeType, $scopeCode)
     {
         return $this->scopeConfig->getValue(
             self::PIXLEE_PDP_WIDGET_ID,
@@ -62,11 +60,11 @@ class Widget
     }
 
     /**
-     * @param int|null|string $scopeCode
      * @param null|string $scopeType
+     * @param int|null|string $scopeCode
      * @return mixed
      */
-    public function getCDPWidgetId($scopeCode = null, $scopeType = ScopeInterface::SCOPE_WEBSITES)
+    public function getCDPWidgetId($scopeType, $scopeCode)
     {
         return $this->scopeConfig->getValue(
             self::PIXLEE_CDP_WIDGET_ID,

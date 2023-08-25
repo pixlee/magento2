@@ -21,6 +21,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Framework\UrlInterface;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
@@ -158,14 +159,15 @@ class Product
      */
     public function exportProducts($websiteId)
     {
-        if ($this->apiConfig->isActive($websiteId)) {
+        if ($this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
             // Pagination variables
             $num_products = $this->getTotalProductsCount($websiteId);
             $counter = 0;
             $limit = 100;
             $offset = 0;
             $job_id = uniqid();
-            $this->pixleeService->notifyExportStatus('started', $job_id, $num_products, $websiteId);
+            $this->pixleeService->setScope(ScopeInterface::SCOPE_WEBSITES, $websiteId);
+            $this->pixleeService->notifyExportStatus('started', $job_id, $num_products);
             $categoriesMap = $this->getCategoriesMap();
 
             while ($offset < $num_products) {
@@ -178,7 +180,7 @@ class Product
                 }
             }
 
-            $this->pixleeService->notifyExportStatus('finished', $job_id, $counter, $websiteId);
+            $this->pixleeService->notifyExportStatus('finished', $job_id, $counter);
         }
     }
 
@@ -244,7 +246,7 @@ class Product
         }
 
         // Format
-        // Hashmap where keys are category_ids and values are a hashmp with name and url keys
+        // Hashmap where keys are category_ids and values are a hashmap with name and url keys
         return $allCategories;
     }
 
@@ -285,7 +287,7 @@ class Product
      */
     public function exportProductToPixlee($product, $categoriesMap, $websiteId)
     {
-        if (!$this->apiConfig->isActive($websiteId)) {
+        if (!$this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
             return;
         }
         // NOTE: 2016-03-21 - JUST noticed, that we were originally checking for getVisibility()
@@ -316,7 +318,8 @@ class Product
             'variants' => $this->getVariantsDict($product),
             'extra_fields' => $this->getExtraFields($product, $categoriesMap)
         ];
-        $this->pixleeService->createProduct($websiteId, $productInfo);
+        $this->pixleeService->setScope(ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        $this->pixleeService->createProduct($productInfo);
 
         $this->logger->addInfo("Product Exported to Pixlee");
     }
@@ -358,7 +361,7 @@ class Product
      */
     protected function getAbsoluteUrl($relativeUrl, $storeId)
     {
-        $storeUrl = $this->storeManager->getStore($storeId)->getBaseUrl(UrlInterface::URL_TYPE_LINK);
+        $storeUrl = $this->storeManager->getStore($storeId)->getBaseUrl();
         return rtrim($storeUrl, '/') . '/' . ltrim($relativeUrl, '/');
     }
 
@@ -374,25 +377,27 @@ class Product
         $result = [];
         $storeIds = $this->storeManager->getWebsite($websiteId)->getStoreIds();
         foreach ($storeIds as $storeId) {
-            $storeProduct = $this->productFactory->create()->setStoreId($storeId);
-            $this->productResource->load($storeProduct, $product->getId());
+            if ($this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $storeId)) {
+                $storeProduct = $this->productFactory->create()->setStoreId($storeId);
+                $this->productResource->load($storeProduct, $product->getId());
 
-            $store = $this->storeManager->getStore($storeId);
-            $storeCurrency = $store->getDefaultCurrency();
-            $convertedPrice = $store->getBaseCurrency()->convert(
-                $storeProduct->getFinalPrice(),
-                $storeCurrency
-            );
+                $store = $this->storeManager->getStore($storeId);
+                $storeCurrency = $store->getDefaultCurrency();
+                $convertedPrice = $store->getBaseCurrency()->convert(
+                    $storeProduct->getFinalPrice(),
+                    $storeCurrency
+                );
 
-            $result[] = [
-                'name' => $storeProduct->getName(),
-                'buy_now_link_url' => $storeProduct->getProductUrl(),
-                'price' => $convertedPrice,
-                'stock' => $this->getAggregateStock($product),
-                'currency' => $storeCurrency->getCode(),
-                'variants_json' => $this->getVariantsDict($storeProduct),
-                'region_code' => $store->getCode()
-            ];
+                $result[] = [
+                    'name' => $storeProduct->getName(),
+                    'buy_now_link_url' => $storeProduct->getProductUrl(),
+                    'price' => $convertedPrice,
+                    'stock' => $this->getAggregateStock($product),
+                    'currency' => $storeCurrency->getCode(),
+                    'variants_json' => $this->getVariantsDict($storeProduct),
+                    'region_code' => $store->getCode()
+                ];
+            }
         }
 
         return $result;

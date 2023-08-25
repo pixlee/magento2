@@ -10,6 +10,7 @@ use Exception;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Serialize\SerializerInterface;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Cart;
@@ -74,13 +75,12 @@ class AddToCartObserver implements ObserverInterface
     public function execute(EventObserver $observer)
     {
         try {
-            $websiteId = $this->storeManager->getWebsite()->getWebsiteId();
+            $store = $this->storeManager->getStore();
 
-            if ($this->apiConfig->isActive($websiteId)) {
-                $product = $observer->getEvent()->getProduct();
+            if ($this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $store->getId())) {
+                $product = $observer->getEvent()->getData('product');
                 $productData = $this->pixleeCart->extractProduct($product);
-                $storeId = $this->storeManager->getStore()->getStoreId();
-                $payload = $this->pixleeCart->preparePayload($storeId, $productData);
+                $payload = $this->pixleeCart->preparePayload($store, $productData);
                 $this->analytics->sendEvent('addToCart', $payload);
                 $this->logger->addInfo('AddToCart ' . $this->serializer->serialize($payload));
             }

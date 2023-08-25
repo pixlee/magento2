@@ -9,10 +9,12 @@ namespace Pixlee\Pixlee\Cron;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Pixlee\Pixlee\Model\Logger\PixleeLogger;
+use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Export\Product;
+use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
-class ExportCron {
+class ExportCron
+{
     /**
      * @var PixleeLogger
      */
@@ -21,17 +23,24 @@ class ExportCron {
      * @var Product
      */
     protected $product;
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
 
     /**
      * @param PixleeLogger $logger
      * @param Product $product
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         PixleeLogger $logger,
-        Product $product
+        Product $product,
+        StoreManagerInterface $storeManager
     ) {
         $this->logger = $logger;
         $this->product = $product;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -41,8 +50,14 @@ class ExportCron {
      * @throws LocalizedException
      * @throws NoSuchEntityException
      */
-    public function execute() {
-        $this->logger->info('Exporting products from Cron Job');
-        $this->product->exportProducts(1);
+    public function execute()
+    {
+        $websites = $this->storeManager->getWebsites();
+        foreach ($websites as $website) {
+            $websiteId = $website->getId();
+            $this->logger->info("Cron product export for website $websiteId started");
+            $this->product->exportProducts($websiteId);
+            $this->logger->info("Cron product export for website $websiteId complete");
+        }
     }
 }

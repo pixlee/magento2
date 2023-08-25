@@ -11,11 +11,12 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Cart;
 use Pixlee\Pixlee\Model\Config\Api;
-use Pixlee\Pixlee\Api\AnalyticsServiceInterface;;
+use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 
 class CheckoutSuccessObserver implements ObserverInterface
 {
@@ -82,19 +83,19 @@ class CheckoutSuccessObserver implements ObserverInterface
     public function execute(EventObserver $observer)
     {
         try {
-            $websiteId = $this->storeManager->getWebsite()->getWebsiteId();
+            $store = $this->storeManager->getStore();
 
-            if ($this->apiConfig->isActive($websiteId)) {
+            if ($this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $store->getId())) {
                 $orderIds = $observer->getEvent()->getOrderIds();
                 if (!$orderIds || !is_array($orderIds)) {
                     return;
                 }
 
-                $storeId = $this->storeManager->getStore()->getStoreId();
+
                 $this->orderCollection->addFieldToFilter('entity_id', ['in' => $orderIds]);
                 foreach ($this->orderCollection as $order) {
                     $cartData = $this->pixleeCart->extractCart($order);
-                    $payload = $this->pixleeCart->preparePayload($storeId, $cartData);
+                    $payload = $this->pixleeCart->preparePayload($store, $cartData);
                     $this->analytics->sendEvent('checkoutSuccess', $payload);
                     $this->logger->addInfo('CheckoutSuccess ' . $this->serializer->serialize($payload));
                 }
