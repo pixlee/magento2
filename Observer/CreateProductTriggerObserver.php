@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Observer;
 
 use Exception;
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -58,7 +59,7 @@ class CreateProductTriggerObserver implements ObserverInterface
             try {
                 $pixleeEnabled = $this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId);
 
-                if ($pixleeEnabled && (int)$product->getStatus() === 1) {
+                if ($pixleeEnabled && $product->getStatus() === Status::STATUS_ENABLED) {
                     $categoriesMap = $this->productExport->getCategoriesMap();
                     $this->productExport->exportProductToPixlee($product, $categoriesMap, $websiteId);
                 }
