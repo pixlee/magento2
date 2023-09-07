@@ -11,11 +11,11 @@ class Product
     /**
      * @var ScopeConfigInterface
      */
-    protected ScopeConfigInterface $scopeConfig;
+    protected $scopeConfig;
     /**
      * @var WriterInterface
      */
-    protected WriterInterface $configWriter;
+    protected $configWriter;
 
     /**
      * @param ScopeConfigInterface $scopeConfig
