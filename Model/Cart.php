@@ -158,7 +158,7 @@ class Cart
 
             $productData['variant_id']    = $actualProduct->getId();
             $productData['variant_sku']   = $actualProduct->getSku();
-            $productData['quantity']      = round($product->getQtyOrdered(), PHP_ROUND_HALF_UP);
+            $productData['quantity']      = round($product->getQtyOrdered());
             $productData['price']         = $this->pricingHelper->currency($actualProduct->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
             $productData['product_id']    = $maybeParent->getId();
             $productData['product_sku']   = $maybeParent->getData('sku');
