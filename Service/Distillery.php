@@ -92,7 +92,7 @@ class Distillery implements PixleeServiceInterface
     {
         $path = 'v1/notifyExportStatus';
         $payload = [
-            'api_key' => $this->apiConfig->getApiKey($this->scopeType, $this->scopeCode),
+            'api_key' => $this->apiConfig->getPrivateApiKey($this->scopeType, $this->scopeCode),
             'status' => $status,
             'job_id' => $jobId,
             'num_products' => $numProducts,
@@ -196,7 +196,7 @@ class Distillery implements PixleeServiceInterface
      */
     protected function getRequiredQueryString()
     {
-        return '?api_key=' . $this->apiConfig->getApiKey($this->scopeType, $this->scopeCode);
+        return '?api_key=' . $this->apiConfig->getPrivateApiKey($this->scopeType, $this->scopeCode);
     }
 
     /**

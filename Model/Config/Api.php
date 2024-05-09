@@ -15,6 +15,7 @@ class Api
 {
     public const PIXLEE_ACTIVE = 'pixlee_pixlee/existing_customers/account_settings/active';
     public const PIXLEE_API_KEY = 'pixlee_pixlee/existing_customers/account_settings/api_key';
+    public const PIXLEE_PRIVATE_API_KEY = 'pixlee_pixlee/existing_customers/account_settings/private_api_key';
     public const PIXLEE_SECRET_KEY = 'pixlee_pixlee/existing_customers/account_settings/secret_key';
 
     /**
@@ -89,6 +90,41 @@ class Api
     {
         $this->configWriter->delete(
             self::PIXLEE_API_KEY,
+            $scopeType,
+            $scopeCode
+        );
+    }
+
+    /**
+     * @param int|null|string $scopeCode
+     * @param null|string $scopeType
+     * @return mixed
+     */
+    public function getPrivateApiKey($scopeType, $scopeCode)
+    {
+        $privateApiKey = $this->scopeConfig->getValue(
+            self::PIXLEE_PRIVATE_API_KEY,
+            $scopeType,
+            $scopeCode
+        );
+
+        /* Fallback can be removed after API requirements are updated */
+        if (empty($privateApiKey)) {
+            $privateApiKey = $this->getApiKey($scopeType, $scopeCode);
+        }
+
+        return $privateApiKey;
+    }
+
+    /**
+     * @param int|null|string $scopeCode
+     * @param null|string $scopeType
+     * @return void
+     */
+    public function deletePrivateApiKey($scopeType, $scopeCode)
+    {
+        $this->configWriter->delete(
+            self::PIXLEE_PRIVATE_API_KEY,
             $scopeType,
             $scopeCode
         );
