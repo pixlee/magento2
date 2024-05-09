@@ -7,17 +7,18 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Model;
 
-use Magento\Catalog\Model\Product as CatalogProduct;
-use Magento\Catalog\Model\Product\Interceptor;
+use Exception;
+use Magento\Bundle\Model\Product\Type as Bundle;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Directory\Model\Currency as DirectoryCurrency;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Currency\Data\Currency;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Module\Dir;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
 use Magento\Framework\Serialize\SerializerInterface;
-use Magento\Sales\Model\Order as SalesOrder;
-use Magento\Sales\Model\Order\Item as SalesItem;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderItemInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -30,14 +31,6 @@ class Cart
      */
     protected $logger;
     /**
-     * @var CatalogProduct
-     */
-    protected $catalogProduct;
-    /**
-     * @var Configurable
-     */
-    protected $configurableProduct;
-    /**
      * @var PricingHelper
      */
     protected $pricingHelper;
@@ -49,10 +42,6 @@ class Cart
      * @var CookieManager
      */
     protected $cookieManager;
-    /**
-     * @var Dir
-     */
-    protected $moduleDirs;
     /**
      * @var Api
      */
@@ -71,38 +60,29 @@ class Cart
     protected $pixlee;
 
     /**
-     * @param CatalogProduct $catalogProduct
-     * @param Configurable $configurableProduct
      * @param PricingHelper $pricingHelper
      * @param StoreManagerInterface $storeManager
      * @param SerializerInterface $serializer
      * @param CookieManager $cookieManager
-     * @param Dir $moduleDirs
      * @param Api $apiConfig
      * @param PixleeLogger $logger
      * @param ProductMetadataInterface $productMetadata
      * @param Pixlee $pixlee
      */
     public function __construct(
-        CatalogProduct $catalogProduct,
-        Configurable $configurableProduct,
         PricingHelper $pricingHelper,
         StoreManagerInterface $storeManager,
         SerializerInterface $serializer,
         CookieManager $cookieManager,
-        Dir $moduleDirs,
         Api $apiConfig,
         PixleeLogger $logger,
         ProductMetadataInterface $productMetadata,
         Pixlee $pixlee
     ) {
-        $this->catalogProduct = $catalogProduct;
-        $this->configurableProduct = $configurableProduct;
         $this->pricingHelper = $pricingHelper;
         $this->storeManager = $storeManager;
         $this->serializer = $serializer;
         $this->cookieManager = $cookieManager;
-        $this->moduleDirs = $moduleDirs;
         $this->apiConfig = $apiConfig;
         $this->logger = $logger;
         $this->productMetadata = $productMetadata;
@@ -117,14 +97,11 @@ class Cart
      */
     public function extractProduct($product)
     {
-        $this->logger->addInfo("Passed product class: " . get_class($product));
-        $this->logger->addInfo("Passed product ID: {$product->getId()}");
-        $this->logger->addInfo("Passed product SKU: {$product->getSku()}");
-        $this->logger->addInfo("Passed product type: {$product->getTypeId()}");
+        $this->logger->addInfo("extractProduct - ID: {$product->getId()}, SKU: {$product->getSku()}, type: {$product->getTypeId()}");
 
         $productData = [];
 
-        if ($product->getId() && is_a($product, Interceptor::class)) {
+        if ($product->getId()) {
             // Add to Cart and Remove from Cart
             $productData['product_id']    = (int) $product->getId();
             $productData['product_sku']   = $product->getData('sku');
@@ -134,87 +111,93 @@ class Cart
             $productData['price']         = $this->pricingHelper->currency($product->getPrice(), true, false);
             $productData['quantity']      = (int) $product->getQty();
             $productData['currency']      = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
-        } elseif ($product->getId() && is_a($product, SalesItem::class)) {
-            // Checkout Start and Conversion
-            $actualProduct = $product->getProduct();
-
-            // TIME TO JUMP THROUGH HOOPS FOR CONFIGURABLE PRODUCTS YAYYYYYY
-            // Now that we have what we think is the actual product, try to find a
-            // parent product (Note: This parent product is essentially generated from the variant SKU)
-            $maybeParentIds = $this->configurableProduct->getParentIdsByChild($actualProduct->getId());
-            $maybeParentId = empty($maybeParentIds) ? null : $maybeParentIds[0];
-            $maybeParentFromSkuProduct = $this->catalogProduct->load($maybeParentId);
-            $this->logger->addInfo("Maybe my parent class (from SKU): " . get_class($maybeParentFromSkuProduct));
-            $this->logger->addInfo("Maybe my parent ID (from SKU): {$maybeParentFromSkuProduct->getId()}");
-            $this->logger->addInfo("Maybe my parent SKU (from SKU): {$maybeParentFromSkuProduct->getSku()}");
-            $this->logger->addInfo("Maybe my parent type (from SKU): {$maybeParentFromSkuProduct->getTypeId()}");
-
-            if ($maybeParentFromSkuProduct->getId() === null) {
-                $this->logger->addInfo("Ended up with null parent object, using self (probably 'simple' type)");
-                $maybeParent = $actualProduct;
-            } else {
-                $maybeParent = $maybeParentFromSkuProduct;
-            }
-
-            $productData['variant_id']    = $actualProduct->getId();
-            $productData['variant_sku']   = $actualProduct->getSku();
-            $productData['quantity']      = round((float)$product->getQtyOrdered());
-            $productData['price']         = $this->pricingHelper->currency($actualProduct->getPrice(), true, false); // Get price in the main currency of the store. (USD, EUR, etc.)
-            $productData['product_id']    = $maybeParent->getId();
-            $productData['product_sku']   = $maybeParent->getData('sku');
-            $productData['currency']      = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
         }
+
+        if (empty($productData)) {
+            $this->logger->error("Cart extractProduct ERROR - No product data found");
+        }
+
         return $productData;
     }
 
     /**
-     * @param $quote
-     * @return false
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
+     * @param OrderInterface $order
+     * @return false|string
      */
-    public function extractCart($quote)
+    public function getConversionPayload($order)
     {
-        if (is_a($quote, SalesOrder::class)) {
-            foreach ($quote->getAllItems() as $item) {
-                // $quote->getAllVisibleItems will actually give us only 'configurable' items
-                // ...when we COULD use with more data from 'simple' items
-                // It might be less robust? Let's see how we all feel about this
-                if ($item->getProduct()->getTypeId() == 'configurable') {
-                    $this->logger->addInfo("Skipping configurable item: {$item->getId()}");
-                } else {
-                    $cartData['cart_contents'][] = $this->extractProduct($item);
-                }
-            }
+        $cartData['cart_contents'] = $this->getCartContents($order);
+        $cartData['cart_total'] = $order->getGrandTotal();
+        $cartData['email'] = $order->getCustomerEmail();
+        $cartData['cart_type'] = Pixlee::PLATFORM;
+        $cartData['cart_total_quantity'] = (int) $order->getData('total_qty_ordered');
+        $cartData['billing_address'] = $this->extractAddress($order->getBillingAddress());
+        $cartData['shipping_address'] = $this->extractAddress($order->getShippingAddress());
+        $cartData['order_id'] = (int) $order->getData('entity_id');
+        $cartData['currency'] = $order->getData('base_currency_code');
+        $this->logger->addInfo($this->serializer->serialize($cartData));
 
-            $cartData['cart_total'] = $quote->getGrandTotal();
-            $cartData['email'] = $quote->getCustomerEmail();
-            $cartData['cart_type'] = Pixlee::PLATFORM;
-            $cartData['cart_total_quantity'] = (int) $quote->getData('total_qty_ordered');
-            $cartData['billing_address'] = $this->extractAddress($quote->getBillingAddress());
-            $cartData['shipping_address'] = $this->extractAddress($quote->getShippingAddress());
-            $cartData['order_id'] = (int) $quote->getData('entity_id');
-            $cartData['currency'] = $quote->getData('base_currency_code');
-            $this->logger->addInfo($this->serializer->serialize($cartData));
-            return $cartData;
+        return $this->preparePayload($order->getStore(), $cartData);
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @return array
+     */
+    protected function getCartContents($order)
+    {
+        $cartContents = [];
+        /** @var OrderItemInterface $item */
+        foreach ($order->getAllVisibleItems() as $item) {
+            $cartContents[] = $this->extractItem($item, $order->getOrderCurrency());
         }
 
-        return false;
+        return $cartContents;
+    }
+
+    /**
+     * @param OrderItemInterface $item
+     * @param DirectoryCurrency $currency
+     * @return array
+     */
+    public function extractItem($item, $currency)
+    {
+        $itemData = [];
+        if ($item->getProductType() === Configurable::TYPE_CODE) {
+            foreach ($item->getChildrenItems() as $childItem) {
+                $itemData['variant_id'] = $childItem->getProductId();
+                $itemData['variant_sku'] = $childItem->getSku();
+                break;
+            }
+        }
+        $itemData['quantity'] = round((float)$item->getQtyOrdered());
+        $itemData['price'] = $currency->format($item->getPrice(), ['display' => Currency::NO_SYMBOL], false);
+        $itemData['product_id'] = $item->getProductId();
+        $itemData['product_sku'] = $this->getItemSku($item);
+        $itemData['currency'] = $currency->getCode();
+
+        return $itemData;
+    }
+
+    /**
+     * @param $item
+     * @return string
+     */
+    public function getItemSku($item)
+    {
+        if ($item->getProductType() === Bundle::TYPE_CODE) {
+            return $item->getProduct()->getSku();
+        }
+        return $item->getSku();
     }
 
     /**
      * @param $address
-     * @return string
+     * @return string The API expects a serialized string
      */
     public function extractAddress($address)
     {
-        // 2016-03-21, Yunfan
-        // Something went wonky with my caches, and it always asks me to 'update'
-        // my address when I input it - this fixes whatever weird edge case I'm running
-        // into right now, and shouldn't hurt the normal case
-        if ($address === null) {
-            $sortedAddress = [];
-        } else {
+        try {
             $sortedAddress = [
                 'street'    => $address->getStreet(),
                 'city'      => $address->getCity(),
@@ -222,9 +205,13 @@ class Cart
                 'country'   => $address->getCountryId(),
                 'zipcode'   => $address->getPostcode()
             ];
+
+            return $this->serializer->serialize($sortedAddress);
+        } catch (Exception $e) {
+            $this->logger->error("Cart extractAddress ERROR", ['exception' => $e]);
         }
-        $jsonAddress = $this->serializer->serialize($sortedAddress);
-        return $jsonAddress ?: '{}';
+
+        return '{}';
     }
 
     /**
@@ -252,12 +239,13 @@ class Cart
             $this->logger->addInfo("Sending payload: " . $serializedPayload);
             return $serializedPayload;
         }
+
         $this->logger->addInfo("Analytics event not sent because the cookie wasn't found");
         return false;
     }
 
     /**
-     * @return array|null
+     * @return array|bool
      */
     protected function getPixleeCookie()
     {
