@@ -1,7 +1,7 @@
 {
     "name": "pixlee/magento2",
     "description": "Social commerce platform to collect, curate, and display user-generated content to enhance your Magento store",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "type": "magento2-module",
     "license": [
         "OSL-3.0"
