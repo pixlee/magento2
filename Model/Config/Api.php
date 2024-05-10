@@ -102,18 +102,11 @@ class Api
      */
     public function getPrivateApiKey($scopeType, $scopeCode)
     {
-        $privateApiKey = $this->scopeConfig->getValue(
+        return $this->scopeConfig->getValue(
             self::PIXLEE_PRIVATE_API_KEY,
             $scopeType,
             $scopeCode
         );
-
-        /* Fallback can be removed after API requirements are updated */
-        if (empty($privateApiKey)) {
-            $privateApiKey = $this->getApiKey($scopeType, $scopeCode);
-        }
-
-        return $privateApiKey;
     }
 
     /**

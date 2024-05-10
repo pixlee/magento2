@@ -115,7 +115,7 @@ class Analytics implements AnalyticsServiceInterface
                 }
             }
             // Required key/value pairs not in the payload by default.
-            $payload['API_KEY']= $this->apiConfig->getPrivateApiKey(ScopeInterface::SCOPE_STORES, $store->getCode());
+            $payload['API_KEY']= $this->apiConfig->getApiKey(ScopeInterface::SCOPE_STORES, $store->getCode());
             $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
             $payload['ecommerce_platform'] = Pixlee::PLATFORM;
             $payload['ecommerce_platform_version'] = $this->productMetadata->getVersion();
