@@ -11,121 +11,71 @@ use Exception;
 use Magento\Bundle\Model\Product\Type as Bundle;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Directory\Model\Currency as DirectoryCurrency;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Currency\Data\Currency;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Pricing\Helper\Data as PricingHelper;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderItemInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
-use Pixlee\Pixlee\Model\Config\Api;
 
 class Cart
 {
-    /**
-     * @var PixleeLogger
-     */
-    protected $logger;
-    /**
-     * @var PricingHelper
-     */
-    protected $pricingHelper;
-    /**
-     * @var StoreManagerInterface
-     */
-    protected $storeManager;
-    /**
-     * @var CookieManager
-     */
-    protected $cookieManager;
-    /**
-     * @var Api
-     */
-    protected $apiConfig;
     /**
      * @var SerializerInterface
      */
     protected $serializer;
     /**
-     * @var ProductMetadataInterface
+     * @var PixleeLogger
      */
-    protected $productMetadata;
-    /**
-     * @var Pixlee
-     */
-    protected $pixlee;
+    protected $logger;
 
     /**
-     * @param PricingHelper $pricingHelper
-     * @param StoreManagerInterface $storeManager
      * @param SerializerInterface $serializer
-     * @param CookieManager $cookieManager
-     * @param Api $apiConfig
      * @param PixleeLogger $logger
-     * @param ProductMetadataInterface $productMetadata
-     * @param Pixlee $pixlee
      */
     public function __construct(
-        PricingHelper $pricingHelper,
-        StoreManagerInterface $storeManager,
         SerializerInterface $serializer,
-        CookieManager $cookieManager,
-        Api $apiConfig,
-        PixleeLogger $logger,
-        ProductMetadataInterface $productMetadata,
-        Pixlee $pixlee
+        PixleeLogger $logger
     ) {
-        $this->pricingHelper = $pricingHelper;
-        $this->storeManager = $storeManager;
         $this->serializer = $serializer;
-        $this->cookieManager = $cookieManager;
-        $this->apiConfig = $apiConfig;
         $this->logger = $logger;
-        $this->productMetadata = $productMetadata;
-        $this->pixlee = $pixlee;
     }
 
     /**
      * @param $product
      * @return array
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
     public function extractProduct($product)
     {
-        $this->logger->addInfo("extractProduct - ID: {$product->getId()}, SKU: {$product->getSku()}, type: {$product->getTypeId()}");
-
-        $productData = [];
-
-        if ($product->getId()) {
-            // Add to Cart and Remove from Cart
-            $productData['product_id']    = (int) $product->getId();
-            $productData['product_sku']   = $product->getData('sku');
-            $productData['variant_id']    = (int) $product->getIdBySku($product->getSku());
-            $productData['variant_sku']   = $product->getSku();
-            // Get price in the main currency of the store. (USD, EUR, etc.)
-            $productData['price']         = $this->pricingHelper->currency($product->getPrice(), true, false);
-            $productData['quantity']      = (int) $product->getQty();
-            $productData['currency']      = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
-        }
-
-        if (empty($productData)) {
-            $this->logger->error("Cart extractProduct ERROR - No product data found");
-        }
+        $this->logger->addInfo("Cart extractProduct - ID: {$product->getId()}, SKU: {$product->getSku()}, type: {$product->getTypeId()}");
+        $currency = $product->getStore()->getCurrentCurrency();
+        $productData['product_id'] = (int) $product->getId();
+        $productData['product_sku'] = $product->getData('sku');
+        $productData['variant_id'] = (int) $product->getIdBySku($product->getSku());
+        $productData['variant_sku'] = $product->getSku();
+        $productData['price'] = $currency->format($this->getProductPrice($product), ['display' => Currency::NO_SYMBOL], false);
+        $productData['quantity'] = (int) $product->getQty();
+        $productData['currency'] = $currency->getCode();
+        $this->logger->addInfo($this->serializer->serialize($productData));
 
         return $productData;
     }
 
     /**
-     * @param OrderInterface $order
-     * @return false|string
+     * @param $product
+     * @return string|float
+     */
+    public function getProductPrice($product)
+    {
+        return $product->getQuoteItemPrice() ?: $product->getFinalPrice() ?: $product->getPrice();
+    }
+
+    /**
+     * @param $order
+     * @return array
      */
     public function getConversionPayload($order)
     {
+        $this->logger->addInfo("Cart getConversionPayload - Order ID: {$order->getId()}}");
         $cartData['cart_contents'] = $this->getCartContents($order);
         $cartData['cart_total'] = $order->getGrandTotal();
         $cartData['email'] = $order->getCustomerEmail();
@@ -137,14 +87,14 @@ class Cart
         $cartData['currency'] = $order->getData('base_currency_code');
         $this->logger->addInfo($this->serializer->serialize($cartData));
 
-        return $this->preparePayload($order->getStore(), $cartData);
+        return $cartData;
     }
 
     /**
      * @param OrderInterface $order
      * @return array
      */
-    protected function getCartContents($order)
+    public function getCartContents($order)
     {
         $cartContents = [];
         /** @var OrderItemInterface $item */
@@ -173,22 +123,10 @@ class Cart
         $itemData['quantity'] = round((float)$item->getQtyOrdered());
         $itemData['price'] = $currency->format($item->getPrice(), ['display' => Currency::NO_SYMBOL], false);
         $itemData['product_id'] = $item->getProductId();
-        $itemData['product_sku'] = $this->getItemSku($item);
+        $itemData['product_sku'] = $item->getProduct()->getSku();
         $itemData['currency'] = $currency->getCode();
 
         return $itemData;
-    }
-
-    /**
-     * @param $item
-     * @return string
-     */
-    public function getItemSku($item)
-    {
-        if ($item->getProductType() === Bundle::TYPE_CODE) {
-            return $item->getProduct()->getSku();
-        }
-        return $item->getSku();
     }
 
     /**
@@ -212,48 +150,5 @@ class Cart
         }
 
         return '{}';
-    }
-
-    /**
-     * @param $store
-     * @param $extraData
-     * @return false|string
-     */
-    public function preparePayload($store, $extraData = [])
-    {
-        if ($payload = $this->getPixleeCookie()) {
-            foreach ($extraData as $key => $value) {
-                // Don't overwrite existing data.
-                if (!isset($payload[$key])) {
-                    $payload[$key] = $value;
-                }
-            }
-            // Required key/value pairs not in the payload by default.
-            $payload['API_KEY']= $this->apiConfig->getPrivateApiKey(ScopeInterface::SCOPE_STORES, $store->getId());
-            $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
-            $payload['ecommerce_platform'] = Pixlee::PLATFORM;
-            $payload['ecommerce_platform_version'] = $this->productMetadata->getVersion();
-            $payload['version_hash'] = $this->pixlee->getExtensionVersion();
-            $payload['region_code'] = $store->getCode();
-            $serializedPayload = $this->serializer->serialize($payload);
-            $this->logger->addInfo("Sending payload: " . $serializedPayload);
-            return $serializedPayload;
-        }
-
-        $this->logger->addInfo("Analytics event not sent because the cookie wasn't found");
-        return false;
-    }
-
-    /**
-     * @return array|bool
-     */
-    protected function getPixleeCookie()
-    {
-        $cookie = $this->cookieManager->get();
-        if (isset($cookie)) {
-            return $this->serializer->unserialize($cookie);
-        }
-
-        return false;
     }
 }

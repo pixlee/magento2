@@ -82,7 +82,7 @@ class CheckoutSuccessObserver implements ObserverInterface
                 /** @var OrderInterface $order */
                 foreach ($orders as $order) {
                     $conversionPayload = $this->pixleeCart->getConversionPayload($order);
-                    $this->analytics->sendEvent('checkoutSuccess', $conversionPayload);
+                    $this->analytics->sendEvent('checkoutSuccess', $conversionPayload, $order->getStore());
                 }
             }
         } catch (Exception $e) {
@@ -94,7 +94,7 @@ class CheckoutSuccessObserver implements ObserverInterface
      * @param Event $event
      * @return array|Collection
      */
-    protected function getOrders($event)
+    public function getOrders($event)
     {
         if ($order = $event->getOrder()) {
             return [$order];
