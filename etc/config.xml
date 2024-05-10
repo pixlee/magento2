@@ -11,6 +11,11 @@
             <products>
                 <export_enabled>1</export_enabled>
             </products>
+            <existing_customers>
+                <account_settings>
+                    <private_api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                </account_settings>
+            </existing_customers>
         </pixlee_pixlee>
     </default>
 </config>

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Service;
 
+use Exception;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Serialize\SerializerInterface;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
@@ -90,16 +91,20 @@ class Distillery implements PixleeServiceInterface
      */
     public function notifyExportStatus($status, $jobId, $numProducts)
     {
-        $path = 'v1/notifyExportStatus';
-        $payload = [
-            'api_key' => $this->apiConfig->getApiKey($this->scopeType, $this->scopeCode),
-            'status' => $status,
-            'job_id' => $jobId,
-            'num_products' => $numProducts,
-            'platform' => Pixlee::PLATFORM
-        ];
+        try {
+            $path = 'v1/notifyExportStatus';
+            $payload = [
+                'api_key' => $this->apiConfig->getPrivateApiKey($this->scopeType, $this->scopeCode),
+                'status' => $status,
+                'job_id' => $jobId,
+                'num_products' => $numProducts,
+                'platform' => Pixlee::PLATFORM
+            ];
 
-        $this->post($path, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+            $this->post($path, json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        } catch (Exception $e) {
+            $this->logger->error($e->getMessage(), ['exception' => $e]);
+        }
     }
 
     /**
@@ -196,7 +201,7 @@ class Distillery implements PixleeServiceInterface
      */
     protected function getRequiredQueryString()
     {
-        return '?api_key=' . $this->apiConfig->getApiKey($this->scopeType, $this->scopeCode);
+        return '?api_key=' . $this->apiConfig->getPrivateApiKey($this->scopeType, $this->scopeCode);
     }
 
     /**
