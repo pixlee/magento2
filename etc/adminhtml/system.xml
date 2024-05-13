@@ -35,6 +35,14 @@
                         </depends>
 	                </field>
 
+                    <field id="private_api_key" translate="label" type="obscure" sortOrder="20"  showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Private API Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <depends>
+                            <field id="active">1</field>
+                        </depends>
+                    </field>
+
 					<!-- Secret Key -->
 					<field id="secret_key" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="0">
 	                    <label>Secret Key</label>

@@ -7,9 +7,9 @@
 namespace Pixlee\Pixlee\Observer;
 
 use Exception;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -39,15 +39,10 @@ class AddToCartObserver implements ObserverInterface
      * @var AnalyticsServiceInterface
      */
     protected $analytics;
-    /**
-     * @var SerializerInterface
-     */
-    protected $serializer;
 
     /**
      * @param PixleeLogger $logger
      * @param StoreManagerInterface $storeManager
-     * @param SerializerInterface $serializer
      * @param Cart $pixleeCart
      * @param Api $apiConfig
      * @param AnalyticsServiceInterface $analytics
@@ -55,14 +50,12 @@ class AddToCartObserver implements ObserverInterface
     public function __construct(
         PixleeLogger $logger,
         StoreManagerInterface $storeManager,
-        SerializerInterface $serializer,
         Cart $pixleeCart,
         Api $apiConfig,
         AnalyticsServiceInterface $analytics
     ) {
         $this->logger = $logger;
         $this->storeManager = $storeManager;
-        $this->serializer = $serializer;
         $this->pixleeCart = $pixleeCart;
         $this->apiConfig = $apiConfig;
         $this->analytics = $analytics;
@@ -75,14 +68,11 @@ class AddToCartObserver implements ObserverInterface
     public function execute(EventObserver $observer)
     {
         try {
-            $store = $this->storeManager->getStore();
-
-            if ($this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $store->getId())) {
+            if ($this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $this->storeManager->getStore()->getCode())) {
+                /** @var ProductInterface $product */
                 $product = $observer->getEvent()->getData('product');
                 $productData = $this->pixleeCart->extractProduct($product);
-                $payload = $this->pixleeCart->preparePayload($store, $productData);
-                $this->analytics->sendEvent('addToCart', $payload);
-                $this->logger->addInfo('AddToCart ' . $this->serializer->serialize($payload));
+                $this->analytics->sendEvent('addToCart', $productData, $product->getStore());
             }
         } catch (Exception $e) {
             $this->logger->error($e->getMessage(), ['exception' => $e]);
