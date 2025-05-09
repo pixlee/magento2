@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -19,6 +19,12 @@ class Pixlee
 {
     const MODULE_NAME = 'Pixlee_Pixlee';
     const PLATFORM = 'magento_2';
+
+    /**
+     * @var string
+     */
+    protected $version;
+
     /**
      * @var ComponentRegistrarInterface
      */

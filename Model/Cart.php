@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Model;
 
 use Exception;
-use Magento\Bundle\Model\Product\Type as Bundle;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Directory\Model\Currency as DirectoryCurrency;
 use Magento\Framework\Currency\Data\Currency;
