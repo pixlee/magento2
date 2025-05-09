@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -56,16 +56,16 @@ class Export extends Field
     {
         $scope = $this->apiConfig->getScope($this->websiteId);
         if ($this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
-            return 'Export your products to Pixlee and start collecting photos.';
+            return 'Export your products to Emplifi and start collecting photos.';
         }
-        return 'Export products for current website to Pixlee';
+        return 'Export products for current website to Emplifi';
     }
 
     public function getButtonHtml()
     {
         $buttonData = [
             'id' => 'pixlee_export_button',
-            'label' => __('Export Products to Pixlee'),
+            'label' => __('Export Products to Emplifi'),
             'onclick' => 'javascript:exportToPixlee(\''.$this->getAjaxExportUrl().'\'); return false;'
         ];
 
