@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Model\Logger;
 
 use Magento\Framework\Logger\Handler\System;
-use Monolog\Level;
+use Monolog\Logger;
 
 class Handler extends System
 {
@@ -18,7 +18,8 @@ class Handler extends System
     protected $fileName = '/var/log/pixlee.log';
 
     /**
+     * Must use Logger::INFO for backwards compatibility
      * @var int
      */
-    protected $loggerType = Level::Info;
+    protected $loggerType = Logger::INFO;
 }
