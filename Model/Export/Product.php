@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Model\Export;
 
+use Exception;
+use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Media\Config;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\Catalog\Model\ProductFactory;
@@ -31,6 +33,7 @@ use Pixlee\Pixlee\Model\Pixlee;
 
 class Product
 {
+    protected const PAGE_SIZE = 100;
     /**
      * @var PixleeServiceInterface
      */
@@ -154,55 +157,36 @@ class Product
      * @param string|int $websiteId
      * @return void
      * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
     public function exportProducts($websiteId)
     {
         if ($this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
-            // Pagination variables
-            $num_products = $this->getTotalProductsCount($websiteId);
-            $counter = 0;
-            $limit = 100;
-            $offset = 0;
+            $collection = $this->getProductCollection($websiteId);
+            $collection->setPageSize(self::PAGE_SIZE);
+            $count = 0;
+            $curPage = 1;
+            $lastPage = $collection->getLastPageNumber();
+            $break = false;
             $job_id = uniqid();
             $this->pixleeService->setScope(ScopeInterface::SCOPE_WEBSITES, $websiteId);
-            $this->pixleeService->notifyExportStatus('started', $job_id, $num_products);
+            $this->pixleeService->notifyExportStatus('started', $job_id, $collection->getSize());
             $categoriesMap = $this->getCategoriesMap();
-
-            while ($offset < $num_products) {
-                $products = $this->getPaginatedProducts($limit, $offset, $websiteId);
-                $offset = $offset + $limit;
-
-                foreach ($products as $product) {
-                    $counter++;
-                    $this->exportProductToPixlee($product, $categoriesMap, $websiteId);
+            $store = $this->storeManager->getWebsite($websiteId)->getDefaultStore();
+            while (!$break) {
+                $collection->clear()
+                    ->setCurPage($curPage);
+                if ($lastPage == $curPage) {
+                    $break = true;
+                }
+                $curPage++;
+                foreach ($collection as $product) {
+                    $this->exportProductToPixlee($product, $categoriesMap, $websiteId, $store);
+                    $count++;
                 }
             }
 
-            $this->pixleeService->notifyExportStatus('finished', $job_id, $counter);
+            $this->pixleeService->notifyExportStatus('finished', $job_id, $count);
         }
-    }
-
-    /**
-     * @param $websiteId
-     * @return int
-     */
-    public function getTotalProductsCount($websiteId)
-    {
-        $collection = $this->productCollection->create();
-        $collection->addFieldToFilter(
-            'visibility',
-            [
-                'in' =>
-                    [
-                        Visibility::VISIBILITY_BOTH,
-                        Visibility::VISIBILITY_IN_CATALOG
-                    ]
-            ]
-        );
-        $collection->addFieldToFilter('status', ['neq' => 2]);
-        $collection->addWebsiteFilter($websiteId);
-        return $collection->getSize();
     }
 
     /**
@@ -250,15 +234,13 @@ class Product
     }
 
     /**
-     * @param $limit
-     * @param $offset
      * @param $websiteId
      * @return ProductResource\Collection
      */
-    public function getPaginatedProducts($limit, $offset, $websiteId)
+    public function getProductCollection($websiteId)
     {
-        $products = $this->productCollection->create();
-        $products->addFieldToFilter(
+        $collection = $this->productCollection->create();
+        $collection->addFieldToFilter(
             'visibility',
             [
                 'in' =>
@@ -268,23 +250,21 @@ class Product
                     ]
             ]
         );
-        $products->addFieldToFilter('status', ['neq' => 2]);
-        $products->addWebsiteFilter($websiteId);
-        $products->getSelect()->limit($limit, $offset);
-        $products->addAttributeToSelect('*');
+        $collection->addFieldToFilter('status', ['neq' => Status::STATUS_DISABLED]);
+        $collection->addWebsiteFilter($websiteId);
 
-        return $products;
+        return $collection;
     }
 
     /**
      * @param $product
      * @param $categoriesMap
      * @param $websiteId
+     * @param $store
      * @return void
      * @throws LocalizedException
-     * @throws NoSuchEntityException
      */
-    public function exportProductToPixlee($product, $categoriesMap, $websiteId)
+    public function exportProductToPixlee($product, $categoriesMap, $websiteId, $store)
     {
         if (!$this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
             return;
@@ -307,10 +287,10 @@ class Product
         $productInfo = [
             'name' => $product->getName(),
             'sku' => $product->getSku(),
-            'product_url' => $this->getProductUrl($product, $websiteId),
+            'product_url' => $this->getProductUrl($product, $store),
             'product_image' => $productImageUrl,
             'product_id' => (int) $product->getId(),
-            'currency_code' => $this->storeManager->getStore()->getCurrentCurrency()->getCode(),
+            'currency_code' => $store->getCurrentCurrency()->getCode(),
             'price' => $product->getFinalPrice(),
             'regional_info' => $this->getRegionalInformation($websiteId, $product),
             'stock' => $this->getAggregateStock($product),
@@ -325,15 +305,11 @@ class Product
 
     /**
      * @param $product
-     * @param string|int $websiteId
+     * @param $store
      * @return string
-     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    protected function getProductUrl($product, $websiteId) {
-        // Pixlee works off of website ID, but for this we want a store ID. This fetches the default store from
-        // the website ID
-        $storeId = $this->storeManager->getWebsite($websiteId)->getDefaultStore()->getId();
-
+    protected function getProductUrl($product, $store) {
         // Ported from TurnTo Magento Extension
         // Due to core bug, it is necessary to retrieve url using this method (see https://github.com/magento/magento2/issues/3074)
         $urlRewrite = $this->urlFinder->findOneByData(
@@ -341,12 +317,12 @@ class Product
                 UrlRewrite::ENTITY_ID => $product->getId(),
                 UrlRewrite::ENTITY_TYPE =>
                     ProductUrlRewriteGenerator::ENTITY_TYPE,
-                UrlRewrite::STORE_ID => $storeId
+                UrlRewrite::STORE_ID => $store->getId()
             ]
         );
 
         if (isset($urlRewrite)) {
-            return $this->getAbsoluteUrl($urlRewrite->getRequestPath(), $storeId);
+            return $this->getAbsoluteUrl($urlRewrite->getRequestPath(), $store);
         }
 
         return $product->getProductUrl();
@@ -354,13 +330,13 @@ class Product
 
     /**
      * @param $relativeUrl
-     * @param $storeId
+     * @param $store
      * @return string
      * @throws NoSuchEntityException
      */
-    protected function getAbsoluteUrl($relativeUrl, $storeId)
+    protected function getAbsoluteUrl($relativeUrl, $store)
     {
-        $storeUrl = $this->storeManager->getStore($storeId)->getBaseUrl();
+        $storeUrl = $store->getBaseUrl();
         return rtrim($storeUrl, '/') . '/' . ltrim($relativeUrl, '/');
     }
 
@@ -370,6 +346,7 @@ class Product
      * @return array
      * @throws NoSuchEntityException
      * @throws LocalizedException
+     * @throws Exception
      */
     public function getRegionalInformation($websiteId, $product)
     {
