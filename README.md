@@ -1,9 +1,9 @@
-# Pixlee Turnto Social UGC plugin for Magento 2
+# Emplifi UGC plugin for Magento 2 / Adobe Commerce
 
 To view these docs online, navigate to:
 https://developers.pixlee.com/docs/magento-2
 
-Use this Magento 2 extension to connects to Emplifi's Pixlee TurnTo Social UGC service. Compatible with Magento Open Source and Adobe Commerce, versions 2.3.x - 2.4.6.
+Use this Magento 2 extension to connect to Emplifi's UGC service. Compatible with Magento Open Source and Adobe Commerce, versions 2.3 - 2.4.
 * * *
 
 ## Installation Instructions
@@ -18,13 +18,13 @@ Composer Package [pixlee/magento2](https://packagist.org/packages/pixlee/magento
 
     ```bash
     composer require pixlee/magento2
-    bin/magento module:enable TurnTo_SocialCommerce --clear-static-content
+    bin/magento module:enable Pixlee_Pixlee --clear-static-content
     bin/magento setup:upgrade
     bin/magento setup:di:compile
     bin/magento cache:clean
     ```
 
-2. Configure the module to connect to your Pixlee account. Please see the Setup section below.
+2. Configure the module to connect to your Emplifi UGC account. Please see the Setup section below.
 
 ### Install by copying files
 
@@ -40,165 +40,104 @@ Composer Package [pixlee/magento2](https://packagist.org/packages/pixlee/magento
     bin/magento cache:clean
     ```
 
-5. Configure the module to connect to your Pixlee account. Please see the Setup section below.
+5. Configure the module to connect to your Emplifi UGC account. Please see the Setup section below.
 
 * * *
 
 ## Setup
 
-### Get Your Pixlee API Keys
+### Configure the Emplifi UGC Magento 2 Module
 
-To connect to Pixlee, you will need your **API Key** and **Secret Key** from [https://app.pixlee.com](https://app.pixlee.com).
+Select **Stores** > **Configuration** on the main menu. Then select **Emplifi (Pixlee)** > **UGC** in the left navigation menu.
 
-1. Log in to [https://app.pixlee.com](https://app.pixlee.com)
-2. Click on the [Settings](https://app.pixlee.com/app#settings/account_settings) link inside the top right hamburger menu.
+The Emplifi UGC account settings can be configured at the Website, Store, or Store view depending on account setup. For
+each UGC account, select the desired cope in the scope (store view) dropdown menu and enter the account configurations.
 
-   ![](https://files.readme.io/35a1ef3-01_09_pixlee_dashboard.png "01_09_pixlee_dashboard.png")
-
-   The settings page should look like this:
-
-   ![](https://files.readme.io/47d7746-01_10_account_settings.png "01_10_account_settings.png")
-
-3. Click on **Pixlee API** on the left-hand navigation bar.
-
-   From this page, record the values of **Account ID**, **Account API Key**, and **Account Secret Key** to be used in the Magento store configurations.
-
-   ![](https://files.readme.io/e34dfe7-01_11_pixlee_api.png "01_11_pixlee_api.png")
-
-### Configure the Pixlee Magento 2 Module
-
-Select **Stores** > **Configuration** on the main menu.
-
-The Pixlee configurations are managed at the website level. At the top of the page, select the desired website using the store view dropdown menu.
-
-> ### 🚧
->
-> Note
->
-> If you keep the **Store View** as **Default Config** then the **Pixlee Tab** will not appear.
-
-![](https://files.readme.io/ac7397d-04_10_magento2_store_view.png "04_10_magento2_store_view.png")
-
-In the left Navigation panel, click **Pixlee** > **Existing Customers**.
-
-![](https://files.readme.io/38d8841-04_02_magento2_configuration.png "04_02_magento2_configuration.png")
+![](https://files.readme.io/b27deee-ApiSettings.png "04_02_magento2_configuration.png")
 
 1. Set **Enable** to *Yes*
-2. Fill in **API Key** and **Secret Key** with the User API Key and Account Secret Key from [https://app.pixlee.com](https://app.pixlee.com). (see Get Your Pixlee API Keys above)
+2. Fill in **API Key**, **Private API Key**, and **Secret Key** with the API keys from your Emplifi Account. [Getting you API Keys](https://developers.pixlee.com/docs/getting-your-api-keys)
 3. Click **Save Config** in the top right corner of the page to save your Account Settings.
 
-### Exporting Products from Magento 2 to Pixlee
+### Exporting Products from Magento to Emplifi
 
 #### Recurring Product Export Cron Job
 
-The Magento 2 extension sets up a cron job that exports products to Pixlee on a daily basis from website 1. This will help ensure that product data is up-to-date in Pixlee by ensuring new products created in Magento 2 are exported to Pixlee daily.
+The extension sets up a cron job that exports products to Emplifi on a daily basis. This will keep product
+data up-to-date in Emplifi by exporting new product data and updated data for existing products to Emplifi.
 
-> 📘 NOTE
->
-> At this time, only website 1 exports products via the cron. Additional websites will have to be exported manually using the Export Products to Pixlee button in the Admin.
+#### Change Product Export Run Time
 
-#### Update the time and frequency at which products are exported to Pixlee
+By default, products will be exported daily at 3am UTC. If this time causes an issue, you can change the time that the
+product export runs by updating the cron schedule in Magento.
 
-Products will be exported on a daily basis at 3am UTC. If you wish to change the hour in which the products are exported do the following:
+1.  Create a copy of the extension's crontab.xml in your Magento 2 directory on the server in the app/code/Pixlee/Pixlee/etc directory.
 
-1.  In the Pixlee extension code in your Magento 2 instance, modify $MAGENTO_ROOT/app/code/Pixlee/Pixlee/etc/crontab.xml
-
-2.  To change the hour in the day at which the products are exported, change the 3 in the schedule tag to any hour you like:
+2.  Update the <schedule> time to the time you want the export to run. To change the hour in the day at which the 
+products are exported, change the 3 in the schedule tag to the hour you want the export to run. The example below will 
+run the export at one minute after 5am UTC.
 
     ```xml
     <job name="export_cronjob" instance="Pixlee\Pixlee\Cron\ExportCron" method="execute">
-        <schedule>1 3 * * *</schedule>
+        <schedule>1 5 * * *</schedule>
     </job>
     ```
 
-#### Export Products to Pixlee button
+#### Manually Run Product Export
 
-Website products can be exported from Magento to Pixlee at any time using the **Export Products to Pixlee button**.
-In the Pixlee **Existing Customer > API Settings**, click the **Export Products to Pixlee button** to export all products for the currently selected website only to your Pixlee account. This process can be repeated for each website.
+Products can be exported to Emplifi when required by using the Export Products button.
+In the extension configuration **Products** section, click the **Export Products to Emplifi** button to export all
+products for the currently selected configuration scope to your Emplifi account. This process can be repeated for each scope.
 
-![](https://files.readme.io/0ad06cc-04_03_magento2_export_pressed.png "04_03_magento2_export_pressed.png")
+> ### 🚧 Note
+> If the export times out, ensure the **max_execution_time** configuration for Magento must is set to at least 3600 seconds (1 hour).
+> Magento sets the value to 5 hours by default.
 
-> ### 🚧
->
-> Note
->
-> If you have ever changed the **max_execution_time** variable for Magento, please ensure that it is set to at least 3600 seconds (1 hour). The default should be 18000 seconds, which is fine to leave alone.
+### Embedding PDP Widget on Product Pages
 
-### Embedding a PDP Widget on your Product Page
+After creating a PDP Widget in Emplifi, adding the widget ID to the configuration will add the widget to the product details pages.
 
-After creating a PDP Widget in Pixlee, it can be added product details page.
+1. Log in to [your account](https://app.pixlee.com) and navigate to the [Publish Center](https://app.pixlee.com/app#publish).
 
-1. Go to [https://app.pixlee.com](https://app.pixlee.com), log in, and navigate to the **Publish** tab.
+2. Click the "Publish New PDP Display" button and configure the display per the [documentation](https://docs.emplifi.io/platform/latest/home/publish-a-product-description-page-display-pdp-).
+NOTE - It is recommended that you leave the "Load Priority" setting to "Low priority" when customizing.
 
-    (Alternatively, point your browser to [https://app.pixlee.com/app#publish](https://app.pixlee.com/app#publish) while logged in).
+3. After customizing, click the "Generate Embed Code" button and copy the value for **widgetId** from the snippet or get the ID from the Publish Center.
 
-2. Click the "Install Product Displays" and it should present you with a lightbox that looks like following.
+4. To enable the PDP widget, enter the **widgetId** from the previous step in the **PDP Widget ID** field under **Widget Settings**
+in the Magento store configuration and click **Save Config**.
 
-    ![](https://files.readme.io/ded63e5-Add_PDP_lightbox.png "Add PDP lightbox.png")
+5. To **customize the placement** of the PDP widget, modify _catalog_product_view.xml_. And use the move tag to move the widget block.
 
-3. Customize the widget as you wish. At the end, press the "Generate Embed Code" button and you'll be presented with an embed code. Note - We recommend that you leave the "Load Priority" setting to "Low priority" when customizing.
+    For example, you can create a new `view/frontend/layout/catalog_product_view.xml` file in a custom module in the 
+    app/code directory and use the move tag to move the widget block.
 
-    ![](https://files.readme.io/046e7a9-01_01_pdp_widget_result.png "01_01_pdp_widget_result.png")
-
-    Copy the value for **widgetId** in the resulting code snippet. Fill in this value in the Widget ID field inside Admin > System > Configuration > Pixlee Account Configuration. This the same field that we skipped over in Step 10.
-
-4. Now, to implement the Pixlee PDP widget, simply enter the value next to **widgetId** from the previous step in the **PDP Widget ID** field under the **PDP Widget Settings** section.
-
-    Click **Save Config** on the top right corner of the page to save your Account Settings.
-
-    ![](https://files.readme.io/eb8b0b0-04_04_magento2_pdp_widget_configuration.png "04_04_magento2_pdp_widget_configuration.png")
-
-    With that, any product that has tagged photos in its Pixlee album should now have a widget gallery appear on its product description page.
-
-    To further customize, you can re-publish your PDP widget using Pixlee's **Design Editor**, and use that resulting **widgetId** instead!
-
-    ![](https://files.readme.io/f0dcdaa-04_05_magento2_pdp_widget_example.png "04_05_magento2_pdp_widget_example.png")
-
-5. Furthermore, if you'd like to **customize the placement** of the PDP widget, modify _catalog_product_view.xml_.
-
-    For example, in the Magento 2 sample store (Luma), it'd be in the following file:
-
-    `$MAGENTO_ROOT/app/code/Pixlee/Pixlee/view/frontend/layout/catalog_product_view.xml`
-
-    Where $MAGENTO_ROOT might be something like /var/www or /usr/share/nginx/html, **depending on your installation.**
+    ```xml
+    <move element="product.view.community_gallery" destination="content" after="product.info.main" />
+    ```
 
 ### Embedding a CDP Widget on your Category Pages
 
 The first three steps are exactly the same as embedding a PDP widget as they only involve getting a **widgetId** from the Control Panel.
 
-1.  Go to [https://app.pixlee.com](https://app.pixlee.com), log in, and navigate to the **Publish** tab.
+1. Log in to [your account](https://app.pixlee.com) and navigate to the [Publish Center](https://app.pixlee.com/app#publish).
 
-    (Alternatively, point your browser to [https://app.pixlee.com/app#publish](https://app.pixlee.com/app#publish) while logged in).
+2. Click the "Publish New PDP Display" button and configure the display per the [documentation](https://docs.emplifi.io/platform/latest/home/publish-a-product-description-page-display-pdp-).
+   NOTE - It is recommended that you leave the "Load Priority" setting to "Low priority" when customizing.
 
-2.  Click the "Install Product Displays", and it should present you with a lightbox that looks like following.
+3. After customizing, click the "Generate Embed Code" button and copy the value for **widgetId** from the snippet or get the ID from the Publish Center.
 
-    ![](https://files.readme.io/f7cc7cc-Add_PDP_lightbox.png "Add PDP lightbox.png")
+4. To enable the CDP widget, enter the **widgetId** from the previous step in the **CDP Widget ID** field under **Widget Settings**
+   in the Magento store configuration and click **Save Config**.
 
-3.  Customize the widget as you wish. At the end, press the "Generate Embed Code" button and you'll be presented with an embed code. Note - We recommend that you leave the "Load Priority" setting to "Low priority" when customizing.
+5. To **customize the placement** of the PDP widget, modify _catalog_product_view.xml_. And use the move tag to move the widget block.
 
-    ![](https://files.readme.io/3f7f450-01_01_pdp_widget_result.png "01_01_pdp_widget_result.png")
+   For example, you can create a new `view/frontend/layout/catalog_category_view.xml` file in a custom module in the
+   app/code directory and use the move tag to move the widget block.
 
-    Copy the value for **widgetId** in the resulting code snippet.
-
-4.  Now, to implement the Pixlee CDP widget, simply fill in this value in the **CDP Widget ID** field inside Admin > System > Configuration > Pixlee Account Configuration > CDP Widget ID.
-
-    Click **Save Config** on the top right corner of the page to save your Account Settings.
-
-    ![](https://files.readme.io/304bbf8-04_04_magento2_pdp_widget_configuration.png "04_04_magento2_pdp_widget_configuration.png")
-
-    With that, any product that has tagged photos in its Pixlee album should now have a widget gallery appear on its product description page.
-
-    To further customize, you can re-publish your PDP widget using Pixlee's **Design Editor**, and use that resulting **widgetId** instead!
-
-    ![](https://files.readme.io/97edd93-04_06_magento2_cdp_widget_example.png "04_06_magento2_cdp_widget_example.png")
-
-5.  Furthermore, if you'd like to **customize the placement** of the CDP widget, modify _catalog_category_view.xml_.
-
-    For example, in the Magento 2 sample store (Luma), it'd be in the following file:
-
-    `$MAGENTO_ROOT/app/code/Pixlee/Pixlee/view/frontend/layout/catalog_category_view.xml`
-
-    Where $MAGENTO_ROOT might be something like /var/www or /usr/share/nginx/html, **depending on your installation.**
+   ```xml
+   <move element="product.view.community_gallery" destination="category.product.list.additional" before="-" />
+   ```
 
 * * *
 
@@ -207,17 +146,15 @@ The first three steps are exactly the same as embedding a PDP widget as they onl
 To test that everything was implemented correctly, we need to check two things -
 
 1.  Were all the products exported?
-2.  Are API calls being successfully made to the Pixlee API?
+2.  Are API calls being successfully made to the Emplifi UGC API?
 
 ### Were all the products exported?
 
-Before testing, please make sure that the Pixlee Product Exports job has at least ran once. If you've already run the exports once, skip to step 3.
+Before testing, please make sure that the Product Export job has at least run once. If you have already run the exports once, skip to step 3.
 
-1.  In order to run it manually. Open Admin Panel > Stores > Configuration > Pixlee > Existing Customers. Press the **Export Products to Pixlee** button to start the exports.
+1.  In order to run it manually. Open Admin Panel > Stores > Configuration > Emplifi > UGC. Press the **Export Products to Emplifi** button to start the exports.
 
-    ![](https://files.readme.io/5315bbd-04_03_magento2_export_pressed.png "04_03_magento2_export_pressed.png")
-
-2.  Login to [Pixlee](https://app.pixlee.com) and navigate to **Products** under the **Album** tab. [Alternatively, click this link.](https://app.pixlee.com/app#products).
+2.  Login to your [Emplifi](https://app.pixlee.com) account and navigate to [Products](https://app.pixlee.com/app#products) under the **Album** tab.
 
 3.  You should see a list of products on this page.
 
@@ -225,11 +162,11 @@ Before testing, please make sure that the Pixlee Product Exports job has at leas
 
 4.  Try searching for a few products on this page that you know exist in your catalog.
 
-5.  In case the list is empty or you were not able to search for a particular product, proceed to the next step. Otherwise, proceed straight to the next section i.e. [Are API calls being successfully made to the Pixlee API?](#api-calls-tests)
+5.  In case the list is empty or you were not able to search for a particular product, proceed to the next step. Otherwise, proceed straight to the next section [Are API calls being successfully made to the Emplifi UGC API?](#are-api-calls-being-successfully-made-to-the-emplifi-ugc-api)
 
-6.  There can be several causes of failure to export products so first, we need to find out the exact cause of the failure. The Pixlee Product Exports job logs the progress and all exceptions to the server logs. So the next step for us is to get the both **Magento server logs** and the **PHP (Apache or equivalent)** logs.
+6.  There can be several causes of failure to export products so first, we need to find out the exact cause of the failure. The Product Exports job logs the progress and all exceptions to the server logs. So the next step for us is to get the both **Magento server logs** and the **PHP (Apache or equivalent)** logs.
 
-7.  The Magento server logs are usually located at **$Magento_Root$/var/log** so navigate to that location and look for the file named **pixlee.log**.
+7.  The Magento server logs are usually located in **var/log** so navigate to that location and look for the file named **pixlee.log**.
 
 8.  For the PHP logs location, it depends on your setup. For example, if you're using Apache the logs should be in **$Apache Root$/logs**. We're looking for the file named **php_error.log** in this directory.
 
@@ -241,27 +178,25 @@ Before testing, please make sure that the Pixlee Product Exports job has at leas
 
 11.  Another common issue we encounter is a low setting for the **max_execution_time**. Look for a log entry similar to the following
 
-    Fatal error: Maximum execution time of XYZ seconds exceeded in ...
+    Fatal error: Maximum execution time of 999 seconds exceeded in ...
 
 12.  If you found a similar log entry please increase the **max_execution_time** setting inside your **php.ini** file to at least 3600. And then try exporting the products again.
 
-13.  If at this point you're still not able to see any products exported to Pixlee, please contact us at support@pixleeturnto.com and attach the both **pixlee.log** and **php_error.log** with the email.
+13.  If at this point you're still not able to see any products exported to Emplifi, please contact us at support@emplifi.io and attach the both **pixlee.log** and **php_error.log** with the email.
 
-### Are API calls being successfully made to the Pixlee API?
+### Are API calls being successfully made to the Emplifi UGC API?
 
-API calls are made to Pixlee API when a customer adds something to their cart and when they buy something on your store. We need to make sure that these calls are being made at the right time.
+API calls are made to Emplifi UGC API when a customer adds something to their cart and when they buy something on your store. We need to make sure that these calls are being made at the right time.
 
 1.  Open your favorite browser and open a product page of your store. And click **Add to Cart**.
 
-    ![](https://files.readme.io/4c7ccb4-04_07_magento2_product_page.png "04_07_magento2_product_page.png")
-
-2.  Open the **pixlee.log** file located at **$Magento_Root$/var/log** using your favorite text editor and scroll down to the very end.
+2.  Open the **pixlee.log** file located in **var/log** using your favorite text editor and scroll down to the very end.
 
 3.  There should be an entry beginning with **AddToCart**
 
     ![](https://files.readme.io/0abe8fa-Screen_Shot_2019-10-10_at_7.36.19_PM.png "Screen Shot 2019-10-10 at 7.36.19 PM.png")
 
-4.  If you found the **AddToCart** calls then your analytics were integrated correctly. If not, contact us at support@pixleeturnto.com and attach the **pixlee.log** file with the email.
+4.  If you found the **AddToCart** calls then your analytics were integrated correctly. If not, contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
 
 5.  Switch back to the browser and proceed to checkout and buy the product that you added to cart previously. Use a test payment method for the checkout.
 
@@ -271,35 +206,32 @@ API calls are made to Pixlee API when a customer adds something to their cart an
 
     ![](https://files.readme.io/f02da02-Screen_Shot_2019-10-10_at_7.47.20_PM.png "Screen Shot 2019-10-10 at 7.47.20 PM.png")
 
-8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@pixleeturnto.com and attach the **pixlee.log** file with the email.
+8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
 
-> ### 🚧
+> ### 🚧 Disclaimer: Mobile Analytics
 >
-> Disclaimer: Mobile Analytics
->
-> Based on the design of Magento2, user agents are not passed along the add to cart and conversion events. This means that there is no current ability to split between mobile and desktop conversion data.
+> Based on the design of Magento2, user agents are not passed in the add to cart and conversion events. This means that
+> there is no current ability to split between mobile and desktop conversion data.
 
 ### RequireJS error on pages containing widgets
 
 To verify that you are encountering this issue, do the following:
 
-1.  Open your website on your browser and navigate to a page where a Pixlee widget should appear.
+1.  Open your website on your browser and navigate to a page where a UGC widget should appear.
 
 2.  Open the developer tools for your browser, navigate to the console tab and verify that you are seeing this error:
 
     ![](https://files.readme.io/d16d7f3-Screen_Shot_2019-10-16_at_1.23.55_PM.png "Screen Shot 2019-10-16 at 1.23.55 PM.png")
 
-    > ### 🚧
+    > ### 🚧 Note
     >
-    > Note
-    >
-    > The cause of this error is that pixlee.com only generates embed codes in plain HTML. Whereas the Pixlee Magento extension is compliant with RequireJS standards and expects Pixlee scripts to be only embedded via RequireJS. This problem can be resolved by creating a widget with [these steps here](https://developers.pixlee.com/docs/magento-2#section-installing-product-description-page-pdp-widgets) instead of directly adding the widget embed code from pixlee.com. However, if you wish to keep the generated embed code, follow the steps below.
+    > The cause of this error is that the Publish Center only generates embed code in plain HTML. Whereas the extension
+    > is compliant with RequireJS standards and expects scripts to be only embedded via RequireJS. This problem can be
+    > resolved by creating a widget with [these steps here](https://developers.pixlee.com/docs/magento-2#section-installing-product-description-page-pdp-widgets)
+    > instead of directly adding the widget embed code from the Publish Center. However, if you wish to keep the generated
+    > embed code, follow the steps below.
 
 3.  Find the generated embed code for the widget. It should look like this:
-
-    ![](https://files.readme.io/f1d47d5-Screen_Shot_2019-10-16_at_1.16.58_PM.png "Screen Shot 2019-10-16 at 1.16.58 PM.png")
-
-    Here is a formatted version of the above code:
 
     ```html
         <div id="pixlee_container"></div>
@@ -309,7 +241,7 @@ To verify that you are encountering this issue, do the following:
             Pixlee.addSimpleWidget({widgetId:YOUR_WIDGET_ID});
           };
         </script>
-        <script src="//assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js"></script>
+        <script src="https://assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js"></script>
     ```
 4.  Use the **require** function to change the embed code using these steps:
 *   Use the require function and add the **asset.pixlee.com** url as a parameter.

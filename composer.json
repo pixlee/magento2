@@ -1,29 +1,31 @@
 {
     "name": "pixlee/magento2",
     "description": "Social commerce platform to collect, curate, and display user-generated content to enhance your Magento store",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "type": "magento2-module",
     "license": [
         "OSL-3.0"
     ],
     "authors": [
         {
-            "name": "Pixlee TurnTo an Emplifi Company",
+            "name": "Emplifi formerly Pixlee TurnTo",
             "email": "ecomm-ugc@emplifi.io",
-            "homepage": "https://www.pixlee.com"
+            "homepage": "https://emplifi.io/"
         }
     ],
     "require": {
-        "magento/framework": ">=102.0.1",
-        "magento/module-backend": "101.0.*|102.0.*",
-        "magento/module-catalog": "103.0.*|104.0.*",
-        "magento/module-config": "101.1.*|101.2.*",
-        "magento/module-configurable-product": "100.3.*|100.4.*",
-        "magento/module-cron": "100.3.*|100.4.*",
-        "magento/module-sales": "102.0.*|103.0.*",
-        "magento/module-store": "101.0.*|101.1.*",
-        "magento/module-url-rewrite": "101.1.*|102.0.*",
-        "php": "^7.1.3|~8.0.0|~8.1.0|~8.2.0"
+        "magento/framework": "^102.0.1||103.0.*",
+        "magento/module-backend": "101.0.*||102.0.*",
+        "magento/module-catalog": "103.0.*||104.0.*",
+        "magento/module-config": "101.1.*||101.2.*",
+        "magento/module-configurable-product": "100.3.*||100.4.*",
+        "magento/module-cron": "100.3.*||100.4.*",
+        "magento/module-directory": "100.3.*||100.4.*",
+        "magento/module-sales": "102.0.*||103.0.*",
+        "magento/module-store": "101.0.*||101.1.*",
+        "magento/module-ui": "101.1.*||101.2.*",
+        "magento/module-url-rewrite": "101.1.*||102.0.*",
+        "php": "^7.1.3||~8.0.0||~8.1.0||~8.2.0||~8.3.0||~8.4.0"
     },
     "autoload": {
         "files": [
@@ -36,6 +38,7 @@
     "keywords": [
         "magento2",
         "magento 2",
+        "pixlee turnto",
         "pixlee",
         "emplifi",
         "social commerce",
