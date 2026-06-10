@@ -17,8 +17,8 @@ use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
 class Pixlee
 {
-    const MODULE_NAME = 'Pixlee_Pixlee';
-    const PLATFORM = 'magento_2';
+    public const MODULE_NAME = 'Pixlee_Pixlee';
+    public const PLATFORM = 'magento_2';
 
     /**
      * @var string
@@ -69,6 +69,7 @@ class Pixlee
 
     /**
      * Attempt to get version from composer.json or fallback to module setup_version
+     *
      * @return string
      */
     public function getExtensionVersion()

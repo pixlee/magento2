@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -16,12 +16,10 @@ class CookieManager
     /**
      * Name of cookie that holds private content version
      */
-    const COOKIE_NAME = 'pixlee_analytics_cookie';
-    const LEGACY_COOKIE_NAME = 'pixlee_analytics_cookie_legacy';
+    public const COOKIE_NAME = 'pixlee_analytics_cookie';
+    public const LEGACY_COOKIE_NAME = 'pixlee_analytics_cookie_legacy';
 
     /**
-     * CookieManager
-     *
      * @var CookieManagerInterface
      */
     protected $cookieManager;
@@ -59,8 +57,8 @@ class CookieManager
     public function get(): ?string
     {
         $cookie = $this->cookieManager->getCookie(self::COOKIE_NAME);
-        if(!isset($cookie)) {
-          $cookie = $this->cookieManager->getCookie(self::LEGACY_COOKIE_NAME);
+        if (!isset($cookie)) {
+            $cookie = $this->cookieManager->getCookie(self::LEGACY_COOKIE_NAME);
         }
         return $cookie;
     }
