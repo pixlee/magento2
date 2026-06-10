@@ -11,11 +11,11 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Export\Product as ProductExport;
@@ -25,6 +25,14 @@ use RuntimeException;
 
 class CreateProductTriggerObserverTest extends TestCase
 {
+    /** @var ObjectManager */
+    private $objectManagerHelper;
+
+    protected function setUp(): void
+    {
+        $this->objectManagerHelper = new ObjectManager($this);
+    }
+
     public function testExecuteExportsProductForActiveEnabledWebsite(): void
     {
         $categoriesMap = ['1' => ['category_id' => 1]];
@@ -34,10 +42,7 @@ class CreateProductTriggerObserverTest extends TestCase
             'getDefaultStore' => $store,
         ]);
 
-        /** @var Product&MockObject $product */
-        $product = $this->createMock(Product::class);
-        $product->method('getWebsiteIds')->willReturn([1]);
-        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product = $this->createProduct([1], Status::STATUS_ENABLED);
 
         $productExport = $this->createMock(ProductExport::class);
         $productExport->method('getCategoriesMap')->willReturn($categoriesMap);
@@ -73,11 +78,8 @@ class CreateProductTriggerObserverTest extends TestCase
             'getDefaultStore' => $store,
         ]);
 
-        /** @var Product&MockObject $product */
-        $product = $this->createMock(Product::class);
-        $product->method('getWebsiteIds')->willReturn([1]);
         // EAV-loaded products often return status as a string from the database.
-        $product->method('getStatus')->willReturn('1');
+        $product = $this->createProduct([1], '1');
 
         $productExport = $this->createMock(ProductExport::class);
         $productExport->method('getCategoriesMap')->willReturn($categoriesMap);
@@ -104,10 +106,7 @@ class CreateProductTriggerObserverTest extends TestCase
 
     public function testExecuteSkipsDisabledProduct(): void
     {
-        /** @var Product&MockObject $product */
-        $product = $this->createMock(Product::class);
-        $product->method('getWebsiteIds')->willReturn([1]);
-        $product->method('getStatus')->willReturn(Status::STATUS_DISABLED);
+        $product = $this->createProduct([1], Status::STATUS_DISABLED);
 
         $productExport = $this->createMock(ProductExport::class);
         $productExport->expects($this->never())->method('exportProductToPixlee');
@@ -128,10 +127,7 @@ class CreateProductTriggerObserverTest extends TestCase
 
     public function testExecuteSkipsInactiveWebsite(): void
     {
-        /** @var Product&MockObject $product */
-        $product = $this->createMock(Product::class);
-        $product->method('getWebsiteIds')->willReturn([1]);
-        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product = $this->createProduct([1], Status::STATUS_ENABLED);
 
         $productExport = $this->createMock(ProductExport::class);
         $productExport->expects($this->never())->method('exportProductToPixlee');
@@ -152,10 +148,7 @@ class CreateProductTriggerObserverTest extends TestCase
 
     public function testExecuteLogsExceptionPerWebsite(): void
     {
-        /** @var Product&MockObject $product */
-        $product = $this->createMock(Product::class);
-        $product->method('getWebsiteIds')->willReturn([1]);
-        $product->method('getStatus')->willReturn(Status::STATUS_ENABLED);
+        $product = $this->createProduct([1], Status::STATUS_ENABLED);
 
         $productExport = $this->createMock(ProductExport::class);
         $productExport->method('getCategoriesMap')->willThrowException(new RuntimeException('export failed'));
@@ -175,5 +168,20 @@ class CreateProductTriggerObserverTest extends TestCase
 
         $event = new Event(['product' => $product]);
         $subject->execute(new Observer(['event' => $event]));
+    }
+
+    /**
+     * @param int[] $websiteIds
+     * @param int|string $status
+     * @return Product
+     */
+    private function createProduct(array $websiteIds, $status)
+    {
+        /** @var Product $product */
+        $product = $this->objectManagerHelper->getObject(Product::class);
+        $product->setWebsiteIds($websiteIds);
+        $product->setData('status', $status);
+
+        return $product;
     }
 }

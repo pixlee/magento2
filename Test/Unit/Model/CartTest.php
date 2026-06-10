@@ -9,12 +9,25 @@ namespace Pixlee\Pixlee\Test\Unit\Model;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Directory\Model\Currency;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Locale\FormatInterface;
+use Magento\Framework\Model\Context;
 use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Serialize\Serializer\Json as MagentoJson;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
+use Magento\Quote\Model\Quote\Item\Compare;
+use Magento\Quote\Model\Quote\Item\Option\Comparator;
+use Magento\Quote\Model\Quote\Item\OptionFactory;
+use Magento\Framework\Serialize\Serializer\Json as SerializerJson;
 use Magento\Sales\Model\Order\Address;
 use Magento\Sales\Model\Order\Item as OrderItem;
+use Magento\Sales\Model\OrderFactory as SalesOrderFactory;
+use Magento\Sales\Model\Status\ListFactory;
+use Magento\Sales\Model\Status\ListStatus;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Cart;
@@ -30,11 +43,15 @@ class CartTest extends TestCase
     /** @var ProductRepositoryInterface&MockObject */
     private $productRepository;
 
+    /** @var ObjectManager */
+    private $objectManagerHelper;
+
     protected function setUp(): void
     {
         $logger = $this->createMock(PixleeLogger::class);
         $this->productRepository = $this->createMock(ProductRepositoryInterface::class);
         $this->cart = new Cart(new Json(), $logger, $this->productRepository);
+        $this->objectManagerHelper = new ObjectManager($this);
     }
 
     public function testExtractQuoteItemQuantityIsInteger(): void
@@ -47,8 +64,10 @@ class CartTest extends TestCase
 
         $itemData = $this->cart->extractQuoteItem($item, $currency);
 
+        $this->assertSame(1, (int) $item->getProductId());
         $this->assertSame(3, $itemData['quantity']);
         $this->assertIsInt($itemData['quantity']);
+        $this->assertSame(1, $itemData['product_id']);
         $this->assertSame('simple', $itemData['product_sku']);
     }
 
@@ -105,7 +124,16 @@ class CartTest extends TestCase
     }
 
     /**
-     * @param array $children
+     * Build a real QuoteItem with data fields (product_id via magic getter, not a custom stub method).
+     *
+     * @param string $productType
+     * @param QuoteItem[] $children
+     * @param float $qty
+     * @param float $price
+     * @param int $productId
+     * @param string $sku
+     * @param string $productSku
+     * @return QuoteItem
      */
     private function createQuoteItemStub(
         $productType,
@@ -116,98 +144,97 @@ class CartTest extends TestCase
         $sku,
         $productSku
     ) {
-        $product = $this->createConfiguredMock(ProductInterface::class, [
-            'getSku' => $productSku,
-        ]);
+        $product = $this->createQuoteItemProductMock($productType, $productSku);
 
-        return new class($productType, $children, $qty, $price, $productId, $sku, $product) extends QuoteItem {
-            /** @var string */
-            private $productType;
-            /** @var array */
-            private $children;
-            /** @var float */
-            private $qty;
-            /** @var float */
-            private $price;
-            /** @var int */
-            private $productId;
-            /** @var string */
-            private $sku;
-            /** @var ProductInterface */
-            private $product;
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', $productType);
+        $item->setData('qty', $qty);
+        $item->setData('price', $price);
+        $item->setData('product_id', $productId);
+        $item->setSku($sku);
+        $item->setData('product', $product);
 
-            public function __construct($productType, array $children, $qty, $price, $productId, $sku, ProductInterface $product)
-            {
-                $this->productType = $productType;
-                $this->children = $children;
-                $this->qty = $qty;
-                $this->price = $price;
-                $this->productId = $productId;
-                $this->sku = $sku;
-                $this->product = $product;
-            }
+        foreach ($children as $child) {
+            $item->addChild($child);
+        }
 
-            public function getProductType()
-            {
-                return $this->productType;
-            }
-
-            public function getChildren()
-            {
-                return $this->children;
-            }
-
-            public function getQty()
-            {
-                return $this->qty;
-            }
-
-            public function getPrice()
-            {
-                return $this->price;
-            }
-
-            public function getProductId()
-            {
-                return $this->productId;
-            }
-
-            public function getSku()
-            {
-                return $this->sku;
-            }
-
-            public function getProduct()
-            {
-                return $this->product;
-            }
-        };
+        return $item;
     }
 
+    /**
+     * @param int $productId
+     * @param string $sku
+     * @return QuoteItem
+     */
     private function createQuoteItemChildStub($productId, $sku)
     {
-        return new class($productId, $sku) {
-            /** @var int */
-            private $productId;
-            /** @var string */
-            private $sku;
+        $child = $this->createQuoteItemInstance();
+        $child->setData('product_id', $productId);
+        $child->setSku($sku);
 
-            public function __construct($productId, $sku)
-            {
-                $this->productId = $productId;
-                $this->sku = $sku;
-            }
+        return $child;
+    }
 
-            public function getProductId()
-            {
-                return $this->productId;
-            }
+    /**
+     * Product mock compatible with QuoteItem::getProduct() (calls setFinalPrice).
+     *
+     * @param string $productType
+     * @param string $productSku
+     * @return Product&MockObject
+     */
+    private function createQuoteItemProductMock($productType, $productSku)
+    {
+        /** @var Product&MockObject $product */
+        $product = $this->getMockBuilder(Product::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice'])
+            ->getMock();
+        $product->method('getSku')->willReturn($productSku);
+        $product->method('getTypeId')->willReturn($productType);
+        $product->method('setFinalPrice')->willReturnSelf();
 
-            public function getSku()
-            {
-                return $this->sku;
-            }
-        };
+        return $product;
+    }
+
+    /**
+     * @return QuoteItem
+     */
+    private function createQuoteItemInstance()
+    {
+        $modelContext = $this->getMockBuilder(Context::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getEventDispatcher'])
+            ->getMock();
+        $modelContext->method('getEventDispatcher')->willReturn($this->createMock(ManagerInterface::class));
+
+        $errorInfos = $this->getMockBuilder(ListStatus::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['clear', 'addItem', 'getItems', 'removeItemsByParams'])
+            ->getMock();
+
+        $statusListFactory = $this->getMockBuilder(ListFactory::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['create'])
+            ->getMock();
+        $statusListFactory->method('create')->willReturn($errorInfos);
+
+        $itemOptionFactory = $this->getMockBuilder(OptionFactory::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['create'])
+            ->getMock();
+
+        return $this->objectManagerHelper->getObject(
+            QuoteItem::class,
+            [
+                'localeFormat' => $this->createMock(FormatInterface::class),
+                'context' => $modelContext,
+                'statusListFactory' => $statusListFactory,
+                'itemOptionFactory' => $itemOptionFactory,
+                'quoteItemCompare' => $this->createMock(Compare::class),
+                'serializer' => $this->createMock(MagentoJson::class),
+                'itemOptionComparator' => new Comparator(),
+            ]
+        );
     }
 
     public function testExtractAddressReturnsEmptyObjectWhenAddressIsNull(): void
@@ -239,32 +266,22 @@ class CartTest extends TestCase
         $currency->method('format')->willReturn('10.00');
         $currency->method('getCode')->willReturn('USD');
 
-        /** @var OrderItem&MockObject $item */
-        $item = $this->getMockBuilder(OrderItem::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([
-                'getProductType',
-                'getChildrenItems',
-                'getQtyOrdered',
-                'getPrice',
-                'getProductId',
-                'getProduct',
-            ])
-            ->getMock();
-        $item->method('getProductType')->willReturn('simple');
-        $item->method('getChildrenItems')->willReturn([]);
-        $item->method('getQtyOrdered')->willReturn(2.0);
-        $item->method('getPrice')->willReturn(10.0);
-        $item->method('getProductId')->willReturn(1);
-        $parentProduct = $this->createConfiguredMock(ProductInterface::class, [
-            'getSku' => 'simple',
-        ]);
-        $item->method('getProduct')->willReturn($parentProduct);
+        $item = $this->createOrderItemStub(
+            'simple',
+            [],
+            2.0,
+            10.0,
+            1,
+            'simple',
+            'simple'
+        );
 
         $itemData = $this->cart->extractItem($item, $currency);
 
+        $this->assertSame(1, (int) $item->getProductId());
         $this->assertSame(2, $itemData['quantity']);
         $this->assertIsInt($itemData['quantity']);
+        $this->assertSame(1, $itemData['product_id']);
     }
 
     public function testExtractItemUsesChildVariantForConfigurableItems(): void
@@ -273,40 +290,90 @@ class CartTest extends TestCase
         $currency->method('format')->willReturn('9.99');
         $currency->method('getCode')->willReturn('USD');
 
-        $childItem = $this->createConfiguredMock(OrderItem::class, [
-            'getProductId' => 42,
-            'getSku' => 'simple-red',
-        ]);
-
-        /** @var OrderItem&MockObject $item */
-        $item = $this->getMockBuilder(OrderItem::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([
-                'getProductType',
-                'getChildrenItems',
-                'getQtyOrdered',
-                'getPrice',
-                'getProductId',
-                'getProduct',
-            ])
-            ->getMock();
-        $item->method('getProductType')->willReturn(Configurable::TYPE_CODE);
-        $item->method('getChildrenItems')->willReturn([$childItem]);
-        $item->method('getQtyOrdered')->willReturn(1.0);
-        $item->method('getPrice')->willReturn(9.99);
-        $item->method('getProductId')->willReturn(10);
-        $parentProduct = $this->createConfiguredMock(ProductInterface::class, [
-            'getSku' => 'configurable-parent',
-        ]);
-        $item->method('getProduct')->willReturn($parentProduct);
+        $childItem = $this->createOrderItemChildStub(42, 'simple-red');
+        $item = $this->createOrderItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            9.99,
+            10,
+            'configurable-parent',
+            'configurable-parent'
+        );
         $this->mockConfigurableParentSku(10, 'configurable-parent');
 
         $itemData = $this->cart->extractItem($item, $currency);
 
-        $this->assertSame(42, $itemData['variant_id']);
+        $this->assertEquals(42, $itemData['variant_id']);
         $this->assertSame('simple-red', $itemData['variant_sku']);
         $this->assertSame('configurable-parent', $itemData['product_sku']);
         $this->assertSame('USD', $itemData['currency']);
+    }
+
+    /**
+     * @param string $productType
+     * @param OrderItem[] $children
+     * @param float $qty
+     * @param float $price
+     * @param int $productId
+     * @param string $sku
+     * @param string $productSku
+     * @return OrderItem
+     */
+    private function createOrderItemStub(
+        $productType,
+        array $children,
+        $qty,
+        $price,
+        $productId,
+        $sku,
+        $productSku
+    ) {
+        $product = $this->createQuoteItemProductMock($productType, $productSku);
+
+        $item = $this->createOrderItemInstance();
+        $item->setData('product_type', $productType);
+        $item->setData('qty_ordered', $qty);
+        $item->setData('price', $price);
+        $item->setData('product_id', $productId);
+        $item->setSku($sku);
+        $item->setData('product', $product);
+
+        foreach ($children as $child) {
+            $item->addChildItem($child);
+        }
+
+        return $item;
+    }
+
+    /**
+     * @param int $productId
+     * @param string $sku
+     * @return OrderItem
+     */
+    private function createOrderItemChildStub($productId, $sku)
+    {
+        $child = $this->createOrderItemInstance();
+        $child->setData('product_id', $productId);
+        $child->setSku($sku);
+
+        return $child;
+    }
+
+    /**
+     * @return OrderItem
+     */
+    private function createOrderItemInstance()
+    {
+        $orderFactory = $this->createPartialMock(SalesOrderFactory::class, ['create']);
+
+        return $this->objectManagerHelper->getObject(
+            OrderItem::class,
+            [
+                'orderFactory' => $orderFactory,
+                'serializer' => $this->createMock(SerializerJson::class),
+            ]
+        );
     }
 
     private function mockConfigurableParentSku(int $productId, string $sku): void
