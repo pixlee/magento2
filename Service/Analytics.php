@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -10,6 +10,7 @@ namespace Pixlee\Pixlee\Service;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Serialize\SerializerInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
@@ -19,6 +20,7 @@ use Pixlee\Pixlee\Model\Pixlee;
 
 class Analytics implements AnalyticsServiceInterface
 {
+    use HttpResponseValidationTrait;
     public const ANALYTICS_BASE_URL = 'https://inbound-analytics.pixlee.com/';
     /**
      * @var Curl
@@ -87,7 +89,11 @@ class Analytics implements AnalyticsServiceInterface
         ];
         if ($payload && isset($urls[$event])) {
             $payload = $this->preparePayload($store, $payload);
-            $path = "events/{$urls[$event]}";
+            if ($payload === false) {
+                return false;
+            }
+
+            $path = "events/$urls[$event]";
             $response = $this->post($path, $payload);
 
             if ($response) {
@@ -101,13 +107,19 @@ class Analytics implements AnalyticsServiceInterface
     }
 
     /**
-     * @param $store
-     * @param $extraData
+     * Prepare payload for Pixlee analytics event.
+     *
+     * @param StoreInterface $store
+     * @param array $extraData
      * @return false|string
      */
     public function preparePayload($store, $extraData = [])
     {
         if ($payload = $this->getPixleeCookie()) {
+            if (empty($payload['CURRENT_PIXLEE_USER_ID'])) {
+                $this->logger->addInfo("Analytics event not sent because CURRENT_PIXLEE_USER_ID was missing");
+                return false;
+            }
             foreach ($extraData as $key => $value) {
                 // Don't overwrite existing data.
                 if (!isset($payload[$key])) {
@@ -115,7 +127,7 @@ class Analytics implements AnalyticsServiceInterface
                 }
             }
             // Required key/value pairs not in the payload by default.
-            $payload['API_KEY']= $this->apiConfig->getApiKey(ScopeInterface::SCOPE_STORES, $store->getCode());
+            $payload['API_KEY'] = $this->apiConfig->getApiKey(ScopeInterface::SCOPE_STORES, $store->getCode());
             $payload['distinct_user_hash'] = $payload['CURRENT_PIXLEE_USER_ID'];
             $payload['ecommerce_platform'] = Pixlee::PLATFORM;
             $payload['ecommerce_platform_version'] = $this->productMetadata->getVersion();
@@ -132,6 +144,8 @@ class Analytics implements AnalyticsServiceInterface
     }
 
     /**
+     * Get cookie data.
+     *
      * @return array|bool
      */
     public function getPixleeCookie()
@@ -161,50 +175,10 @@ class Analytics implements AnalyticsServiceInterface
         $this->curl->setHeaders($headers);
         $this->curl->post($requestUrl, $payload);
         $response = $this->curl->getBody();
-        $responseCode = $this->curl->getStatus();
-        if (!$this->isValidResponse($response, $responseCode)) {
+        if (!$this->isValidHttpResponse($requestUrl, $this->curl->getStatus(), $response)) {
             return false;
         }
 
         return $response;
-    }
-
-    /**
-     * @param $response
-     * @param $responseCode
-     * @return bool
-     */
-    public function isValidResponse($response, $responseCode)
-    {
-        if (!$this->isBetween($responseCode, 200, 299)) {
-            $this->logger->addInfo("Pixlee Analytics: HTTP $responseCode response");
-            return false;
-        }
-        if (is_object($response) && $response->status === null) {
-            $this->logger->addInfo("Pixlee Analytics: Invalid status returned");
-            return false;
-        }
-        if (is_object($response) && !$this->isBetween($response->status, 200, 299)) {
-            $errorMessage = implode(',', (array)$response->message);
-            $this->logger->addInfo("Pixlee Analytics: $response->status - $errorMessage ");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param $theNum
-     * @param $low
-     * @param $high
-     * @return bool
-     */
-    public function isBetween($theNum, $low, $high)
-    {
-        if ($theNum >= $low && $theNum <= $high) {
-            return true;
-        }
-
-        return false;
     }
 }

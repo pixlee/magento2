@@ -1,15 +1,16 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Observer;
 
 use Exception;
-use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -62,18 +63,24 @@ class AddToCartObserver implements ObserverInterface
     }
 
     /**
-     * @param EventObserver $observer
-     * @return void
+     * @inheritdoc
      */
     public function execute(EventObserver $observer)
     {
         try {
-            if ($this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $this->storeManager->getStore()->getCode())) {
-                /** @var ProductInterface $product */
-                $product = $observer->getEvent()->getData('product');
-                $productData = $this->pixleeCart->extractProduct($product);
-                $this->analytics->sendEvent('addToCart', $productData, $product->getStore());
+            if (!$this->apiConfig->isActive(ScopeInterface::SCOPE_STORES, $this->storeManager->getStore()->getCode())) {
+                return;
             }
+
+            /** @var QuoteItem|null $quoteItem */
+            $quoteItem = $observer->getEvent()->getData('quote_item');
+            if (!$quoteItem instanceof QuoteItem) {
+                return;
+            }
+
+            $store = $quoteItem->getQuote()->getStore();
+            $itemData = $this->pixleeCart->extractQuoteItem($quoteItem, $store->getCurrentCurrency());
+            $this->analytics->sendEvent('addToCart', $itemData, $store);
         } catch (Exception $e) {
             $this->logger->error($e->getMessage(), ['exception' => $e]);
         }

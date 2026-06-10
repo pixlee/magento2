@@ -1,8 +1,9 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Observer;
 
@@ -71,8 +72,7 @@ class CheckoutSuccessObserver implements ObserverInterface
     }
 
     /**
-     * @param EventObserver $observer
-     * @return void
+     * @inheritdoc
      */
     public function execute(EventObserver $observer)
     {
@@ -91,10 +91,12 @@ class CheckoutSuccessObserver implements ObserverInterface
     }
 
     /**
+     * Get the event orders
+     *
      * @param Event $event
      * @return array|Collection
      */
-    public function getOrders($event)
+    public function getOrders(Event $event)
     {
         if ($order = $event->getOrder()) {
             return [$order];
