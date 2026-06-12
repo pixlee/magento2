@@ -98,6 +98,87 @@ class CartTest extends AbstractUnitTestCase
         $this->assertSame('USD', $itemData['currency']);
     }
 
+    public function testExtractQuoteItemUsesZeroQuotePriceForFreeOrFullyDiscountedItem(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(0.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('0.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $product->method('getSku')->willReturn('free-simple');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('setFinalPrice')->willReturnSelf();
+        $product->method('getFinalPrice')->willReturn(25.0);
+        $product->method('getPrice')->willReturn(25.0);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('qty', 1.0);
+        $item->setData('price', 0.0);
+        $item->setData('product_id', 1);
+        $item->setSku('free-simple');
+        $item->setData('product', $product);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('0.00', $itemData['price']);
+    }
+
+    public function testExtractQuoteItemUsesZeroChildQuotePriceForFreeConfigurableVariant(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(0.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('0.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $childProduct->method('getSku')->willReturn('simple-red');
+        $childProduct->method('getTypeId')->willReturn('simple');
+        $childProduct->method('setFinalPrice')->willReturnSelf();
+        $childProduct->method('getFinalPrice')->willReturn(49.99);
+        $childProduct->method('getPrice')->willReturn(55.0);
+
+        $parentProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $parentProduct->method('getSku')->willReturn('configurable-parent');
+        $parentProduct->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
+        $parentProduct->method('setFinalPrice')->willReturnSelf();
+        $parentProduct->method('getFinalPrice')->willReturn(0.0);
+        $parentProduct->method('getPrice')->willReturn(0.0);
+
+        $childItem = $this->createQuoteItemChildStub(42, 'simple-red');
+        $childItem->setData('qty', 1.0);
+        $childItem->setData('price', 0.0);
+        $childItem->setData('product', $childProduct);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', Configurable::TYPE_CODE);
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 10);
+        $item->setSku('configurable-parent');
+        $item->setData('product', $parentProduct);
+        $item->addChild($childItem);
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('0.00', $itemData['price']);
+    }
+
     public function testExtractQuoteItemFallsBackToProductFinalPriceWhenQuotePriceUnset(): void
     {
         $currency = $this->createMock(Currency::class);

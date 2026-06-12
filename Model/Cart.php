@@ -151,8 +151,8 @@ class Cart
     protected function resolveQuoteItemPrice(QuoteItem $item)
     {
         $price = $item->getPrice();
-        if ($price) {
-            return $price;
+        if (is_numeric($price)) {
+            return (float)$price;
         }
 
         $product = $item->getProduct();
@@ -165,8 +165,8 @@ class Cart
 
         foreach ($item->getChildren() as $child) {
             $childPrice = $child->getPrice();
-            if ($childPrice) {
-                return $childPrice;
+            if (is_numeric($childPrice)) {
+                return (float)$childPrice;
             }
             $childProduct = $child->getProduct();
             if ($childProduct) {
