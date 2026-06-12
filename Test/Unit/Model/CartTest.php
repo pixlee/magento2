@@ -18,7 +18,7 @@ use Magento\Framework\Locale\FormatInterface;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Serialize\Serializer\Json as MagentoJson;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Pixlee\Pixlee\Test\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Quote\Model\Quote\Item\Compare;
 use Magento\Quote\Model\Quote\Item\Option\Comparator;
@@ -30,11 +30,11 @@ use Magento\Sales\Model\OrderFactory as SalesOrderFactory;
 use Magento\Sales\Model\Status\ListFactory;
 use Magento\Sales\Model\Status\ListStatus;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Cart;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
-class CartTest extends TestCase
+class CartTest extends AbstractUnitTestCase
 {
     /**
      * @var Cart
@@ -49,15 +49,15 @@ class CartTest extends TestCase
 
     protected function setUp(): void
     {
-        $logger = $this->createMock(PixleeLogger::class);
-        $this->productRepository = $this->createMock(ProductRepositoryInterface::class);
+        $logger = $this->createPassiveDouble(PixleeLogger::class);
+        $this->productRepository = $this->createPassiveDouble(ProductRepositoryInterface::class);
         $this->cart = new Cart(new Json(), $logger, $this->productRepository);
         $this->objectManagerHelper = new ObjectManager($this);
     }
 
     public function testExtractQuoteItemQuantityIsInteger(): void
     {
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('10.00');
         $currency->method('getCode')->willReturn('USD');
 
@@ -74,7 +74,7 @@ class CartTest extends TestCase
 
     public function testExtractQuoteItemUsesChildVariantForConfigurableItems(): void
     {
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('9.99');
         $currency->method('getCode')->willReturn('USD');
 
@@ -107,10 +107,10 @@ class CartTest extends TestCase
             ->willReturn('25.00');
         $currency->method('getCode')->willReturn('USD');
 
-        $product = $this->getMockBuilder(Product::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice'])
-            ->getMock();
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
         $product->method('getSku')->willReturn('simple');
         $product->method('getTypeId')->willReturn('simple');
         $product->method('setFinalPrice')->willReturnSelf();
@@ -140,20 +140,20 @@ class CartTest extends TestCase
             ->willReturn('49.99');
         $currency->method('getCode')->willReturn('USD');
 
-        $childProduct = $this->getMockBuilder(Product::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice'])
-            ->getMock();
+        $childProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
         $childProduct->method('getSku')->willReturn('simple-red');
         $childProduct->method('getTypeId')->willReturn('simple');
         $childProduct->method('setFinalPrice')->willReturnSelf();
         $childProduct->method('getFinalPrice')->with(1.0)->willReturn(49.99);
         $childProduct->method('getPrice')->willReturn(55.0);
 
-        $parentProduct = $this->getMockBuilder(Product::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice'])
-            ->getMock();
+        $parentProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
         $parentProduct->method('getSku')->willReturn('configurable-parent');
         $parentProduct->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
         $parentProduct->method('setFinalPrice')->willReturnSelf();
@@ -183,7 +183,7 @@ class CartTest extends TestCase
 
     public function testExtractQuoteItemUsesParentSkuWhenQuoteProductIsSelectedSimple(): void
     {
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('77.00');
         $currency->method('getCode')->willReturn('USD');
 
@@ -269,10 +269,10 @@ class CartTest extends TestCase
     private function createQuoteItemProductMock($productType, $productSku)
     {
         /** @var Product&MockObject $product */
-        $product = $this->getMockBuilder(Product::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice'])
-            ->getMock();
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice']
+        );
         $product->method('getSku')->willReturn($productSku);
         $product->method('getTypeId')->willReturn($productType);
         $product->method('setFinalPrice')->willReturnSelf();
@@ -285,37 +285,28 @@ class CartTest extends TestCase
      */
     private function createQuoteItemInstance()
     {
-        $modelContext = $this->getMockBuilder(Context::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getEventDispatcher'])
-            ->getMock();
-        $modelContext->method('getEventDispatcher')->willReturn($this->createMock(ManagerInterface::class));
+        $modelContext = $this->createPartialPassiveDouble(Context::class, ['getEventDispatcher']);
+        $modelContext->method('getEventDispatcher')->willReturn($this->createPassiveDouble(ManagerInterface::class));
 
-        $errorInfos = $this->getMockBuilder(ListStatus::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['clear', 'addItem', 'getItems', 'removeItemsByParams'])
-            ->getMock();
+        $errorInfos = $this->createPartialPassiveDouble(
+            ListStatus::class,
+            ['clear', 'addItem', 'getItems', 'removeItemsByParams']
+        );
 
-        $statusListFactory = $this->getMockBuilder(ListFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
-            ->getMock();
+        $statusListFactory = $this->createPartialPassiveDouble(ListFactory::class, ['create']);
         $statusListFactory->method('create')->willReturn($errorInfos);
 
-        $itemOptionFactory = $this->getMockBuilder(OptionFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
-            ->getMock();
+        $itemOptionFactory = $this->createPartialPassiveDouble(OptionFactory::class, ['create']);
 
         return $this->objectManagerHelper->getObject(
             QuoteItem::class,
             [
-                'localeFormat' => $this->createMock(FormatInterface::class),
+                'localeFormat' => $this->createPassiveDouble(FormatInterface::class),
                 'context' => $modelContext,
                 'statusListFactory' => $statusListFactory,
                 'itemOptionFactory' => $itemOptionFactory,
-                'quoteItemCompare' => $this->createMock(Compare::class),
-                'serializer' => $this->createMock(MagentoJson::class),
+                'quoteItemCompare' => $this->createPassiveDouble(Compare::class),
+                'serializer' => $this->createPassiveDouble(MagentoJson::class),
                 'itemOptionComparator' => new Comparator(),
             ]
         );
@@ -329,7 +320,7 @@ class CartTest extends TestCase
     public function testExtractAddressSerializesAddressFields(): void
     {
         /** @var Address&MockObject $address */
-        $address = $this->createConfiguredMock(Address::class, [
+        $address = $this->createConfiguredPassiveDouble(Address::class, [
             'getStreet' => ['123 Main St'],
             'getCity' => 'Los Angeles',
             'getRegion' => 'CA',
@@ -346,7 +337,7 @@ class CartTest extends TestCase
 
     public function testExtractItemQuantityIsInteger(): void
     {
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('10.00');
         $currency->method('getCode')->willReturn('USD');
 
@@ -370,7 +361,7 @@ class CartTest extends TestCase
 
     public function testExtractItemUsesChildVariantForConfigurableItems(): void
     {
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('9.99');
         $currency->method('getCode')->willReturn('USD');
 
@@ -449,20 +440,20 @@ class CartTest extends TestCase
      */
     private function createOrderItemInstance()
     {
-        $orderFactory = $this->createPartialMock(SalesOrderFactory::class, ['create']);
+        $orderFactory = $this->createPartialPassiveDouble(SalesOrderFactory::class, ['create']);
 
         return $this->objectManagerHelper->getObject(
             OrderItem::class,
             [
                 'orderFactory' => $orderFactory,
-                'serializer' => $this->createMock(SerializerJson::class),
+                'serializer' => $this->createPassiveDouble(SerializerJson::class),
             ]
         );
     }
 
     private function mockConfigurableParentSku(int $productId, string $sku): void
     {
-        $parentProduct = $this->createConfiguredMock(ProductInterface::class, [
+        $parentProduct = $this->createConfiguredPassiveDouble(ProductInterface::class, [
             'getSku' => $sku,
         ]);
         $this->productRepository->method('getById')

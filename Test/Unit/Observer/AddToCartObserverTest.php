@@ -16,30 +16,30 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 use Pixlee\Pixlee\Model\Cart;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Observer\AddToCartObserver;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class AddToCartObserverTest extends TestCase
+class AddToCartObserverTest extends AbstractUnitTestCase
 {
     public function testExecuteSendsAnalyticsEventWhenActive(): void
     {
         $itemData = ['product_sku' => 'simple', 'price' => '10.00'];
-        $store = $this->createConfiguredMock(Store::class, ['getCode' => 'default']);
-        $currency = $this->createMock(Currency::class);
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getCode' => 'default']);
+        $currency = $this->createPassiveDouble(Currency::class);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
-        $quote = $this->createMock(Quote::class);
+        $quote = $this->createPassiveDouble(Quote::class);
         $quote->method('getStore')->willReturn($store);
 
         /** @var QuoteItem&MockObject $quoteItem */
-        $quoteItem = $this->createMock(QuoteItem::class);
+        $quoteItem = $this->createPassiveDouble(QuoteItem::class);
         $quoteItem->method('getQuote')->willReturn($quote);
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')
             ->with(ScopeInterface::SCOPE_STORES, 'default')
             ->willReturn(true);
@@ -56,11 +56,11 @@ class AddToCartObserverTest extends TestCase
             ->with('addToCart', $itemData, $store)
             ->willReturn(true);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($store);
 
         $subject = new AddToCartObserver(
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             $storeManager,
             $cart,
             $apiConfig,
@@ -73,9 +73,9 @@ class AddToCartObserverTest extends TestCase
 
     public function testExecuteSkipsWhenQuoteItemMissing(): void
     {
-        $store = $this->createConfiguredMock(Store::class, ['getCode' => 'default']);
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getCode' => 'default']);
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(true);
 
         $cart = $this->createMock(Cart::class);
@@ -84,11 +84,11 @@ class AddToCartObserverTest extends TestCase
         $analytics = $this->createMock(AnalyticsServiceInterface::class);
         $analytics->expects($this->never())->method('sendEvent');
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($store);
 
         $subject = new AddToCartObserver(
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             $storeManager,
             $cart,
             $apiConfig,
@@ -101,9 +101,9 @@ class AddToCartObserverTest extends TestCase
 
     public function testExecuteSkipsWhenPixleeInactive(): void
     {
-        $store = $this->createConfiguredMock(Store::class, ['getCode' => 'default']);
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getCode' => 'default']);
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(false);
 
         $cart = $this->createMock(Cart::class);
@@ -112,43 +112,43 @@ class AddToCartObserverTest extends TestCase
         $analytics = $this->createMock(AnalyticsServiceInterface::class);
         $analytics->expects($this->never())->method('sendEvent');
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($store);
 
         $subject = new AddToCartObserver(
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             $storeManager,
             $cart,
             $apiConfig,
             $analytics
         );
 
-        $event = new Event(['quote_item' => $this->createMock(QuoteItem::class)]);
+        $event = new Event(['quote_item' => $this->createPassiveDouble(QuoteItem::class)]);
         $subject->execute(new Observer(['event' => $event]));
     }
 
     public function testExecuteLogsExceptionWithoutRethrowing(): void
     {
-        $store = $this->createConfiguredMock(Store::class, ['getCode' => 'default']);
-        $currency = $this->createMock(Currency::class);
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getCode' => 'default']);
+        $currency = $this->createPassiveDouble(Currency::class);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
-        $quote = $this->createMock(Quote::class);
+        $quote = $this->createPassiveDouble(Quote::class);
         $quote->method('getStore')->willReturn($store);
 
-        $quoteItem = $this->createMock(QuoteItem::class);
+        $quoteItem = $this->createPassiveDouble(QuoteItem::class);
         $quoteItem->method('getQuote')->willReturn($quote);
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(true);
 
-        $cart = $this->createMock(Cart::class);
+        $cart = $this->createPassiveDouble(Cart::class);
         $cart->method('extractQuoteItem')->willThrowException(new \RuntimeException('boom'));
 
         $logger = $this->createMock(PixleeLogger::class);
         $logger->expects($this->once())->method('error');
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($store);
 
         $subject = new AddToCartObserver(
@@ -156,7 +156,7 @@ class AddToCartObserverTest extends TestCase
             $storeManager,
             $cart,
             $apiConfig,
-            $this->createMock(AnalyticsServiceInterface::class)
+            $this->createPassiveDouble(AnalyticsServiceInterface::class)
         );
 
         $event = new Event(['quote_item' => $quoteItem]);

@@ -11,17 +11,17 @@ use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\CookieManager;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class CookieManagerTest extends TestCase
+class CookieManagerTest extends AbstractUnitTestCase
 {
     /** @var CookieManagerInterface&MockObject */
     private $cookieManager;
 
     protected function setUp(): void
     {
-        $this->cookieManager = $this->createMock(CookieManagerInterface::class);
+        $this->cookieManager = $this->createPassiveDouble(CookieManagerInterface::class);
     }
 
     public function testGetReturnsPrimaryCookieWhenPresent(): void
@@ -63,8 +63,8 @@ class CookieManagerTest extends TestCase
     {
         return new CookieManager(
             $this->cookieManager,
-            $this->createMock(CookieMetadataFactory::class),
-            $this->createMock(SessionManagerInterface::class)
+            $this->createPassiveDouble(CookieMetadataFactory::class),
+            $this->createPassiveDouble(SessionManagerInterface::class)
         );
     }
 }

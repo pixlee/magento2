@@ -11,16 +11,16 @@ use Exception;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Store\Model\ScopeInterface;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Observer\ValidateCredentialsObserver;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class ValidateCredentialsObserverTest extends TestCase
+class ValidateCredentialsObserverTest extends AbstractUnitTestCase
 {
     public function testValidateCredentialsSkipsWhenInactive(): void
     {
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('getScope')->with(1)->willReturn([
             'scopeType' => ScopeInterface::SCOPE_WEBSITES,
             'scopeCode' => 1,
@@ -74,7 +74,7 @@ class ValidateCredentialsObserverTest extends TestCase
         $apiConfig->method('isActive')->willReturn(true);
         $apiConfig->expects($this->once())->method('deleteActive');
 
-        $pixleeService = $this->createMock(PixleeServiceInterface::class);
+        $pixleeService = $this->createPassiveDouble(PixleeServiceInterface::class);
         $pixleeService->method('validateCredentials')->willReturn('');
 
         $subject = new ValidateCredentialsObserver($apiConfig, $pixleeService);
@@ -93,7 +93,7 @@ class ValidateCredentialsObserverTest extends TestCase
         $apiConfig->method('isActive')->willReturn(true);
         $apiConfig->expects($this->never())->method('deleteActive');
 
-        $pixleeService = $this->createMock(PixleeServiceInterface::class);
+        $pixleeService = $this->createPassiveDouble(PixleeServiceInterface::class);
         $pixleeService->method('validateCredentials')->willReturn('{"ok":true}');
 
         $subject = new ValidateCredentialsObserver($apiConfig, $pixleeService);
@@ -102,7 +102,7 @@ class ValidateCredentialsObserverTest extends TestCase
 
     public function testExecuteReadsWebsiteFromEvent(): void
     {
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('getScope')->with(2)->willReturn([
             'scopeType' => ScopeInterface::SCOPE_WEBSITES,
             'scopeCode' => 2,
@@ -111,7 +111,7 @@ class ValidateCredentialsObserverTest extends TestCase
 
         $subject = new ValidateCredentialsObserver(
             $apiConfig,
-            $this->createMock(PixleeServiceInterface::class)
+            $this->createPassiveDouble(PixleeServiceInterface::class)
         );
 
         $event = new Event(['website' => 2]);

@@ -10,24 +10,23 @@ namespace Pixlee\Pixlee\Test\Unit\Cron;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Cron\ExportCron;
 use Pixlee\Pixlee\Model\Config\Product as ProductConfig;
 use Pixlee\Pixlee\Model\Export\Product;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class ExportCronTest extends TestCase
+class ExportCronTest extends AbstractUnitTestCase
 {
     public function testExecuteExportsOnlyWebsitesWithCronEnabled(): void
     {
-        $websiteOne = $this->createConfiguredMock(Website::class, ['getId' => 1]);
-        $websiteTwo = $this->createConfiguredMock(Website::class, ['getId' => 2]);
+        $websiteOne = $this->createConfiguredPassiveDouble(Website::class, ['getId' => 1]);
+        $websiteTwo = $this->createConfiguredPassiveDouble(Website::class, ['getId' => 2]);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsites')->willReturn([$websiteOne, $websiteTwo]);
 
-        $productConfig = $this->createMock(ProductConfig::class);
+        $productConfig = $this->createPassiveDouble(ProductConfig::class);
         $productConfig->method('isCronEnabled')
             ->willReturnMap([
                 [ScopeInterface::SCOPE_WEBSITES, 1, true],
@@ -54,19 +53,19 @@ class ExportCronTest extends TestCase
 
     public function testExecuteSkipsAllWebsitesWhenCronDisabled(): void
     {
-        $website = $this->createConfiguredMock(Website::class, ['getId' => 1]);
+        $website = $this->createConfiguredPassiveDouble(Website::class, ['getId' => 1]);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsites')->willReturn([$website]);
 
-        $productConfig = $this->createMock(ProductConfig::class);
+        $productConfig = $this->createPassiveDouble(ProductConfig::class);
         $productConfig->method('isCronEnabled')->willReturn(false);
 
         $productExport = $this->createMock(Product::class);
         $productExport->expects($this->never())->method('exportProducts');
 
         $subject = new ExportCron(
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             $productExport,
             $storeManager,
             $productConfig

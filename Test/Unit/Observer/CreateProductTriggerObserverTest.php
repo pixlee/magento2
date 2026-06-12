@@ -11,19 +11,19 @@ use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Pixlee\Pixlee\Test\Unit\Helper\ObjectManager;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Export\Product as ProductExport;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Observer\CreateProductTriggerObserver;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 use RuntimeException;
 
-class CreateProductTriggerObserverTest extends TestCase
+class CreateProductTriggerObserverTest extends AbstractUnitTestCase
 {
     /** @var ObjectManager */
     private $objectManagerHelper;
@@ -36,8 +36,8 @@ class CreateProductTriggerObserverTest extends TestCase
     public function testExecuteExportsProductForActiveEnabledWebsite(): void
     {
         $categoriesMap = ['1' => ['category_id' => 1]];
-        $store = $this->createConfiguredMock(Store::class, ['getId' => 1]);
-        $website = $this->createConfiguredMock(Website::class, [
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getId' => 1]);
+        $website = $this->createConfiguredPassiveDouble(Website::class, [
             'getId' => 1,
             'getDefaultStore' => $store,
         ]);
@@ -50,18 +50,18 @@ class CreateProductTriggerObserverTest extends TestCase
             ->method('exportProductToPixlee')
             ->with($product, $categoriesMap, 1, $store);
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
             ->willReturn(true);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsite')->with(1)->willReturn($website);
 
         $subject = new CreateProductTriggerObserver(
             $productExport,
             $apiConfig,
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             $storeManager
         );
 
@@ -72,13 +72,12 @@ class CreateProductTriggerObserverTest extends TestCase
     public function testExecuteExportsWhenStatusIsStringFromEav(): void
     {
         $categoriesMap = ['1' => ['category_id' => 1]];
-        $store = $this->createConfiguredMock(Store::class, ['getId' => 1]);
-        $website = $this->createConfiguredMock(Website::class, [
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getId' => 1]);
+        $website = $this->createConfiguredPassiveDouble(Website::class, [
             'getId' => 1,
             'getDefaultStore' => $store,
         ]);
 
-        // EAV-loaded products often return status as a string from the database.
         $product = $this->createProduct([1], '1');
 
         $productExport = $this->createMock(ProductExport::class);
@@ -87,16 +86,16 @@ class CreateProductTriggerObserverTest extends TestCase
             ->method('exportProductToPixlee')
             ->with($product, $categoriesMap, 1, $store);
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(true);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsite')->with(1)->willReturn($website);
 
         $subject = new CreateProductTriggerObserver(
             $productExport,
             $apiConfig,
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             $storeManager
         );
 
@@ -111,14 +110,14 @@ class CreateProductTriggerObserverTest extends TestCase
         $productExport = $this->createMock(ProductExport::class);
         $productExport->expects($this->never())->method('exportProductToPixlee');
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(true);
 
         $subject = new CreateProductTriggerObserver(
             $productExport,
             $apiConfig,
-            $this->createMock(PixleeLogger::class),
-            $this->createMock(StoreManagerInterface::class)
+            $this->createPassiveDouble(PixleeLogger::class),
+            $this->createPassiveDouble(StoreManagerInterface::class)
         );
 
         $event = new Event(['product' => $product]);
@@ -132,14 +131,14 @@ class CreateProductTriggerObserverTest extends TestCase
         $productExport = $this->createMock(ProductExport::class);
         $productExport->expects($this->never())->method('exportProductToPixlee');
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(false);
 
         $subject = new CreateProductTriggerObserver(
             $productExport,
             $apiConfig,
-            $this->createMock(PixleeLogger::class),
-            $this->createMock(StoreManagerInterface::class)
+            $this->createPassiveDouble(PixleeLogger::class),
+            $this->createPassiveDouble(StoreManagerInterface::class)
         );
 
         $event = new Event(['product' => $product]);
@@ -150,10 +149,10 @@ class CreateProductTriggerObserverTest extends TestCase
     {
         $product = $this->createProduct([1], Status::STATUS_ENABLED);
 
-        $productExport = $this->createMock(ProductExport::class);
+        $productExport = $this->createPassiveDouble(ProductExport::class);
         $productExport->method('getCategoriesMap')->willThrowException(new RuntimeException('export failed'));
 
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('isActive')->willReturn(true);
 
         $logger = $this->createMock(PixleeLogger::class);
@@ -163,7 +162,7 @@ class CreateProductTriggerObserverTest extends TestCase
             $productExport,
             $apiConfig,
             $logger,
-            $this->createMock(StoreManagerInterface::class)
+            $this->createPassiveDouble(StoreManagerInterface::class)
         );
 
         $event = new Event(['product' => $product]);

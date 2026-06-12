@@ -12,14 +12,14 @@ use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\Store;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\CookieManager;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Pixlee;
 use Pixlee\Pixlee\Service\Analytics;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class AnalyticsTest extends TestCase
+class AnalyticsTest extends AbstractUnitTestCase
 {
     private const API_KEY = 'public-api-key';
 
@@ -46,12 +46,12 @@ class AnalyticsTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->curl = $this->createMock(Curl::class);
-        $this->apiConfig = $this->createMock(Api::class);
-        $this->cookieManager = $this->createMock(CookieManager::class);
-        $this->logger = $this->createMock(PixleeLogger::class);
-        $this->pixlee = $this->createMock(Pixlee::class);
-        $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
+        $this->curl = $this->createPassiveDouble(Curl::class);
+        $this->apiConfig = $this->createPassiveDouble(Api::class);
+        $this->cookieManager = $this->createPassiveDouble(CookieManager::class);
+        $this->logger = $this->createPassiveDouble(PixleeLogger::class);
+        $this->pixlee = $this->createPassiveDouble(Pixlee::class);
+        $this->productMetadata = $this->createPassiveDouble(ProductMetadataInterface::class);
         $this->serializer = new Json();
 
         $this->apiConfig->method('getApiKey')->willReturn(self::API_KEY);
@@ -101,6 +101,7 @@ class AnalyticsTest extends TestCase
         $cookiePayload = ['CURRENT_PIXLEE_USER_ID' => 'user-123'];
         $this->cookieManager->method('get')->willReturn($this->serializer->serialize($cookiePayload));
 
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->expects($this->once())->method('post')->with(
             $this->stringContains(Analytics::ANALYTICS_BASE_URL . 'events/addToCart'),
             $this->callback(function ($body) {
@@ -121,6 +122,7 @@ class AnalyticsTest extends TestCase
         $cookiePayload = ['CURRENT_PIXLEE_USER_ID' => 'user-123'];
         $this->cookieManager->method('get')->willReturn($this->serializer->serialize($cookiePayload));
 
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->expects($this->once())->method('post')->with(
             $this->stringContains(Analytics::ANALYTICS_BASE_URL . 'events/conversion'),
             $this->callback(function ($body) {
@@ -158,12 +160,13 @@ class AnalyticsTest extends TestCase
     {
         $this->curl->method('getStatus')->willReturn(AnalyticsResponseFixtures::HTTP_SERVER_ERROR);
         $this->curl->method('getBody')->willReturn('error');
+        $this->logger = $this->createMock(PixleeLogger::class);
         $this->logger->expects($this->once())->method('error')->with(
             'Invalid HTTP response from Pixlee API',
             [
                 'status' => AnalyticsResponseFixtures::HTTP_SERVER_ERROR,
                 'body' => 'error',
-                'path' => 'events/addToCart',
+                'path' => Analytics::ANALYTICS_BASE_URL . 'events/addToCart',
             ]
         );
 
@@ -210,7 +213,7 @@ class AnalyticsTest extends TestCase
      */
     private function createStoreMock(string $code): Store
     {
-        return $this->createConfiguredMock(Store::class, [
+        return $this->createConfiguredPassiveDouble(Store::class, [
             'getCode' => $code,
         ]);
     }

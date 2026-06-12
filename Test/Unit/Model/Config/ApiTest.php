@@ -10,16 +10,16 @@ namespace Pixlee\Pixlee\Test\Unit\Model\Config;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Store\Model\ScopeInterface;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Config\Api;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class ApiTest extends TestCase
+class ApiTest extends AbstractUnitTestCase
 {
     public function testGetScopeReturnsDefaultWhenWebsiteIdEmpty(): void
     {
         $subject = new Api(
-            $this->createMock(ScopeConfigInterface::class),
-            $this->createMock(WriterInterface::class)
+            $this->createPassiveDouble(ScopeConfigInterface::class),
+            $this->createPassiveDouble(WriterInterface::class)
         );
 
         $scope = $subject->getScope(null);
@@ -31,8 +31,8 @@ class ApiTest extends TestCase
     public function testGetScopeReturnsWebsiteScopeWhenWebsiteIdProvided(): void
     {
         $subject = new Api(
-            $this->createMock(ScopeConfigInterface::class),
-            $this->createMock(WriterInterface::class)
+            $this->createPassiveDouble(ScopeConfigInterface::class),
+            $this->createPassiveDouble(WriterInterface::class)
         );
 
         $scope = $subject->getScope(2);

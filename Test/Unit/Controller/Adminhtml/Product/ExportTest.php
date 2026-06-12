@@ -12,11 +12,11 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Controller\Adminhtml\Product\Export;
 use Pixlee\Pixlee\Model\Export\Product;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class ExportTest extends TestCase
+class ExportTest extends AbstractUnitTestCase
 {
     public function testExecuteExportsSingleWebsiteWhenWebsiteIdProvided(): void
     {
@@ -29,10 +29,10 @@ class ExportTest extends TestCase
                 $exportedWebsiteIds[] = $websiteId;
             });
 
-        $request = $this->createMock(RequestInterface::class);
+        $request = $this->createPassiveDouble(RequestInterface::class);
         $request->method('getParam')->with('website_id')->willReturn('3');
 
-        $subject = $this->createSubject($productExport, $request, $this->createMock(StoreManagerInterface::class));
+        $subject = $this->createSubject($productExport, $request, $this->createPassiveDouble(StoreManagerInterface::class));
         $subject->execute();
 
         $this->assertSame(['3'], $exportedWebsiteIds);
@@ -40,10 +40,10 @@ class ExportTest extends TestCase
 
     public function testExecuteExportsAllWebsitesWhenWebsiteIdMissing(): void
     {
-        $websiteOne = $this->createConfiguredMock(Website::class, ['getId' => 1]);
-        $websiteTwo = $this->createConfiguredMock(Website::class, ['getId' => 2]);
+        $websiteOne = $this->createConfiguredPassiveDouble(Website::class, ['getId' => 1]);
+        $websiteTwo = $this->createConfiguredPassiveDouble(Website::class, ['getId' => 2]);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsites')->willReturn([$websiteOne, $websiteTwo]);
 
         $exportedWebsiteIds = [];
@@ -55,7 +55,7 @@ class ExportTest extends TestCase
                 $exportedWebsiteIds[] = $websiteId;
             });
 
-        $request = $this->createMock(RequestInterface::class);
+        $request = $this->createPassiveDouble(RequestInterface::class);
         $request->method('getParam')->with('website_id')->willReturn(null);
 
         $subject = $this->createSubject($productExport, $request, $storeManager);
@@ -73,7 +73,7 @@ class ExportTest extends TestCase
         RequestInterface $request,
         StoreManagerInterface $storeManager
     ): Export {
-        $context = $this->createMock(Context::class);
+        $context = $this->createPassiveDouble(Context::class);
         $context->method('getRequest')->willReturn($request);
 
         return new Export($context, $productExport, $storeManager);

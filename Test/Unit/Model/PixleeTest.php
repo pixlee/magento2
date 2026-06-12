@@ -14,25 +14,25 @@ use Magento\Framework\Filesystem\Directory\ReadFactory;
 use Magento\Framework\Module\ModuleList;
 use Magento\Framework\Serialize\Serializer\Json;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Pixlee;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 
-class PixleeTest extends TestCase
+class PixleeTest extends AbstractUnitTestCase
 {
     public function testGetExtensionVersionReadsFromComposerJson(): void
     {
         $composerJson = json_encode(['version' => '3.0.2']);
 
-        $reader = $this->createMock(Read::class);
+        $reader = $this->createPassiveDouble(Read::class);
         $reader->method('isExist')->with('composer.json')->willReturn(true);
         $reader->method('isReadable')->with('composer.json')->willReturn(true);
         $reader->method('readFile')->with('composer.json')->willReturn($composerJson);
 
-        $readFactory = $this->createMock(ReadFactory::class);
+        $readFactory = $this->createPassiveDouble(ReadFactory::class);
         $readFactory->method('create')->willReturn($reader);
 
-        $componentRegistrar = $this->createMock(ComponentRegistrarInterface::class);
+        $componentRegistrar = $this->createPassiveDouble(ComponentRegistrarInterface::class);
         $componentRegistrar->method('getPath')
             ->with(ComponentRegistrar::MODULE, Pixlee::MODULE_NAME)
             ->willReturn('/var/www/html/vendor-dev/pixlee/magento2');
@@ -40,8 +40,8 @@ class PixleeTest extends TestCase
         $subject = new Pixlee(
             $componentRegistrar,
             $readFactory,
-            $this->createMock(ModuleList::class),
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(ModuleList::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             new Json()
         );
 
@@ -51,17 +51,17 @@ class PixleeTest extends TestCase
 
     public function testGetExtensionVersionFallsBackToSetupVersion(): void
     {
-        $reader = $this->createMock(Read::class);
+        $reader = $this->createPassiveDouble(Read::class);
         $reader->method('isExist')->willReturn(false);
 
-        $readFactory = $this->createMock(ReadFactory::class);
+        $readFactory = $this->createPassiveDouble(ReadFactory::class);
         $readFactory->method('create')->willReturn($reader);
 
-        $componentRegistrar = $this->createMock(ComponentRegistrarInterface::class);
+        $componentRegistrar = $this->createPassiveDouble(ComponentRegistrarInterface::class);
         $componentRegistrar->method('getPath')->willReturn('/path/to/module');
 
         /** @var ModuleList&MockObject $moduleList */
-        $moduleList = $this->createMock(ModuleList::class);
+        $moduleList = $this->createPassiveDouble(ModuleList::class);
         $moduleList->method('getOne')
             ->with(Pixlee::MODULE_NAME)
             ->willReturn(['setup_version' => '1.2.3']);
@@ -70,7 +70,7 @@ class PixleeTest extends TestCase
             $componentRegistrar,
             $readFactory,
             $moduleList,
-            $this->createMock(PixleeLogger::class),
+            $this->createPassiveDouble(PixleeLogger::class),
             new Json()
         );
 

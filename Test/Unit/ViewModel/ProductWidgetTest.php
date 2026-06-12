@@ -12,12 +12,12 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Config\Widget;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 use Pixlee\Pixlee\ViewModel\ProductWidget;
 
-class ProductWidgetTest extends TestCase
+class ProductWidgetTest extends AbstractUnitTestCase
 {
     private const SCOPE = [
         'scopeType' => ScopeInterface::SCOPE_WEBSITES,
@@ -26,26 +26,26 @@ class ProductWidgetTest extends TestCase
 
     public function testIsActiveDelegatesToApiConfig(): void
     {
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('getScope')->with(1)->willReturn(self::SCOPE);
         $apiConfig->method('isActive')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
             ->willReturn(true);
 
-        $subject = $this->createSubject($apiConfig, $this->createMock(Widget::class));
+        $subject = $this->createSubject($apiConfig, $this->createPassiveDouble(Widget::class));
 
         $this->assertTrue($subject->isActive());
     }
 
     public function testGettersDelegateWithWebsiteScope(): void
     {
-        $apiConfig = $this->createMock(Api::class);
+        $apiConfig = $this->createPassiveDouble(Api::class);
         $apiConfig->method('getScope')->willReturn(self::SCOPE);
         $apiConfig->method('getApiKey')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
             ->willReturn('api-key');
 
-        $widgetConfig = $this->createMock(Widget::class);
+        $widgetConfig = $this->createPassiveDouble(Widget::class);
         $widgetConfig->method('getAccountId')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
             ->willReturn('acct-1');
@@ -66,9 +66,9 @@ class ProductWidgetTest extends TestCase
 
     public function testGetScopeFallsBackToDefaultStoreWebsiteWhenGetWebsiteThrows(): void
     {
-        $defaultStore = $this->createConfiguredMock(Store::class, ['getWebsiteId' => 2]);
+        $defaultStore = $this->createConfiguredPassiveDouble(Store::class, ['getWebsiteId' => 2]);
 
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsite')->willThrowException(new Exception('no website'));
         $storeManager->method('getDefaultStoreView')->willReturn($defaultStore);
 
@@ -81,7 +81,7 @@ class ProductWidgetTest extends TestCase
 
         $subject = new ProductWidget(
             $apiConfig,
-            $this->createMock(Widget::class),
+            $this->createPassiveDouble(Widget::class),
             $storeManager
         );
 
@@ -90,8 +90,8 @@ class ProductWidgetTest extends TestCase
 
     private function createSubject(Api $apiConfig, Widget $widgetConfig): ProductWidget
     {
-        $website = $this->createConfiguredMock(Website::class, ['getId' => 1]);
-        $storeManager = $this->createMock(StoreManagerInterface::class);
+        $website = $this->createConfiguredPassiveDouble(Website::class, ['getId' => 1]);
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         $storeManager->method('getWebsite')->willReturn($website);
 
         return new ProductWidget($apiConfig, $widgetConfig, $storeManager);

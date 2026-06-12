@@ -28,7 +28,7 @@ use Magento\Store\Model\Website;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Export\Product;
@@ -42,7 +42,7 @@ use Pixlee\Pixlee\Model\Pixlee;
  * pipeline so that, once the export is fixed, we can confirm it produces the
  * payloads Emplifi expects.
  */
-class ProductTest extends TestCase
+class ProductTest extends AbstractUnitTestCase
 {
     private const WEBSITE_ID = 1;
 
@@ -81,32 +81,29 @@ class ProductTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->mediaConfig = $this->createMock(MediaConfig::class);
-        $this->configurableProduct = $this->createMock(Configurable::class);
-        $this->productCollectionFactory = $this->getMockBuilder(ProductResource\CollectionFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
-            ->getMock();
-        $this->categoryCollectionFactory = $this->getMockBuilder(CategoryCollectionFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
-            ->getMock();
-        $this->productFactory = $this->getMockBuilder(ProductFactory::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['create'])
-            ->getMock();
-        $this->productResource = $this->createMock(ProductResource::class);
-        $this->productRepository = $this->createMock(ProductRepository::class);
-        $this->stockRegistry = $this->createMock(StockRegistryInterface::class);
-        $this->storeManager = $this->createMock(StoreManagerInterface::class);
+        $this->mediaConfig = $this->createPassiveDouble(MediaConfig::class);
+        $this->configurableProduct = $this->createPassiveDouble(Configurable::class);
+        $this->productCollectionFactory = $this->createPartialPassiveDouble(
+            ProductResource\CollectionFactory::class,
+            ['create']
+        );
+        $this->categoryCollectionFactory = $this->createPartialPassiveDouble(
+            CategoryCollectionFactory::class,
+            ['create']
+        );
+        $this->productFactory = $this->createPartialPassiveDouble(ProductFactory::class, ['create']);
+        $this->productResource = $this->createPassiveDouble(ProductResource::class);
+        $this->productRepository = $this->createPassiveDouble(ProductRepository::class);
+        $this->stockRegistry = $this->createPassiveDouble(StockRegistryInterface::class);
+        $this->storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
         // Use a real serializer, so payload assertions are concrete.
         $this->serializer = new Json();
-        $this->urlFinder = $this->createMock(UrlFinderInterface::class);
-        $this->apiConfig = $this->createMock(Api::class);
-        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
-        $this->logger = $this->createMock(PixleeLogger::class);
-        $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
-        $this->pixlee = $this->createMock(Pixlee::class);
+        $this->urlFinder = $this->createPassiveDouble(UrlFinderInterface::class);
+        $this->apiConfig = $this->createPassiveDouble(Api::class);
+        $this->pixleeService = $this->createPassiveDouble(PixleeServiceInterface::class);
+        $this->logger = $this->createPassiveDouble(PixleeLogger::class);
+        $this->productMetadata = $this->createPassiveDouble(ProductMetadataInterface::class);
+        $this->pixlee = $this->createPassiveDouble(Pixlee::class);
     }
 
     private function createSubject(): Product
@@ -137,6 +134,12 @@ class ProductTest extends TestCase
 
     public function testExportProductsDoesNothingWhenAccountInactive(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+        $this->productCollectionFactory = $this->getMockBuilder(ProductResource\CollectionFactory::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['create'])
+            ->getMock();
+
         $this->apiConfig->method('isActive')
             ->with(ScopeInterface::SCOPE_WEBSITES, self::WEBSITE_ID)
             ->willReturn(false);
@@ -160,8 +163,8 @@ class ProductTest extends TestCase
         ]);
         $collection = $this->paginatedCollection($page, $lastPage = 2, $size = 4);
 
-        $store = $this->createMock(Store::class);
-        $website = $this->createMock(Website::class);
+        $store = $this->createPassiveDouble(Store::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getDefaultStore')->willReturn($store);
         $this->storeManager->method('getWebsite')->with(self::WEBSITE_ID)->willReturn($website);
 
@@ -193,8 +196,8 @@ class ProductTest extends TestCase
 
         $collection = $this->paginatedCollection($this->countableIterable([]), $lastPage = 1, $size = 0);
 
-        $store = $this->createMock(Store::class);
-        $website = $this->createMock(Website::class);
+        $store = $this->createPassiveDouble(Store::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getDefaultStore')->willReturn($store);
         $this->storeManager->method('getWebsite')->with(self::WEBSITE_ID)->willReturn($website);
 
@@ -353,7 +356,7 @@ class ProductTest extends TestCase
         ];
 
         // 99 is intentionally absent from the map and must be skipped silently.
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getCategoryIds')->willReturn([3, 4, 99]);
 
         $categories = $this->createSubject()->getCategories($product, $categoriesMap);
@@ -372,7 +375,7 @@ class ProductTest extends TestCase
 
     public function testGetCategoriesReturnsEmptyArrayWhenProductHasNoCategories(): void
     {
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getCategoryIds')->willReturn([]);
 
         $this->assertSame([], $this->createSubject()->getCategories($product, []));
@@ -481,12 +484,12 @@ class ProductTest extends TestCase
             3 => ['name' => 'Men', 'url' => 'u3', 'parent_ids' => [3]],
         ];
 
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getId')->willReturn(10);
         $product->method('getCategoryIds')->willReturn([3]);
 
         // getAllPhotos: simple product, no gallery images, no children.
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->with(10)->willReturn($loaded);
         $this->configurableProduct->method('getUsedProductCollection')
@@ -512,16 +515,16 @@ class ProductTest extends TestCase
 
     public function testGetAllPhotosCollectsParentAndVariantImagesWithoutDuplicates(): void
     {
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getId')->willReturn(10);
 
-        $parentLoaded = $this->createMock(ProductModel::class);
+        $parentLoaded = $this->createPassiveDouble(ProductModel::class);
         $parentLoaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([
             $this->fakeImage('http://img/a.jpg'),
             $this->fakeImage('http://img/b.jpg'),
         ]));
 
-        $childLoaded = $this->createMock(ProductModel::class);
+        $childLoaded = $this->createPassiveDouble(ProductModel::class);
         $childLoaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([
             // Duplicate of the parent image must be ignored.
             $this->fakeImage('http://img/b.jpg'),
@@ -550,14 +553,14 @@ class ProductTest extends TestCase
 
     public function testGetProductUrlUsesRewriteRequestPathWhenAvailable(): void
     {
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getBaseUrl')->willReturn('http://example.com/');
 
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getId')->willReturn(10);
 
-        $rewrite = $this->createMock(UrlRewrite::class);
+        $rewrite = $this->createPassiveDouble(UrlRewrite::class);
         $rewrite->method('getRequestPath')->willReturn('men/shirts/red.html');
         $this->urlFinder->method('findOneByData')->willReturn($rewrite);
 
@@ -568,10 +571,10 @@ class ProductTest extends TestCase
 
     public function testGetProductUrlFallsBackToProductUrlWhenNoRewrite(): void
     {
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
 
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getId')->willReturn(10);
         $product->method('getProductUrl')->willReturn('http://example.com/catalog/product/view/id/10');
 
@@ -584,7 +587,7 @@ class ProductTest extends TestCase
 
     public function testGetAbsoluteUrlNormalisesSlashes(): void
     {
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getBaseUrl')->willReturn('http://example.com/');
 
         $this->assertSame(
@@ -601,7 +604,7 @@ class ProductTest extends TestCase
     {
         $product = $this->productWithWebsite(self::WEBSITE_ID, 10);
 
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([1, 2]);
         $this->storeManager->method('getWebsite')->with(self::WEBSITE_ID)->willReturn($website);
 
@@ -611,7 +614,7 @@ class ProductTest extends TestCase
             [ScopeInterface::SCOPE_STORES, 2, false],
         ]);
 
-        $storeProduct = $this->createMock(ProductModel::class);
+        $storeProduct = $this->createPassiveDouble(ProductModel::class);
         $storeProduct->method('getName')->willReturn('Localised Name');
         $storeProduct->method('getProductUrl')->willReturn('http://eu.example.com/p.html');
         $storeProduct->method('getFinalPrice')->willReturn(50.0);
@@ -619,12 +622,12 @@ class ProductTest extends TestCase
         $this->productFactory->method('create')->willReturn($storeProduct);
         $this->productResource->method('load')->willReturnSelf();
 
-        $eurCurrency = $this->createMock(Currency::class);
+        $eurCurrency = $this->createPassiveDouble(Currency::class);
         $eurCurrency->method('getCode')->willReturn('EUR');
-        $baseCurrency = $this->createMock(Currency::class);
+        $baseCurrency = $this->createPassiveDouble(Currency::class);
         $baseCurrency->method('convert')->with(50.0, $eurCurrency)->willReturn(45.0);
 
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getDefaultCurrency')->willReturn($eurCurrency);
         $store->method('getBaseCurrency')->willReturn($baseCurrency);
         $store->method('getCode')->willReturn('eu');
@@ -651,35 +654,41 @@ class ProductTest extends TestCase
 
     public function testExportProductSkipsWhenApiInactive(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->apiConfig->method('isActive')
             ->with(ScopeInterface::SCOPE_WEBSITES, self::WEBSITE_ID)
             ->willReturn(false);
 
         $this->pixleeService->expects($this->never())->method('createProduct');
 
-        $product = $this->createMock(ProductModel::class);
-        $store = $this->createMock(Store::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
+        $store = $this->createPassiveDouble(Store::class);
 
         $this->createSubject()->exportProductToPixlee($product, [], self::WEBSITE_ID, $store);
     }
 
     public function testExportProductSkipsProductsNotVisibleInCatalog(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->apiConfig->method('isActive')->willReturn(true);
 
         $this->pixleeService->expects($this->never())->method('createProduct');
 
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getVisibility')->willReturn(Visibility::VISIBILITY_NOT_VISIBLE);
         $product->method('getId')->willReturn(10);
 
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
 
         $this->createSubject()->exportProductToPixlee($product, [], self::WEBSITE_ID, $store);
     }
 
     public function testExportProductBuildsExpectedPayloadAndCallsCreateProduct(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         // API active for the website, but inactive per-store so regional_info is empty.
         $this->mockApiActiveForWebsiteScope();
 
@@ -696,9 +705,9 @@ class ProductTest extends TestCase
             ->willReturn('http://example.com/media/catalog/product/t/e/test.jpg');
 
         // Store passed in to the export call.
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('getCode')->willReturn('USD');
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
@@ -706,7 +715,7 @@ class ProductTest extends TestCase
         $this->urlFinder->method('findOneByData')->willReturn(null);
 
         // Regional info iterates the website's stores.
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([1]);
         $this->storeManager->method('getWebsite')->willReturn($website);
 
@@ -716,7 +725,7 @@ class ProductTest extends TestCase
         $this->stockRegistry->method('getStockItem')->willReturn($this->stockItem(15.0));
 
         // Extra fields dependencies.
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->willReturn($loaded);
         $this->productMetadata->method('getVersion')->willReturn('2.4.8');
@@ -759,6 +768,8 @@ class ProductTest extends TestCase
      */
     public function testExportedPayloadContainsEveryExpectedFieldPopulated(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->mockApiActiveForWebsiteScope();
 
         $product = $this->productWithWebsite(self::WEBSITE_ID, 10);
@@ -773,20 +784,20 @@ class ProductTest extends TestCase
         $this->mediaConfig->method('getMediaUrl')
             ->willReturn('http://example.com/media/catalog/product/t/e/test.jpg');
 
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('getCode')->willReturn('USD');
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
         $this->urlFinder->method('findOneByData')->willReturn(null);
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([]);
         $this->storeManager->method('getWebsite')->willReturn($website);
         $this->configurableProduct->method('getUsedProductCollection')
             ->willReturn($this->countableIterable([]));
         $this->stockRegistry->method('getStockItem')->willReturn($this->stockItem(15.0));
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->willReturn($loaded);
         $this->productMetadata->method('getVersion')->willReturn('2.4.8');
@@ -851,14 +862,16 @@ class ProductTest extends TestCase
      */
     public function testExportProductReturnsEarlyWhenProductNameIsNull(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->apiConfig->method('isActive')->willReturn(true);
 
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getId')->willReturn(10);
         $product->method('getVisibility')->willReturn(Visibility::VISIBILITY_BOTH);
         $product->method('getName')->willReturn(null);
 
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
 
         $this->pixleeService->expects($this->never())
             ->method('createProduct');
@@ -868,6 +881,8 @@ class ProductTest extends TestCase
 
     public function testExportProductStillExportsWhenProductNameIsEmptyString(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->mockApiActiveForWebsiteScope();
 
         $product = $this->productWithWebsite(self::WEBSITE_ID, 10);
@@ -879,20 +894,20 @@ class ProductTest extends TestCase
         $product->method('getProductUrl')->willReturn('http://example.com/empty.html');
         $product->method('getCategoryIds')->willReturn([]);
 
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('getCode')->willReturn('USD');
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
         $this->urlFinder->method('findOneByData')->willReturn(null);
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([]);
         $this->storeManager->method('getWebsite')->willReturn($website);
         $this->configurableProduct->method('getUsedProductCollection')
             ->willReturn($this->countableIterable([]));
         $this->stockRegistry->method('getStockItem')->willReturn($this->stockItem(0.0));
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->willReturn($loaded);
         $this->productMetadata->method('getVersion')->willReturn('2.4.8');
@@ -913,6 +928,8 @@ class ProductTest extends TestCase
 
     public function testExportProductExportsCatalogOnlyVisibleProducts(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->mockApiActiveForWebsiteScope();
 
         $product = $this->productWithWebsite(self::WEBSITE_ID, 10);
@@ -924,20 +941,20 @@ class ProductTest extends TestCase
         $product->method('getProductUrl')->willReturn('http://example.com/catalog-only.html');
         $product->method('getCategoryIds')->willReturn([]);
 
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('getCode')->willReturn('USD');
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
         $this->urlFinder->method('findOneByData')->willReturn(null);
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([]);
         $this->storeManager->method('getWebsite')->willReturn($website);
         $this->configurableProduct->method('getUsedProductCollection')
             ->willReturn($this->countableIterable([]));
         $this->stockRegistry->method('getStockItem')->willReturn($this->stockItem(3.0));
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->willReturn($loaded);
         $this->productMetadata->method('getVersion')->willReturn('2.4.8');
@@ -958,6 +975,8 @@ class ProductTest extends TestCase
 
     public function testExportConfigurableProductBuildsVariantsPayload(): void
     {
+        $this->pixleeService = $this->createMock(PixleeServiceInterface::class);
+
         $this->mockApiActiveForWebsiteScope();
 
         $product = $this->productWithWebsite(self::WEBSITE_ID, 1);
@@ -977,17 +996,17 @@ class ProductTest extends TestCase
             [20, self::WEBSITE_ID, $this->stockItem(50.0)],
         ]);
 
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('getCode')->willReturn('USD');
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
         $this->urlFinder->method('findOneByData')->willReturn(null);
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([]);
         $this->storeManager->method('getWebsite')->willReturn($website);
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->willReturn($loaded);
         $this->productMetadata->method('getVersion')->willReturn('2.4.8');
@@ -1014,6 +1033,8 @@ class ProductTest extends TestCase
 
     public function testExportProductSendsEmptyImageWhenProductHasNoImage(): void
     {
+        $this->mediaConfig = $this->createMock(MediaConfig::class);
+
         $this->mockApiActiveForWebsiteScope();
 
         $product = $this->productWithWebsite(self::WEBSITE_ID, 10);
@@ -1027,20 +1048,20 @@ class ProductTest extends TestCase
 
         $this->mediaConfig->expects($this->never())->method('getMediaUrl');
 
-        $currency = $this->createMock(Currency::class);
+        $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('getCode')->willReturn('USD');
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn(1);
         $store->method('getCurrentCurrency')->willReturn($currency);
 
         $this->urlFinder->method('findOneByData')->willReturn(null);
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getStoreIds')->willReturn([]);
         $this->storeManager->method('getWebsite')->willReturn($website);
         $this->configurableProduct->method('getUsedProductCollection')
             ->willReturn($this->countableIterable([]));
         $this->stockRegistry->method('getStockItem')->willReturn($this->stockItem(0.0));
-        $loaded = $this->createMock(ProductModel::class);
+        $loaded = $this->createPassiveDouble(ProductModel::class);
         $loaded->method('getMediaGalleryImages')->willReturn($this->countableIterable([]));
         $this->productRepository->method('getById')->willReturn($loaded);
         $this->productMetadata->method('getVersion')->willReturn('2.4.8');
@@ -1107,9 +1128,9 @@ class ProductTest extends TestCase
      */
     private function mockWebsiteDefaultStore(int $storeId): void
     {
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getId')->willReturn($storeId);
-        $website = $this->createMock(Website::class);
+        $website = $this->createPassiveDouble(Website::class);
         $website->method('getDefaultStore')->willReturn($store);
         $this->storeManager->method('getWebsite')->with(self::WEBSITE_ID)->willReturn($website);
     }
@@ -1242,10 +1263,10 @@ class ProductTest extends TestCase
      */
     private function productWithWebsite(int $websiteId, ?int $productId = null)
     {
-        $store = $this->createMock(Store::class);
+        $store = $this->createPassiveDouble(Store::class);
         $store->method('getWebsiteId')->willReturn($websiteId);
 
-        $product = $this->createMock(ProductModel::class);
+        $product = $this->createPassiveDouble(ProductModel::class);
         $product->method('getStore')->willReturn($store);
         if ($productId !== null) {
             $product->method('getId')->willReturn($productId);
@@ -1259,7 +1280,7 @@ class ProductTest extends TestCase
      */
     private function stockItem(float $qty)
     {
-        $item = $this->createMock(StockItemInterface::class);
+        $item = $this->createPassiveDouble(StockItemInterface::class);
         $item->method('getQty')->willReturn($qty);
 
         return $item;

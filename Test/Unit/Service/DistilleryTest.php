@@ -11,18 +11,19 @@ use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\ScopeInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Pixlee;
 use Pixlee\Pixlee\Service\Distillery;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 use ReflectionException;
 use ReflectionMethod;
 
-class DistilleryTest extends TestCase
+class DistilleryTest extends AbstractUnitTestCase
 {
     private const PRIVATE_KEY = 'test-private-key';
     private const SECRET_KEY = 'test-secret-key';
+    private const ALBUMS_BASE_URI = 'https://distillery.pixlee.co/api/v2/albums';
 
     /** @var Curl&MockObject */
     private $curl;
@@ -38,9 +39,9 @@ class DistilleryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->curl = $this->createMock(Curl::class);
-        $this->apiConfig = $this->createMock(Api::class);
-        $this->logger = $this->createMock(PixleeLogger::class);
+        $this->curl = $this->createPassiveDouble(Curl::class);
+        $this->apiConfig = $this->createPassiveDouble(Api::class);
+        $this->logger = $this->createPassiveDouble(PixleeLogger::class);
         $this->serializer = new Json();
 
         $this->apiConfig->method('getPrivateApiKey')->willReturn(self::PRIVATE_KEY);
@@ -68,6 +69,7 @@ class DistilleryTest extends TestCase
         $payload = '{"album_type":"product"}';
         $responseBody = '{"status":200}';
 
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->expects($this->once())
             ->method('setHeaders')
             ->with($this->callback(function (array $headers) use ($payload): bool {
@@ -81,7 +83,7 @@ class DistilleryTest extends TestCase
 
         $this->curl->expects($this->once())->method('addHeader')->with('Expect', '');
         $this->curl->expects($this->once())->method('post')->with(
-            $this->stringContains('https://distillery.pixlee.co/api/v2/albums?api_key=' . self::PRIVATE_KEY),
+            $this->stringContains(self::ALBUMS_BASE_URI . '?api_key=' . self::PRIVATE_KEY),
             $payload
         );
         $this->curl->method('getStatus')->willReturn(200);
@@ -97,12 +99,13 @@ class DistilleryTest extends TestCase
     {
         $this->curl->method('getStatus')->willReturn(401);
         $this->curl->method('getBody')->willReturn('unauthorized');
+        $this->logger = $this->createMock(PixleeLogger::class);
         $this->logger->expects($this->once())->method('error')->with(
             'Invalid HTTP response from Pixlee API',
             [
                 'status' => 401,
                 'body' => 'unauthorized',
-                'path' => 'v2/albums',
+                'path' => self::ALBUMS_BASE_URI,
             ]
         );
 
@@ -116,6 +119,7 @@ class DistilleryTest extends TestCase
     {
         $responseBody = '{"albums":[]}';
 
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->expects($this->once())->method('get')->with(
             $this->stringContains('v2/albums?api_key=' . self::PRIVATE_KEY . '&page=1&per_page=1')
         );
@@ -144,6 +148,7 @@ class DistilleryTest extends TestCase
             'extra_fields' => '{}',
         ];
 
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->method('getStatus')->willReturn(200);
         $this->curl->method('getBody')->willReturn('{"album_id":99}');
 
@@ -172,6 +177,7 @@ class DistilleryTest extends TestCase
 
     public function testNotifyExportStatusPostsExpectedPayload(): void
     {
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->method('getStatus')->willReturn(200);
         $this->curl->method('getBody')->willReturn('{"ok":true}');
 
@@ -199,12 +205,13 @@ class DistilleryTest extends TestCase
     {
         $this->curl->method('getStatus')->willReturn(401);
         $this->curl->method('getBody')->willReturn('unauthorized');
+        $this->logger = $this->createMock(PixleeLogger::class);
         $this->logger->expects($this->once())->method('error')->with(
             'Invalid HTTP response from Pixlee API',
             [
                 'status' => 401,
                 'body' => 'unauthorized',
-                'path' => 'v2/albums',
+                'path' => self::ALBUMS_BASE_URI,
             ]
         );
 
@@ -230,6 +237,7 @@ class DistilleryTest extends TestCase
     {
         $responseBody = '{"albums":[]}';
 
+        $this->curl = $this->createMock(Curl::class);
         $this->curl->expects($this->once())->method('get')->with(
             $this->stringContains('v2/albums')
         );
