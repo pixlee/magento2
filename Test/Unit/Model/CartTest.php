@@ -12,6 +12,7 @@ use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Directory\Model\Currency;
+use Magento\Framework\Currency\Data\Currency as FrameworkCurrency;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Locale\FormatInterface;
 use Magento\Framework\Model\Context;
@@ -95,6 +96,89 @@ class CartTest extends TestCase
         $this->assertSame('simple-red', $itemData['variant_sku']);
         $this->assertSame('configurable-parent', $itemData['product_sku']);
         $this->assertSame('USD', $itemData['currency']);
+    }
+
+    public function testExtractQuoteItemFallsBackToProductFinalPriceWhenQuotePriceUnset(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(25.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('25.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $product = $this->getMockBuilder(Product::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice'])
+            ->getMock();
+        $product->method('getSku')->willReturn('simple');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('setFinalPrice')->willReturnSelf();
+        $product->method('getFinalPrice')->with(2.0)->willReturn(25.0);
+        $product->method('getPrice')->willReturn(30.0);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('qty', 2.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 1);
+        $item->setSku('simple');
+        $item->setData('product', $product);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('25.00', $itemData['price']);
+        $this->assertSame(2, $itemData['quantity']);
+    }
+
+    public function testExtractQuoteItemFallsBackToChildProductFinalPriceForConfigurable(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(49.99, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('49.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childProduct = $this->getMockBuilder(Product::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice'])
+            ->getMock();
+        $childProduct->method('getSku')->willReturn('simple-red');
+        $childProduct->method('getTypeId')->willReturn('simple');
+        $childProduct->method('setFinalPrice')->willReturnSelf();
+        $childProduct->method('getFinalPrice')->with(1.0)->willReturn(49.99);
+        $childProduct->method('getPrice')->willReturn(55.0);
+
+        $parentProduct = $this->getMockBuilder(Product::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice'])
+            ->getMock();
+        $parentProduct->method('getSku')->willReturn('configurable-parent');
+        $parentProduct->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
+        $parentProduct->method('setFinalPrice')->willReturnSelf();
+        $parentProduct->method('getFinalPrice')->with(1.0)->willReturn(0.0);
+        $parentProduct->method('getPrice')->willReturn(0.0);
+
+        $childItem = $this->createQuoteItemChildStub(42, 'simple-red');
+        $childItem->setData('qty', 1.0);
+        $childItem->setData('price', null);
+        $childItem->setData('product', $childProduct);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', Configurable::TYPE_CODE);
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 10);
+        $item->setSku('configurable-parent');
+        $item->setData('product', $parentProduct);
+        $item->addChild($childItem);
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('49.99', $itemData['price']);
+        $this->assertSame(42, $itemData['variant_id']);
     }
 
     public function testExtractQuoteItemUsesParentSkuWhenQuoteProductIsSelectedSimple(): void

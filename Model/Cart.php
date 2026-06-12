@@ -69,7 +69,7 @@ class Cart
             $item->getProductType(),
             $item->getChildren(),
             $item->getQty(),
-            $item->getPrice(),
+            $this->resolveQuoteItemPrice($item),
             (int) $item->getProductId(),
             $item->getProduct(),
             $currency
@@ -84,6 +84,7 @@ class Cart
      *
      * @param OrderInterface $order
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getConversionPayload($order)
     {
@@ -107,6 +108,7 @@ class Cart
      *
      * @param OrderInterface $order
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getCartContents($order)
     {
@@ -125,6 +127,7 @@ class Cart
      * @param OrderItemInterface $item
      * @param DirectoryCurrency $currency
      * @return array
+     * @throws NoSuchEntityException
      */
     public function extractItem($item, $currency)
     {
@@ -137,6 +140,44 @@ class Cart
             $item->getProduct(),
             $currency
         );
+    }
+
+    /**
+     * Resolve quote item price which may not be set before collectTotals(); fall back to catalog pricing.
+     *
+     * @param QuoteItem $item
+     * @return float|string|null
+     */
+    protected function resolveQuoteItemPrice(QuoteItem $item)
+    {
+        $price = $item->getPrice();
+        if ($price) {
+            return $price;
+        }
+
+        $product = $item->getProduct();
+        if ($product) {
+            $productPrice = $product->getFinalPrice($item->getQty()) ?: $product->getPrice();
+            if ($productPrice) {
+                return $productPrice;
+            }
+        }
+
+        foreach ($item->getChildren() as $child) {
+            $childPrice = $child->getPrice();
+            if ($childPrice) {
+                return $childPrice;
+            }
+            $childProduct = $child->getProduct();
+            if ($childProduct) {
+                $productPrice = $childProduct->getFinalPrice($child->getQty()) ?: $childProduct->getPrice();
+                if ($productPrice) {
+                    return $productPrice;
+                }
+            }
+        }
+
+        return $price;
     }
 
     /**
