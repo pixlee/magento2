@@ -1,9 +1,9 @@
 # Emplifi UGC plugin for Magento 2 / Adobe Commerce
 
-To view these docs online, navigate to:
-https://developers.pixlee.com/docs/magento-2
+Use this Magento 2 extension to connect to Emplifi's UGC service. Compatible with Magento Open Source and Adobe Commerce, versions 2.3–2.4.
 
-Use this Magento 2 extension to connect to Emplifi's UGC service. Compatible with Magento Open Source and Adobe Commerce, versions 2.3 - 2.4.
+[Documentation](https://developers.pixlee.com/docs/magento-2)
+
 * * *
 
 ## Installation Instructions
@@ -31,7 +31,7 @@ Composer Package [pixlee/magento2](https://packagist.org/packages/pixlee/magento
 1. Create a `code/Pixlee/Pixlee` directory in the `app` directory of your Magento installation.
 2. Download the latest "Source code" from this page: [https://github.com/pixlee/magento2/releases](https://github.com/pixlee/magento2/releases)
 3. Extract the file and copy the contents of the Pixlee_Pixlee directory into the `app/code/Pixlee/Pixlee` directory.
-4. Run following commands from your root Magento installation directory:
+4. Run the following commands from your root Magento installation directory:
 
     ```bash
     bin/magento module:enable Pixlee_Pixlee --clear-static-content
@@ -53,8 +53,6 @@ Select **Stores** > **Configuration** on the main menu. Then select **Emplifi (P
 The Emplifi UGC account settings can be configured at the Website, Store, or Store view depending on account setup. For
 each UGC account, select the desired cope in the scope (store view) dropdown menu and enter the account configurations.
 
-![](https://files.readme.io/b27deee-ApiSettings.png "04_02_magento2_configuration.png")
-
 1. Set **Enable** to *Yes*
 2. Fill in **API Key**, **Private API Key**, and **Secret Key** with the API keys from your Emplifi Account. [Getting you API Keys](https://developers.pixlee.com/docs/getting-your-api-keys)
 3. Click **Save Config** in the top right corner of the page to save your Account Settings.
@@ -63,8 +61,13 @@ each UGC account, select the desired cope in the scope (store view) dropdown men
 
 #### Recurring Product Export Cron Job
 
-The extension sets up a cron job that exports products to Emplifi on a daily basis. This will keep product
-data up-to-date in Emplifi by exporting new product data and updated data for existing products to Emplifi.
+The extension sets up a cron job that exports products to Emplifi daily. This will keep product
+data up to date in Emplifi by exporting new product data and updated data for existing products to Emplifi.
+
+#### Disable Product Export
+
+The extension can be configured to disable product export. To disable product export, set the **Enable Nightly Export**
+configuration option to *No*.
 
 #### Change Product Export Run Time
 
@@ -74,11 +77,11 @@ product export runs by updating the cron schedule in Magento.
 1.  Create a copy of the extension's crontab.xml in your Magento 2 directory on the server in the app/code/Pixlee/Pixlee/etc directory.
 
 2.  Update the <schedule> time to the time you want the export to run. To change the hour in the day at which the 
-products are exported, change the 3 in the schedule tag to the hour you want the export to run. The example below will 
+products are exported, change the `3` in the schedule tag to the hour you want the export to run. The example below will 
 run the export at one minute after 5am UTC.
 
     ```xml
-    <job name="export_cronjob" instance="Pixlee\Pixlee\Cron\ExportCron" method="execute">
+    <job name="pixlee_product_export" instance="Pixlee\Pixlee\Cron\ExportCron" method="execute">
         <schedule>1 5 * * *</schedule>
     </job>
     ```
@@ -90,8 +93,8 @@ In the extension configuration **Products** section, click the **Export Products
 products for the currently selected configuration scope to your Emplifi account. This process can be repeated for each scope.
 
 > ### 🚧 Note
-> If the export times out, ensure the **max_execution_time** configuration for Magento must is set to at least 3600 seconds (1 hour).
-> Magento sets the value to 5 hours by default.
+> If the export times out, ensure the **max_execution_time** configuration for Magento is set to at least 3600 seconds (1 hour).
+Magento sets the value to 5 hours by default.
 
 ### Embedding PDP Widget on Product Pages
 
@@ -100,7 +103,6 @@ After creating a PDP Widget in Emplifi, adding the widget ID to the configuratio
 1. Log in to [your account](https://app.pixlee.com) and navigate to the [Publish Center](https://app.pixlee.com/app#publish).
 
 2. Click the "Publish New PDP Display" button and configure the display per the [documentation](https://docs.emplifi.io/platform/latest/home/publish-a-product-description-page-display-pdp-).
-NOTE - It is recommended that you leave the "Load Priority" setting to "Low priority" when customizing.
 
 3. After customizing, click the "Generate Embed Code" button and copy the value for **widgetId** from the snippet or get the ID from the Publish Center.
 
@@ -123,14 +125,14 @@ The first three steps are exactly the same as embedding a PDP widget as they onl
 1. Log in to [your account](https://app.pixlee.com) and navigate to the [Publish Center](https://app.pixlee.com/app#publish).
 
 2. Click the "Publish New PDP Display" button and configure the display per the [documentation](https://docs.emplifi.io/platform/latest/home/publish-a-product-description-page-display-pdp-).
-   NOTE - It is recommended that you leave the "Load Priority" setting to "Low priority" when customizing.
+   > It is recommended that you leave the "Load Priority" setting to "Low priority" when customizing.
 
 3. After customizing, click the "Generate Embed Code" button and copy the value for **widgetId** from the snippet or get the ID from the Publish Center.
 
 4. To enable the CDP widget, enter the **widgetId** from the previous step in the **CDP Widget ID** field under **Widget Settings**
    in the Magento store configuration and click **Save Config**.
 
-5. To **customize the placement** of the PDP widget, modify _catalog_product_view.xml_. And use the move tag to move the widget block.
+5. To **customize the placement** of the CDP widget, modify _catalog_product_view.xml_. And use the move tag to move the widget block.
 
    For example, you can create a new `view/frontend/layout/catalog_category_view.xml` file in a custom module in the
    app/code directory and use the move tag to move the widget block.
@@ -141,50 +143,116 @@ The first three steps are exactly the same as embedding a PDP widget as they onl
 
 * * *
 
-## Testing and Troubleshooting
+## Testing
 
-To test that everything was implemented correctly, we need to check two things -
+This module includes both unit and integration tests located in:
 
-1.  Were all the products exported?
-2.  Are API calls being successfully made to the Emplifi UGC API?
+- `vendor/pixlee/magento2/Test/Unit`
+- `vendor/pixlee/magento2/Test/Integration`
 
-### Were all the products exported?
+These tests can be executed using PHPUnit and the Magento 2 test framework.
 
-Before testing, please make sure that the Product Export job has at least run once. If you have already run the exports once, skip to step 3.
+---
 
-1.  In order to run it manually. Open Admin Panel > Stores > Configuration > Emplifi > UGC. Press the **Export Products to Emplifi** button to start the exports.
+### Unit Tests
 
-2.  Login to your [Emplifi](https://app.pixlee.com) account and navigate to [Products](https://app.pixlee.com/app#products) under the **Album** tab.
+Run unit tests with:
 
-3.  You should see a list of products on this page.
+```bash
+vendor/bin/phpunit -c phpunit.xml.dist vendor/pixlee/magento2/Test/Unit
+```
 
-    ![](https://files.readme.io/9546c5f-01_64_demandware_products.png "01_64_demandware_products.png")
+---
 
-4.  Try searching for a few products on this page that you know exist in your catalog.
+### Integration Tests (Magento Test Framework)
 
-5.  In case the list is empty or you were not able to search for a particular product, proceed to the next step. Otherwise, proceed straight to the next section [Are API calls being successfully made to the Emplifi UGC API?](#are-api-calls-being-successfully-made-to-the-emplifi-ugc-api)
+Run integration tests with:
 
-6.  There can be several causes of failure to export products so first, we need to find out the exact cause of the failure. The Product Exports job logs the progress and all exceptions to the server logs. So the next step for us is to get the both **Magento server logs** and the **PHP (Apache or equivalent)** logs.
+```bash
+vendor/bin/phpunit -c dev/tests/integration/phpunit.xml.dist vendor/pixlee/magento2/Test/Integration
+```
 
-7.  The Magento server logs are usually located in **var/log** so navigate to that location and look for the file named **pixlee.log**.
+> Ensure your Magento integration test environment (database and configuration) is properly set up before running integration tests.
 
-8.  For the PHP logs location, it depends on your setup. For example, if you're using Apache the logs should be in **$Apache Root$/logs**. We're looking for the file named **php_error.log** in this directory.
+---
 
-9.  One of the most common issues that we encounter is a lack of allocated memory to the Magento or PHP/Apache server. Open the **php_error.log** file using your favorite text editor and search for a log entry similar to the following line
+### Optional: Include module tests in your Magento test suite
 
-    Allowed memory size of 33554432 bytes exhausted (tried to allocate 43148176 bytes) in PHP
+To run Pixlee tests as part of your existing Magento integration test suite, add the following to your `dev/tests/integration/phpunit.xml.dist` (or a custom test suite configuration):
 
-10.  If you found a similar looking error, please increase the allocated memory and run the product export job again.
+```xml
+<testsuite name="Pixlee Module Tests">
+    <directory>../../../vendor/pixlee/magento2/Test/Integration</directory>
+    <directory>../../../vendor/pixlee/magento2/Test/Unit</directory>
+</testsuite>
+```
 
-11.  Another common issue we encounter is a low setting for the **max_execution_time**. Look for a log entry similar to the following
+---
 
-    Fatal error: Maximum execution time of 999 seconds exceeded in ...
+### Optional: Enable module for integration tests
 
-12.  If you found a similar log entry please increase the **max_execution_time** setting inside your **php.ini** file to at least 3600. And then try exporting the products again.
+Ensure the module is enabled in your integration test environment by adding it to:
 
-13.  If at this point you're still not able to see any products exported to Emplifi, please contact us at support@emplifi.io and attach the both **pixlee.log** and **php_error.log** with the email.
+`dev/tests/integration/etc/config-global.php`
 
-### Are API calls being successfully made to the Emplifi UGC API?
+```php
+<?php
+
+return [
+    'TESTS_MODULES_ENABLED' => [
+        'Pixlee_Pixlee' => true,
+    ],
+];
+```
+
+---
+
+### Notes
+
+- Integration tests require a configured Magento test database.
+- Run all commands from the Magento root directory.
+- Unit tests do not require Magento to be bootstrapped.
+
+## Validation and Troubleshooting
+
+To validate the extension setup, you can confirm:
+- All the products exported
+- API calls are successfully made to the Emplifi UGC API
+
+### Product Export
+
+Ensure the product export has run at least once. To run the export manually:
+
+- Open your store Admin
+- Navigate to **Stores > Configuration > Emplifi > UGC**
+- Click the **Export Products to Emplifi** button in the Products section
+
+Validate products updated in Emplifi
+- Login to your [Emplifi](https://app.pixlee.com) account and navigate to [Products](https://app.pixlee.com/app#products) under the **Album** tab.
+- Confirm the exported products are listed.
+- Search for products to confirm they appear in your account with the correct data.
+
+#### Troubleshooting Product Export
+
+If the list is empty, or if you were not able to find a particular product, check the application and server logs for
+errors. The extension logs to a separate log file **pixlee.log** which can be found in the application logs usually
+located in **var/log** directory.
+
+You can also check the PHP server logs. Some common errors are:
+1. Lack of allocated memory for the server
+    
+    `Allowed memory size of 33554432 bytes exhausted (tried to allocate 43148176 bytes) in PHP`
+
+   - To fix the issue, increase the allocated memory and run the product export job again.
+2. Insufficient **max_execution_time**
+
+    `Fatal error: Maximum execution time of 999 seconds exceeded in ...`
+
+   - To fix the issue, increase the **max_execution_time** setting inside your **php.ini** file to at least 3600. And then try exporting the products again.
+
+If you need further help troubleshooting, please email support@emplifi.io and attach relevant logs.
+
+### API Validation
 
 API calls are made to Emplifi UGC API when a customer adds something to their cart and when they buy something on your store. We need to make sure that these calls are being made at the right time.
 
@@ -194,60 +262,35 @@ API calls are made to Emplifi UGC API when a customer adds something to their ca
 
 3.  There should be an entry beginning with **AddToCart**
 
-    ![](https://files.readme.io/0abe8fa-Screen_Shot_2019-10-10_at_7.36.19_PM.png "Screen Shot 2019-10-10 at 7.36.19 PM.png")
+4.  If you found the **AddToCart** calls, then your analytics were integrated correctly. If not, contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
 
-4.  If you found the **AddToCart** calls then your analytics were integrated correctly. If not, contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
-
-5.  Switch back to the browser and proceed to checkout and buy the product that you added to cart previously. Use a test payment method for the checkout.
+5.  Switch back to the browser and proceed to checkout to buy the product that you added to the cart previously. Use a test payment method for the checkout.
 
 6.  When you reach the order confirmation page switch open the **pixlee.log** file again and ensure that you are viewing the latest copy of the file.
 
 7.  This time look for log entries beginning with **CheckoutSuccess**
 
-    ![](https://files.readme.io/f02da02-Screen_Shot_2019-10-10_at_7.47.20_PM.png "Screen Shot 2019-10-10 at 7.47.20 PM.png")
-
 8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
 
 > ### 🚧 Disclaimer: Mobile Analytics
 >
-> Based on the design of Magento2, user agents are not passed in the add to cart and conversion events. This means that
+> Based on the design of Magento2, user agents are not passed in the **add to cart** and **conversion** events. This means that
 > there is no current ability to split between mobile and desktop conversion data.
 
 ### RequireJS error on pages containing widgets
 
 To verify that you are encountering this issue, do the following:
 
-1.  Open your website on your browser and navigate to a page where a UGC widget should appear.
+- Open the developer tools for your browser and check for console errors.
+- If you find an error like `Mismatched anonymous define() module` this is likely caused by adding scripts directly to
+the page without using RequireJS.
+- Refer to the documentation for [Embedding Widgets on your site](https://developers.pixlee.com/docs/magento-2#embedding-widgets-on-your-site)
 
-2.  Open the developer tools for your browser, navigate to the console tab and verify that you are seeing this error:
-
-    ![](https://files.readme.io/d16d7f3-Screen_Shot_2019-10-16_at_1.23.55_PM.png "Screen Shot 2019-10-16 at 1.23.55 PM.png")
-
-    > ### 🚧 Note
-    >
-    > The cause of this error is that the Publish Center only generates embed code in plain HTML. Whereas the extension
-    > is compliant with RequireJS standards and expects scripts to be only embedded via RequireJS. This problem can be
-    > resolved by creating a widget with [these steps here](https://developers.pixlee.com/docs/magento-2#section-installing-product-description-page-pdp-widgets)
-    > instead of directly adding the widget embed code from the Publish Center. However, if you wish to keep the generated
-    > embed code, follow the steps below.
-
-3.  Find the generated embed code for the widget. It should look like this:
-
-    ```html
-        <div id="pixlee_container"></div>
-        <script type="text/javascript">
-          window.PixleeAsyncInit = function() {
-            Pixlee.init({apiKey:'YOUR_API_KEY'});
-            Pixlee.addSimpleWidget({widgetId:YOUR_WIDGET_ID});
-          };
-        </script>
-        <script src="https://assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js"></script>
-    ```
-4.  Use the **require** function to change the embed code using these steps:
-*   Use the require function and add the **asset.pixlee.com** url as a parameter.
-*   Move the JavaScript code in the **window.PixleeAsyncInit** function to the **require** function's callback.
-*   Call the **Pixlee.resizeWidget()** function at the end of the callback.
-*   The new code should look like this:
+To manually add a widget, use the **require()** function to add the widget embed code:
+*   Add the **asset.pixlee.com** url to the array as the first parameter.
+*   Move the JavaScript code from the **window.PixleeAsyncInit** as the **require** callback function.
+*   Call the **Pixlee.resizeWidget()** at the end of the callback.
+*   The new code should look similar to this:
 
     ```html
     <div id="pixlee_container"></div>

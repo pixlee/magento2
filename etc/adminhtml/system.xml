@@ -88,6 +88,9 @@
                     <label>Enable Nightly Export</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <depends>
+                    <field id="pixlee_pixlee/existing_customers/account_settings/active">1</field>
+                </depends>
             </group>
 		</section>
 	</system>
