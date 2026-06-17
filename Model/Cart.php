@@ -57,11 +57,15 @@ class Cart
      *
      * @param QuoteItem $item
      * @param DirectoryCurrency $currency
-     * @return array
+     * @return array|null Null when the line item has no product_id and no attached product.
      * @throws NoSuchEntityException
      */
     public function extractQuoteItem(QuoteItem $item, $currency)
     {
+        if (!$this->canExtractLineItem($item)) {
+            return null;
+        }
+
         $this->logger->addInfo(
             "Cart extractQuoteItem - ID: {$item->getProductId()}, SKU: {$item->getSku()},"
             . " type: {$item->getProductType()}"
@@ -72,7 +76,7 @@ class Cart
             $item->getQty(),
             $this->resolveQuoteItemPrice($item),
             (int) $item->getProductId(),
-            $item->getProduct(),
+            $this->resolveProduct((int) $item->getProductId(), $item->getProduct()),
             $currency
         );
         $this->logger->addInfo($this->serializer->serialize($itemData));
@@ -116,6 +120,9 @@ class Cart
         $cartContents = [];
         /** @var OrderItemInterface $item */
         foreach ($order->getAllVisibleItems() as $item) {
+            if (!$this->canExtractLineItem($item)) {
+                continue;
+            }
             $cartContents[] = $this->extractItem($item, $order->getOrderCurrency());
         }
 
@@ -138,7 +145,7 @@ class Cart
             $item->getQtyOrdered(),
             $item->getPrice(),
             (int) $item->getProductId(),
-            $item->getProduct(),
+            $this->resolveProduct((int) $item->getProductId(), $item->getProduct()),
             $currency
         );
     }
@@ -198,6 +205,41 @@ class Cart
         }
 
         return $item->getPrice();
+    }
+
+    /**
+     * Return the line item product when loaded; otherwise load from catalog by ID.
+     *
+     * @param int $productId
+     * @param ProductInterface|null $product
+     * @return ProductInterface
+     * @throws NoSuchEntityException
+     */
+    protected function resolveProduct(int $productId, ?ProductInterface $product): ProductInterface
+    {
+        if ($product !== null) {
+            return $product;
+        }
+
+        return $this->productRepository->getById($productId);
+    }
+
+    /**
+     * Whether a quote or order line item has enough product context to extract analytics data.
+     *
+     * Prefer product_id when present; only inspect attached product data when ID is missing
+     * (e.g. async quote flows) to avoid lazy-loading catalog products during the check.
+     *
+     * @param QuoteItem|OrderItemInterface $item
+     * @return bool
+     */
+    protected function canExtractLineItem($item): bool
+    {
+        if ((int) $item->getProductId() > 0) {
+            return true;
+        }
+
+        return $item->hasData('product') && $item->getData('product');
     }
 
     /**

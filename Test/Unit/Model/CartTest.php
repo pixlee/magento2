@@ -24,6 +24,7 @@ use Magento\Quote\Model\Quote\Item\Compare;
 use Magento\Quote\Model\Quote\Item\Option\Comparator;
 use Magento\Quote\Model\Quote\Item\OptionFactory;
 use Magento\Framework\Serialize\Serializer\Json as SerializerJson;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Address;
 use Magento\Sales\Model\Order\Item as OrderItem;
 use Magento\Sales\Model\OrderFactory as SalesOrderFactory;
@@ -504,6 +505,103 @@ class CartTest extends AbstractUnitTestCase
                 'itemOptionComparator' => new Comparator(),
             ]
         );
+    }
+
+    public function testExtractQuoteItemReturnsNullWhenLineItemHasNoProductReference(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('product_id', 0);
+        $item->setData('product', false);
+
+        $this->assertNull($this->cart->extractQuoteItem($item, $currency));
+    }
+
+    public function testGetCartContentsSkipsItemsWithoutProductReference(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $validItem = $this->createOrderItemStub('simple', [], 1.0, 10.0, 1, 'simple', 'simple');
+
+        $invalidItem = $this->createOrderItemInstance();
+        $invalidItem->setData('product_type', 'simple');
+        $invalidItem->setData('product_id', 0);
+        $invalidItem->setData('product', false);
+        $invalidItem->setData('qty_ordered', 1.0);
+        $invalidItem->setData('price', 10.0);
+
+        $order = $this->createPassiveDouble(Order::class);
+        $order->method('getAllVisibleItems')->willReturn([$validItem, $invalidItem]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $cartContents = $this->cart->getCartContents($order);
+
+        $this->assertCount(1, $cartContents);
+        $this->assertSame(1, $cartContents[0]['product_id']);
+    }
+
+    public function testExtractQuoteItemLoadsProductWhenNotOnLineItem(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createQuoteItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        // Unloaded product without triggering QuoteItem::getProduct() auto-load.
+        $item->setData('product', false);
+
+        $catalogProduct = $this->createConfiguredPassiveDouble(ProductInterface::class, [
+            'getSku' => 'catalog-sku',
+        ]);
+        $this->productRepository->method('getById')
+            ->with(99)
+            ->willReturn($catalogProduct);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('catalog-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
+    }
+
+    public function testExtractItemLoadsProductWhenNotOnLineItem(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createOrderItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        $item->setData('product', null);
+
+        $catalogProduct = $this->createConfiguredPassiveDouble(ProductInterface::class, [
+            'getSku' => 'catalog-sku',
+        ]);
+        $this->productRepository->method('getById')
+            ->with(99)
+            ->willReturn($catalogProduct);
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('catalog-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
     }
 
     public function testExtractAddressReturnsEmptyObjectWhenAddressIsNull(): void

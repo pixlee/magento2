@@ -80,6 +80,9 @@ class AddToCartObserver implements ObserverInterface
 
             $store = $quoteItem->getQuote()->getStore();
             $itemData = $this->pixleeCart->extractQuoteItem($quoteItem, $store->getCurrentCurrency());
+            if ($itemData === null) {
+                return;
+            }
             $this->analytics->sendEvent('addToCart', $itemData, $store);
         } catch (Exception $e) {
             $this->logger->error($e->getMessage(), ['exception' => $e]);

@@ -127,6 +127,45 @@ class AddToCartObserverTest extends AbstractUnitTestCase
         $subject->execute(new Observer(['event' => $event]));
     }
 
+    public function testExecuteSkipsAnalyticsWhenExtractQuoteItemReturnsNull(): void
+    {
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getCode' => 'default']);
+        $currency = $this->createPassiveDouble(Currency::class);
+        $store->method('getCurrentCurrency')->willReturn($currency);
+
+        $quote = $this->createPassiveDouble(Quote::class);
+        $quote->method('getStore')->willReturn($store);
+
+        $quoteItem = $this->createPassiveDouble(QuoteItem::class);
+        $quoteItem->method('getQuote')->willReturn($quote);
+
+        $apiConfig = $this->createPassiveDouble(Api::class);
+        $apiConfig->method('isActive')->willReturn(true);
+
+        $cart = $this->createMock(Cart::class);
+        $cart->expects($this->once())
+            ->method('extractQuoteItem')
+            ->with($quoteItem, $currency)
+            ->willReturn(null);
+
+        $analytics = $this->createMock(AnalyticsServiceInterface::class);
+        $analytics->expects($this->never())->method('sendEvent');
+
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+
+        $subject = new AddToCartObserver(
+            $this->createPassiveDouble(PixleeLogger::class),
+            $storeManager,
+            $cart,
+            $apiConfig,
+            $analytics
+        );
+
+        $event = new Event(['quote_item' => $quoteItem]);
+        $subject->execute(new Observer(['event' => $event]));
+    }
+
     public function testExecuteLogsExceptionWithoutRethrowing(): void
     {
         $store = $this->createConfiguredPassiveDouble(Store::class, ['getCode' => 'default']);
