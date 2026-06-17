@@ -9,6 +9,7 @@ namespace Pixlee\Pixlee\Model;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Directory\Model\Currency as DirectoryCurrency;
 use Magento\Framework\Currency\Data\Currency;
@@ -152,32 +153,73 @@ class Cart
     {
         $price = $item->getPrice();
         if (is_numeric($price)) {
-            return (float)$price;
+            return (float) $price;
         }
 
-        $product = $item->getProduct();
-        if ($product) {
-            $productPrice = $product->getFinalPrice($item->getQty()) ?: $product->getPrice();
-            if ($productPrice) {
-                return $productPrice;
+        $isConfigurable = $item->getProductType() === Configurable::TYPE_CODE;
+
+        // Configurable parents are not directly purchasable; their catalog price is often zero.
+        // Resolve from child line items first, then fall back to the parent catalog price.
+        if (!$isConfigurable) {
+            $product = $item->getProduct();
+            if ($product) {
+                $productPrice = $this->resolveProductPrice($product, $item->getQty());
+                if ($productPrice !== null) {
+                    return $productPrice;
+                }
             }
         }
 
         foreach ($item->getChildren() as $child) {
             $childPrice = $child->getPrice();
             if (is_numeric($childPrice)) {
-                return (float)$childPrice;
+                return (float) $childPrice;
             }
             $childProduct = $child->getProduct();
             if ($childProduct) {
-                $productPrice = $childProduct->getFinalPrice($child->getQty()) ?: $childProduct->getPrice();
-                if ($productPrice) {
+                $childProductPrice = $this->resolveProductPrice(
+                    $childProduct,
+                    $child->getQty()
+                );
+                if ($childProductPrice !== null) {
+                    return $childProductPrice;
+                }
+            }
+        }
+
+        if ($isConfigurable) {
+            $product = $item->getProduct();
+            if ($product) {
+                $productPrice = $this->resolveProductPrice($product, $item->getQty());
+                if ($productPrice !== null) {
                     return $productPrice;
                 }
             }
         }
 
-        return $price;
+        return $item->getPrice();
+    }
+
+    /**
+     * Resolve catalog product price: final price first, then base price.
+     *
+     * @param Product $product
+     * @param float|int|null $qty
+     * @return float|null
+     */
+    protected function resolveProductPrice(Product $product, $qty = null)
+    {
+        $finalPrice = $product->getFinalPrice($qty);
+        if ($finalPrice !== null) {
+            return $finalPrice;
+        }
+
+        $basePrice = $product->getPrice();
+        if ($basePrice !== null) {
+            return $basePrice;
+        }
+
+        return null;
     }
 
     /**
