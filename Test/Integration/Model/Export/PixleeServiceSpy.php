@@ -37,7 +37,7 @@ class PixleeServiceSpy implements PixleeServiceInterface
      */
     public function validateCredentials()
     {
-        return false;
+        return PixleeServiceInterface::CREDENTIALS_INVALID;
     }
 
     /**

@@ -11,6 +11,7 @@ use Magento\Framework\HTTP\Client\Curl;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Store\Model\ScopeInterface;
 use PHPUnit\Framework\MockObject\MockObject;
+use Pixlee\Pixlee\Api\PixleeServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Pixlee;
@@ -233,13 +234,13 @@ class DistilleryTest extends AbstractUnitTestCase
         ]));
     }
 
-    public function testValidateCredentialsDelegatesToGetAlbums(): void
+    public function testValidateCredentialsReturnsValidForSuccessfulAlbumsResponse(): void
     {
-        $responseBody = '{"albums":[]}';
+        $responseBody = '{"status":200,"message":"Successfully returned albums","data":[]}';
 
         $this->curl = $this->createMock(Curl::class);
         $this->curl->expects($this->once())->method('get')->with(
-            $this->stringContains('v2/albums')
+            $this->stringContains('v2/albums?api_key=' . self::PRIVATE_KEY . '&page=1&per_page=1')
         );
         $this->curl->method('getStatus')->willReturn(200);
         $this->curl->method('getBody')->willReturn($responseBody);
@@ -247,7 +248,37 @@ class DistilleryTest extends AbstractUnitTestCase
         $subject = $this->createSubject();
         $subject->setScope(ScopeInterface::SCOPE_WEBSITES, 1);
 
-        $this->assertSame($responseBody, $subject->validateCredentials());
+        $this->assertSame(PixleeServiceInterface::CREDENTIALS_VALID, $subject->validateCredentials());
+    }
+
+    public function testValidateCredentialsReturnsFalseFor401(): void
+    {
+        $this->curl->method('getStatus')->willReturn(401);
+
+        $subject = $this->createSubject();
+        $subject->setScope(ScopeInterface::SCOPE_WEBSITES, 1);
+
+        $this->assertSame(PixleeServiceInterface::CREDENTIALS_INVALID, $subject->validateCredentials());
+    }
+
+    public function testValidateCredentialsReturnsFalseFor403(): void
+    {
+        $this->curl->method('getStatus')->willReturn(403);
+
+        $subject = $this->createSubject();
+        $subject->setScope(ScopeInterface::SCOPE_WEBSITES, 1);
+
+        $this->assertSame(PixleeServiceInterface::CREDENTIALS_INVALID, $subject->validateCredentials());
+    }
+
+    public function testValidateCredentialsReturnsValidForServerFailure(): void
+    {
+        $this->curl->method('getStatus')->willReturn(500);
+
+        $subject = $this->createSubject();
+        $subject->setScope(ScopeInterface::SCOPE_WEBSITES, 1);
+
+        $this->assertSame(PixleeServiceInterface::CREDENTIALS_VALID, $subject->validateCredentials());
     }
 
     private function createSubject(): Distillery

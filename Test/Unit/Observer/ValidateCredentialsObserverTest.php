@@ -54,36 +54,18 @@ class ValidateCredentialsObserverTest extends AbstractUnitTestCase
         $pixleeService = $this->createMock(PixleeServiceInterface::class);
         $pixleeService->expects($this->once())->method('setScope')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1);
-        $pixleeService->method('validateCredentials')->willReturn(false);
+        $pixleeService->method('validateCredentials')
+            ->willReturn(PixleeServiceInterface::CREDENTIALS_INVALID);
 
         $subject = new ValidateCredentialsObserver($apiConfig, $pixleeService);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Invalid Private API Key or Secret Key.');
+        $this->expectExceptionMessage('Unable to save settings. Invalid keys.');
 
         $subject->validateCredentials('1');
     }
 
-    public function testValidateCredentialsDeletesKeysWhenServiceReturnsEmptyString(): void
-    {
-        $apiConfig = $this->createMock(Api::class);
-        $apiConfig->method('getScope')->willReturn([
-            'scopeType' => ScopeInterface::SCOPE_WEBSITES,
-            'scopeCode' => 1,
-        ]);
-        $apiConfig->method('isActive')->willReturn(true);
-        $apiConfig->expects($this->once())->method('deleteActive');
-
-        $pixleeService = $this->createPassiveDouble(PixleeServiceInterface::class);
-        $pixleeService->method('validateCredentials')->willReturn('');
-
-        $subject = new ValidateCredentialsObserver($apiConfig, $pixleeService);
-
-        $this->expectException(Exception::class);
-        $subject->validateCredentials('1');
-    }
-
-    public function testValidateCredentialsPassesWhenServiceReturnsTruthy(): void
+    public function testValidateCredentialsPassesWhenServiceReturnsValid(): void
     {
         $apiConfig = $this->createMock(Api::class);
         $apiConfig->method('getScope')->willReturn([
@@ -94,7 +76,7 @@ class ValidateCredentialsObserverTest extends AbstractUnitTestCase
         $apiConfig->expects($this->never())->method('deleteActive');
 
         $pixleeService = $this->createPassiveDouble(PixleeServiceInterface::class);
-        $pixleeService->method('validateCredentials')->willReturn('{"ok":true}');
+        $pixleeService->method('validateCredentials')->willReturn(PixleeServiceInterface::CREDENTIALS_VALID);
 
         $subject = new ValidateCredentialsObserver($apiConfig, $pixleeService);
         $subject->validateCredentials('1');

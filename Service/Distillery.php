@@ -78,7 +78,21 @@ class Distillery implements PixleeServiceInterface
      */
     public function validateCredentials()
     {
-        return $this->getAlbums(['page' => '1', 'per_page' => '1']);
+        $requestUri = $this->buildRequestUri('v2/albums', [
+            'page' => '1',
+            'per_page' => '1',
+        ]);
+
+        $this->curl->setHeaders($this->getRequestHeaders());
+        $this->curl->get($requestUri['uri']);
+
+        $status = $this->curl->getStatus();
+
+        if ($status === 401 || $status === 403) {
+            return PixleeServiceInterface::CREDENTIALS_INVALID;
+        }
+
+        return PixleeServiceInterface::CREDENTIALS_VALID;
     }
 
     /**
@@ -153,21 +167,11 @@ class Distillery implements PixleeServiceInterface
      */
     public function get($path, $options = null)
     {
-        $queryString = $this->getRequiredQueryString();
+        $requestUri = $this->buildRequestUri($path, $options);
 
-        if (!empty($options)) {
-            $queryString = $queryString . '&' . http_build_query($options);
-        }
-        $baseUri = self::DISTILLERY_BASE_URL . $path;
-        $uri = $baseUri . $queryString;
-
-        $headers = [
-            'Content-Type' => 'application/json',
-            'X-Alt-Referer' => 'magento2.pixlee.com'
-        ];
-        $this->curl->setHeaders($headers);
-        $this->curl->get($uri);
-        if (!$this->isValidHttpResponse($baseUri, $this->curl->getStatus(), $this->curl->getBody())) {
+        $this->curl->setHeaders($this->getRequestHeaders());
+        $this->curl->get($requestUri['uri']);
+        if (!$this->isValidHttpResponse($requestUri['baseUri'], $this->curl->getStatus(), $this->curl->getBody())) {
             return false;
         }
 
@@ -179,25 +183,17 @@ class Distillery implements PixleeServiceInterface
      */
     public function post(string $path, string $payload, $options = null)
     {
-        $queryString = $this->getRequiredQueryString();
+        $requestUri = $this->buildRequestUri($path, $options);
 
-        if (!empty($options)) {
-            $queryString = $queryString . "&" . http_build_query($options);
-        }
-        $baseUri = self::DISTILLERY_BASE_URL . $path;
-        $uri = $baseUri . $queryString;
-
-        $headers = [
-            "Content-Type" => "application/json",
-            "X-Alt-Referer" => "magento2.pixlee.com",
+        $headers = $this->getRequestHeaders() + [
             'Signature' => $this->generateSignature($payload),
-            "Signature-Algorithm" => static::SIGNATURE_ALGORITHM,
+            'Signature-Algorithm' => static::SIGNATURE_ALGORITHM,
         ];
         $this->curl->setHeaders($headers);
         // Needed for 100-continue response
         $this->curl->addHeader('Expect', '');
-        $this->curl->post($uri, $payload);
-        if (!$this->isValidHttpResponse($baseUri, $this->curl->getStatus(), $this->curl->getBody())) {
+        $this->curl->post($requestUri['uri'], $payload);
+        if (!$this->isValidHttpResponse($requestUri['baseUri'], $this->curl->getStatus(), $this->curl->getBody())) {
             return false;
         }
 
@@ -212,6 +208,40 @@ class Distillery implements PixleeServiceInterface
     protected function getRequiredQueryString(): string
     {
         return '?api_key=' . $this->apiConfig->getPrivateApiKey($this->scopeType, $this->scopeCode);
+    }
+
+    /**
+     * Default headers for Distillery API requests.
+     *
+     * @return array
+     */
+    protected function getRequestHeaders(): array
+    {
+        return [
+            'Content-Type' => 'application/json',
+            'X-Alt-Referer' => 'magento2.pixlee.com',
+        ];
+    }
+
+    /**
+     * Build a full request URI and base URI for a Distillery API path.
+     *
+     * @param string $path
+     * @param array|null $options
+     * @return array
+     */
+    protected function buildRequestUri(string $path, $options = null): array
+    {
+        $queryString = $this->getRequiredQueryString();
+        if (!empty($options)) {
+            $queryString .= '&' . http_build_query($options);
+        }
+        $baseUri = self::DISTILLERY_BASE_URL . $path;
+
+        return [
+            'uri' => $baseUri . $queryString,
+            'baseUri' => $baseUri,
+        ];
     }
 
     /**

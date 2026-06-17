@@ -10,6 +10,16 @@ namespace Pixlee\Pixlee\Api;
 interface PixleeServiceInterface
 {
     /**
+     * Credential validation succeeded.
+     */
+    public const CREDENTIALS_VALID = 'valid';
+
+    /**
+     * Credential validation failed due to rejected credentials
+     */
+    public const CREDENTIALS_INVALID = false;
+
+    /**
      * Set scope
      *
      * @param null|string $scopeType

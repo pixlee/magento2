@@ -63,13 +63,15 @@ class ValidateCredentialsObserver implements ObserverInterface
         if ($this->apiConfig->isActive($scope['scopeType'], $scope['scopeCode'])) {
             $this->pixleeService->setScope($scope['scopeType'], $scope['scopeCode']);
             $validated = $this->pixleeService->validateCredentials();
-            if (!$validated) {
-                $this->apiConfig->deleteActive($scope['scopeType'], $scope['scopeCode']);
-                $this->apiConfig->deletePrivateApiKey($scope['scopeType'], $scope['scopeCode']);
-                $this->apiConfig->deleteSecretKey($scope['scopeType'], $scope['scopeCode']);
-
-                throw new LocalizedException(__('Invalid Private API Key or Secret Key.'));
+            if ($validated === PixleeServiceInterface::CREDENTIALS_VALID) {
+                return;
             }
+
+            $this->apiConfig->deleteActive($scope['scopeType'], $scope['scopeCode']);
+            $this->apiConfig->deletePrivateApiKey($scope['scopeType'], $scope['scopeCode']);
+            $this->apiConfig->deleteSecretKey($scope['scopeType'], $scope['scopeCode']);
+
+            throw new LocalizedException(__('Unable to save settings. Invalid keys.'));
         }
     }
 }
