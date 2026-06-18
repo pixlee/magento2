@@ -209,7 +209,12 @@ class Cart
             }
         }
 
-        return $item->getPrice();
+        $this->logger->error(
+            'Unable to resolve product price for item. 0.0 returned.',
+            $this->getLineItemLogContext($item)
+        );
+
+        return 0.0;
     }
 
     /**
@@ -279,12 +284,12 @@ class Cart
     protected function resolveProductPrice(Product $product, $qty = null)
     {
         $finalPrice = $product->getFinalPrice($qty);
-        if ($finalPrice !== null) {
+        if (is_numeric($finalPrice)) {
             return $finalPrice;
         }
 
         $basePrice = $product->getPrice();
-        if ($basePrice !== null) {
+        if (is_numeric($basePrice)) {
             return $basePrice;
         }
 
