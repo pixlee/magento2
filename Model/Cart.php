@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Model;
 
-use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
@@ -57,12 +56,12 @@ class Cart
      *
      * @param QuoteItem $item
      * @param DirectoryCurrency $currency
-     * @return array|null Null when the line item product cannot be resolved.
+     * @return array|null Null only when the line item has no resolvable SKU (the field Pixlee requires).
      */
     public function extractQuoteItem(QuoteItem $item, $currency)
     {
-        $product = $this->extractLineItemProduct($item);
-        if ($product === null) {
+        $identity = $this->resolveItemIdentity($item);
+        if ($identity === null) {
             return null;
         }
 
@@ -71,8 +70,8 @@ class Cart
             $item->getChildren(),
             $item->getQty(),
             $this->resolveQuoteItemPrice($item),
-            (int) $item->getProductId(),
-            $product,
+            $identity['product_id'],
+            $identity['product_sku'],
             $currency
         );
         $this->logger->info('Cart extractQuoteItem completed', $this->getLineItemLogContext($item));
@@ -135,12 +134,12 @@ class Cart
      *
      * @param OrderItemInterface $item
      * @param DirectoryCurrency $currency
-     * @return array|null Null when the line item product cannot be resolved.
+     * @return array|null Null only when the line item has no resolvable SKU (the field Pixlee requires).
      */
     public function extractItem($item, $currency)
     {
-        $product = $this->extractLineItemProduct($item);
-        if ($product === null) {
+        $identity = $this->resolveItemIdentity($item);
+        if ($identity === null) {
             return null;
         }
 
@@ -148,9 +147,9 @@ class Cart
             (string) $item->getProductType(),
             $item->getChildrenItems(),
             $item->getQtyOrdered(),
-            $item->getPrice(),
-            (int) $item->getProductId(),
-            $product,
+            $this->resolveOrderItemPrice($item),
+            $identity['product_id'],
+            $identity['product_sku'],
             $currency
         );
     }
@@ -159,7 +158,7 @@ class Cart
      * Resolve quote item price which may not be set before collectTotals(); fall back to catalog pricing.
      *
      * @param QuoteItem $item
-     * @return float|string|null
+     * @return float
      */
     protected function resolveQuoteItemPrice(QuoteItem $item)
     {
@@ -218,44 +217,100 @@ class Cart
     }
 
     /**
-     * Resolve the catalog product for a quote or order line item.
+     * Resolve order item price for analytics.
      *
-     * Uses the attached product when present; otherwise loads by product_id.
-     * Returns null when the line item has no resolvable product (missing ID, deleted catalog product, etc.).
+     * Order line prices are persisted at checkout, so unlike the quote path this needs no catalog
+     * fallback (which would reload the product). It only normalizes the type and guards the rare
+     * non-numeric case to 0.0 so both payloads emit price as the same type.
+     *
+     * @param OrderItemInterface $item
+     * @return float
+     */
+    protected function resolveOrderItemPrice($item): float
+    {
+        $price = $item->getPrice();
+        if (is_numeric($price)) {
+            return (float) $price;
+        }
+
+        $this->logger->error(
+            'Unable to resolve product price for item. 0.0 returned.',
+            $this->getLineItemLogContext($item)
+        );
+
+        return 0.0;
+    }
+
+    /**
+     * Resolve product id and SKU for a quote or order line item.
+     *
+     * The product_sku field is the only field Pixlee requires to attribute a line item (per the Analytics API
+     * for both addToCart and conversion), so it is the sole drop condition. A missing or invalid
+     * product_id is supplementary and must not drop the line — it would otherwise silently lose
+     * conversions whose item rows lack a catalog id.
      *
      * @param QuoteItem|OrderItemInterface $item
-     * @return ProductInterface|null
+     * @return array{product_id: int, product_sku: string}|null
      */
-    protected function extractLineItemProduct($item): ?ProductInterface
+    protected function resolveItemIdentity($item): ?array
     {
-        // For configurable items, getProduct() may return the associated simple child instead of
-        // the configurable parent. Always load by product_id for configurables so product_sku in
-        // the analytics payload reflects the parent, not the variant.
-        if ($item->getProductType() !== Configurable::TYPE_CODE) {
-            $product = $item->getProduct();
-            if ($product instanceof ProductInterface) {
-                return $product;
-            }
+        $productSku = $this->resolveProductSku($item);
+        if ($productSku === null) {
+            $this->logger->error('Cart line item dropped: no resolvable SKU', $this->getLineItemLogContext($item));
+            return null;
         }
 
         $productId = (int) $item->getProductId();
         if ($productId <= 0) {
-            $this->logger->error('Cart line item has no resolvable product', array_merge(
-                $this->getLineItemLogContext($item),
-                ['reason' => 'missing_or_invalid_product_id']
-            ));
+            $this->logger->warning(
+                'Cart line item missing product id; sending SKU-only payload',
+                $this->getLineItemLogContext($item)
+            );
+        }
+
+        return [
+            'product_id' => $productId,
+            'product_sku' => $productSku,
+        ];
+    }
+
+    /**
+     * Resolve product_sku for analytics from the line item.
+     *
+     * Simple lines use the line-item SKU snapshot. Configurable lines (quote or order) may carry the
+     * selected simple SKU — or no SKU at all — on the parent row, so load the parent catalog SKU by
+     * product_id when available and fall back to the line SKU. Loading is limited to this configurable
+     * case where it is needed to report the parent rather than the variant; both payloads resolve SKU
+     * identically so add-to-cart and conversion mirror each other.
+     *
+     * @param QuoteItem|OrderItemInterface $item
+     * @return string|null
+     */
+    protected function resolveProductSku($item): ?string
+    {
+        if ($item->getProductType() === Configurable::TYPE_CODE) {
+            $productId = (int) $item->getProductId();
+            if ($productId > 0) {
+                try {
+                    $parentSku = $this->productRepository->getById($productId)->getSku();
+                    if ($parentSku !== null && $parentSku !== '') {
+                        return $parentSku;
+                    }
+                } catch (NoSuchEntityException $e) {
+                    $this->logger->error('Cart configurable line item parent SKU unavailable in catalog', array_merge(
+                        $this->getLineItemLogContext($item),
+                        ['exception' => $e]
+                    ));
+                }
+            }
+        }
+
+        $sku = $item->getSku();
+        if ($sku === null || $sku === '') {
             return null;
         }
 
-        try {
-            return $this->productRepository->getById($productId);
-        } catch (NoSuchEntityException $e) {
-            $this->logger->error('Cart line item product not found in catalog', array_merge(
-                $this->getLineItemLogContext($item),
-                ['exception' => $e]
-            ));
-            return null;
-        }
+        return $sku;
     }
 
     /**
@@ -285,12 +340,12 @@ class Cart
     {
         $finalPrice = $product->getFinalPrice($qty);
         if (is_numeric($finalPrice)) {
-            return $finalPrice;
+            return (float) $finalPrice;
         }
 
         $basePrice = $product->getPrice();
         if (is_numeric($basePrice)) {
-            return $basePrice;
+            return (float) $basePrice;
         }
 
         return null;
@@ -304,7 +359,7 @@ class Cart
      * @param float|string $quantity
      * @param float|string $price
      * @param int $productId
-     * @param ProductInterface $product
+     * @param string $productSku
      * @param DirectoryCurrency $currency
      * @return array
      */
@@ -314,7 +369,7 @@ class Cart
         $quantity,
         $price,
         int $productId,
-        ProductInterface $product,
+        string $productSku,
         $currency
     ): array {
         $itemData = [];
@@ -333,7 +388,7 @@ class Cart
         $itemData['quantity'] = (int) round((float) $quantity);
         $itemData['price'] = $currency->format($price, ['display' => Currency::NO_SYMBOL], false);
         $itemData['product_id'] = $productId;
-        $itemData['product_sku'] = $product->getSku();
+        $itemData['product_sku'] = $productSku;
         $itemData['currency'] = $currency->getCode();
 
         return $itemData;
