@@ -402,6 +402,33 @@ class CartTest extends AbstractUnitTestCase
         $this->assertSame(1396, $itemData['product_id']);
     }
 
+    public function testExtractQuoteItemFallsBackToLineSkuForConfigurableWhenCatalogMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createQuoteItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createQuoteItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+
+        $this->productRepository->method('getById')
+            ->with(1396)
+            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('WJ12-XS-Blue', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
+    }
+
     /**
      * Build a real QuoteItem with data fields (product_id via magic getter, not a custom stub method).
      *
@@ -507,9 +534,11 @@ class CartTest extends AbstractUnitTestCase
         );
     }
 
-    public function testExtractQuoteItemReturnsNullWhenCatalogProductIsMissing(): void
+    public function testExtractQuoteItemUsesLineItemSkuWhenCatalogProductIsMissing(): void
     {
         $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
 
         $item = $this->createQuoteItemStub(
             'simple',
@@ -522,16 +551,17 @@ class CartTest extends AbstractUnitTestCase
         );
         $item->setData('product', false);
 
-        $this->productRepository->method('getById')
-            ->with(99)
-            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
 
-        $this->assertNull($this->cart->extractQuoteItem($item, $currency));
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
     }
 
-    public function testExtractItemReturnsNullWhenCatalogProductIsMissing(): void
+    public function testExtractItemUsesLineItemSkuWhenCatalogProductIsMissing(): void
     {
         $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
 
         $item = $this->createOrderItemStub(
             'simple',
@@ -544,11 +574,10 @@ class CartTest extends AbstractUnitTestCase
         );
         $item->setData('product', null);
 
-        $this->productRepository->method('getById')
-            ->with(99)
-            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+        $itemData = $this->cart->extractItem($item, $currency);
 
-        $this->assertNull($this->cart->extractItem($item, $currency));
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
     }
 
     public function testExtractQuoteItemReturnsNullWhenLineItemHasNoProductReference(): void
@@ -587,7 +616,7 @@ class CartTest extends AbstractUnitTestCase
         $this->assertSame(1, $cartContents[0]['product_id']);
     }
 
-    public function testExtractQuoteItemLoadsProductWhenNotOnLineItem(): void
+    public function testExtractQuoteItemUsesLineItemSkuWhenProductNotLoaded(): void
     {
         $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('10.00');
@@ -605,20 +634,13 @@ class CartTest extends AbstractUnitTestCase
         // Unloaded product without triggering QuoteItem::getProduct() auto-load.
         $item->setData('product', false);
 
-        $catalogProduct = $this->createConfiguredPassiveDouble(ProductInterface::class, [
-            'getSku' => 'catalog-sku',
-        ]);
-        $this->productRepository->method('getById')
-            ->with(99)
-            ->willReturn($catalogProduct);
-
         $itemData = $this->cart->extractQuoteItem($item, $currency);
 
-        $this->assertSame('catalog-sku', $itemData['product_sku']);
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
         $this->assertSame(99, $itemData['product_id']);
     }
 
-    public function testExtractItemLoadsProductWhenNotOnLineItem(): void
+    public function testExtractItemUsesLineItemSkuWhenProductNotLoaded(): void
     {
         $currency = $this->createPassiveDouble(Currency::class);
         $currency->method('format')->willReturn('10.00');
@@ -635,16 +657,9 @@ class CartTest extends AbstractUnitTestCase
         );
         $item->setData('product', null);
 
-        $catalogProduct = $this->createConfiguredPassiveDouble(ProductInterface::class, [
-            'getSku' => 'catalog-sku',
-        ]);
-        $this->productRepository->method('getById')
-            ->with(99)
-            ->willReturn($catalogProduct);
-
         $itemData = $this->cart->extractItem($item, $currency);
 
-        $this->assertSame('catalog-sku', $itemData['product_sku']);
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
         $this->assertSame(99, $itemData['product_id']);
     }
 
@@ -719,6 +734,59 @@ class CartTest extends AbstractUnitTestCase
         $this->assertSame('simple-red', $itemData['variant_sku']);
         $this->assertSame('configurable-parent', $itemData['product_sku']);
         $this->assertSame('USD', $itemData['currency']);
+    }
+
+    public function testExtractItemUsesParentSkuWhenOrderLineSkuIsVariant(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createOrderItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createOrderItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+        $this->mockConfigurableParentSku(1396, 'WJ12');
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('WJ12', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
+        $this->assertEquals(1382, $itemData['variant_id']);
+        $this->assertSame('WJ12-XS-Blue', $itemData['variant_sku']);
+    }
+
+    public function testExtractItemFallsBackToLineSkuForConfigurableWhenCatalogMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createOrderItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createOrderItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+
+        $this->productRepository->method('getById')
+            ->with(1396)
+            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('WJ12-XS-Blue', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
     }
 
     /**
