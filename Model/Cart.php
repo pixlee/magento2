@@ -57,29 +57,25 @@ class Cart
      *
      * @param QuoteItem $item
      * @param DirectoryCurrency $currency
-     * @return array|null Null when the line item has no product_id and no attached product.
-     * @throws NoSuchEntityException
+     * @return array|null Null when the line item product cannot be resolved.
      */
     public function extractQuoteItem(QuoteItem $item, $currency)
     {
-        if (!$this->canExtractLineItem($item)) {
+        $product = $this->extractLineItemProduct($item);
+        if ($product === null) {
             return null;
         }
 
-        $this->logger->addInfo(
-            "Cart extractQuoteItem - ID: {$item->getProductId()}, SKU: {$item->getSku()},"
-            . " type: {$item->getProductType()}"
-        );
         $itemData = $this->buildItemData(
             $item->getProductType(),
             $item->getChildren(),
             $item->getQty(),
             $this->resolveQuoteItemPrice($item),
             (int) $item->getProductId(),
-            $this->resolveProduct((int) $item->getProductId(), $item->getProduct()),
+            $product,
             $currency
         );
-        $this->logger->addInfo($this->serializer->serialize($itemData));
+        $this->logger->info('Cart extractQuoteItem completed', $this->getLineItemLogContext($item));
 
         return $itemData;
     }
@@ -89,11 +85,11 @@ class Cart
      *
      * @param OrderInterface $order
      * @return array
-     * @throws NoSuchEntityException
      */
     public function getConversionPayload($order)
     {
-        $this->logger->addInfo("Cart getConversionPayload - Order ID: {$order->getId()}");
+        $orderId = (int) $order->getData('entity_id');
+        $this->logger->info('Cart getConversionPayload started', ['order_id' => $orderId]);
         $cartData['cart_contents'] = $this->getCartContents($order);
         $cartData['cart_total'] = $order->getGrandTotal();
         $cartData['email'] = $order->getCustomerEmail();
@@ -101,9 +97,14 @@ class Cart
         $cartData['cart_total_quantity'] = (int) $order->getData('total_qty_ordered');
         $cartData['billing_address'] = $this->extractAddress($order->getBillingAddress());
         $cartData['shipping_address'] = $this->extractAddress($order->getShippingAddress());
-        $cartData['order_id'] = (int) $order->getData('entity_id');
+        $cartData['order_id'] = $orderId;
         $cartData['currency'] = $order->getData('base_currency_code');
-        $this->logger->addInfo($this->serializer->serialize($cartData));
+        $this->logger->info('Cart getConversionPayload completed', [
+            'order_id' => $orderId,
+            'items_count' => count($cartData['cart_contents']),
+            'cart_total_quantity' => $cartData['cart_total_quantity'],
+            'cart_total' => $cartData['cart_total'],
+        ]);
 
         return $cartData;
     }
@@ -113,17 +114,17 @@ class Cart
      *
      * @param OrderInterface $order
      * @return array
-     * @throws NoSuchEntityException
      */
     public function getCartContents($order)
     {
         $cartContents = [];
         /** @var OrderItemInterface $item */
         foreach ($order->getAllVisibleItems() as $item) {
-            if (!$this->canExtractLineItem($item)) {
+            $itemData = $this->extractItem($item, $order->getOrderCurrency());
+            if ($itemData === null) {
                 continue;
             }
-            $cartContents[] = $this->extractItem($item, $order->getOrderCurrency());
+            $cartContents[] = $itemData;
         }
 
         return $cartContents;
@@ -134,18 +135,22 @@ class Cart
      *
      * @param OrderItemInterface $item
      * @param DirectoryCurrency $currency
-     * @return array
-     * @throws NoSuchEntityException
+     * @return array|null Null when the line item product cannot be resolved.
      */
     public function extractItem($item, $currency)
     {
+        $product = $this->extractLineItemProduct($item);
+        if ($product === null) {
+            return null;
+        }
+
         return $this->buildItemData(
             (string) $item->getProductType(),
             $item->getChildrenItems(),
             $item->getQtyOrdered(),
             $item->getPrice(),
             (int) $item->getProductId(),
-            $this->resolveProduct((int) $item->getProductId(), $item->getProduct()),
+            $product,
             $currency
         );
     }
@@ -208,38 +213,60 @@ class Cart
     }
 
     /**
-     * Return the line item product when loaded; otherwise load from catalog by ID.
+     * Resolve the catalog product for a quote or order line item.
      *
-     * @param int $productId
-     * @param ProductInterface|null $product
-     * @return ProductInterface
-     * @throws NoSuchEntityException
+     * Uses the attached product when present; otherwise loads by product_id.
+     * Returns null when the line item has no resolvable product (missing ID, deleted catalog product, etc.).
+     *
+     * @param QuoteItem|OrderItemInterface $item
+     * @return ProductInterface|null
      */
-    protected function resolveProduct(int $productId, ?ProductInterface $product): ProductInterface
+    protected function extractLineItemProduct($item): ?ProductInterface
     {
-        if ($product !== null) {
-            return $product;
+        // For configurable items, getProduct() may return the associated simple child instead of
+        // the configurable parent. Always load by product_id for configurables so product_sku in
+        // the analytics payload reflects the parent, not the variant.
+        if ($item->getProductType() !== Configurable::TYPE_CODE) {
+            $product = $item->getProduct();
+            if ($product instanceof ProductInterface) {
+                return $product;
+            }
         }
 
-        return $this->productRepository->getById($productId);
+        $productId = (int) $item->getProductId();
+        if ($productId <= 0) {
+            $this->logger->error('Cart line item has no resolvable product', array_merge(
+                $this->getLineItemLogContext($item),
+                ['reason' => 'missing_or_invalid_product_id']
+            ));
+            return null;
+        }
+
+        try {
+            return $this->productRepository->getById($productId);
+        } catch (NoSuchEntityException $e) {
+            $this->logger->error('Cart line item product not found in catalog', array_merge(
+                $this->getLineItemLogContext($item),
+                ['exception' => $e]
+            ));
+            return null;
+        }
     }
 
     /**
-     * Whether a quote or order line item has enough product context to extract analytics data.
-     *
-     * Prefer product_id when present; only inspect attached product data when ID is missing
-     * (e.g. async quote flows) to avoid lazy-loading catalog products during the check.
+     * Build shared log context for quote and order line items.
      *
      * @param QuoteItem|OrderItemInterface $item
-     * @return bool
+     * @return array
      */
-    protected function canExtractLineItem($item): bool
+    protected function getLineItemLogContext($item): array
     {
-        if ((int) $item->getProductId() > 0) {
-            return true;
-        }
-
-        return $item->hasData('product') && $item->getData('product');
+        return [
+            'item_id' => $item->getItemId(),
+            'product_id' => (int) $item->getProductId(),
+            'sku' => $item->getSku(),
+            'product_type' => $item->getProductType(),
+        ];
     }
 
     /**
@@ -275,7 +302,6 @@ class Cart
      * @param ProductInterface $product
      * @param DirectoryCurrency $currency
      * @return array
-     * @throws NoSuchEntityException
      */
     protected function buildItemData(
         string $productType,
@@ -293,32 +319,19 @@ class Cart
                 $itemData['variant_sku'] = $childItem->getSku();
                 break;
             }
+            if (!isset($itemData['variant_id'])) {
+                $this->logger->error('Cart configurable item has no child line items; variant data unavailable', [
+                    'product_id' => $productId,
+                ]);
+            }
         }
         $itemData['quantity'] = (int) round((float) $quantity);
         $itemData['price'] = $currency->format($price, ['display' => Currency::NO_SYMBOL], false);
         $itemData['product_id'] = $productId;
-        $itemData['product_sku'] = $this->resolveProductSku($productType, $productId, $product);
+        $itemData['product_sku'] = $product->getSku();
         $itemData['currency'] = $currency->getCode();
 
         return $itemData;
-    }
-
-    /**
-     * Resolve catalog product SKU for analytics (parent SKU for configurables).
-     *
-     * @param string $productType
-     * @param int $productId
-     * @param ProductInterface $product
-     * @return string
-     * @throws NoSuchEntityException
-     */
-    protected function resolveProductSku(string $productType, int $productId, ProductInterface $product): string
-    {
-        if ($productType === Configurable::TYPE_CODE) {
-            return $this->productRepository->getById($productId)->getSku();
-        }
-
-        return $product->getSku();
     }
 
     /**

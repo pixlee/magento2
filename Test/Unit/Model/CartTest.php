@@ -87,7 +87,7 @@ class CartTest extends AbstractUnitTestCase
             9.99,
             10,
             'simple-red',
-            'simple-red'
+            'configurable-parent'
         );
         $this->mockConfigurableParentSku(10, 'configurable-parent');
 
@@ -390,7 +390,7 @@ class CartTest extends AbstractUnitTestCase
             77.0,
             1396,
             'WJ12-XS-Blue',
-            'WJ12-XS-Blue'
+            'WJ12'
         );
         $this->mockConfigurableParentSku(1396, 'WJ12');
 
@@ -505,6 +505,50 @@ class CartTest extends AbstractUnitTestCase
                 'itemOptionComparator' => new Comparator(),
             ]
         );
+    }
+
+    public function testExtractQuoteItemReturnsNullWhenCatalogProductIsMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+
+        $item = $this->createQuoteItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        $item->setData('product', false);
+
+        $this->productRepository->method('getById')
+            ->with(99)
+            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+
+        $this->assertNull($this->cart->extractQuoteItem($item, $currency));
+    }
+
+    public function testExtractItemReturnsNullWhenCatalogProductIsMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+
+        $item = $this->createOrderItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        $item->setData('product', null);
+
+        $this->productRepository->method('getById')
+            ->with(99)
+            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+
+        $this->assertNull($this->cart->extractItem($item, $currency));
     }
 
     public function testExtractQuoteItemReturnsNullWhenLineItemHasNoProductReference(): void
@@ -741,6 +785,134 @@ class CartTest extends AbstractUnitTestCase
                 'serializer' => $this->createPassiveDouble(SerializerJson::class),
             ]
         );
+    }
+
+    public function testExtractItemReturnsNullWhenLineItemHasNoProductReference(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $item = $this->createOrderItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('product_id', 0);
+        $item->setData('product', null);
+
+        $this->assertNull($this->cart->extractItem($item, $currency));
+    }
+
+    public function testExtractItemForConfigurableWithNoChildrenHasNoVariantKeys(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('9.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createOrderItemStub(Configurable::TYPE_CODE, [], 1.0, 9.99, 10, 'conf-parent', 'conf-parent');
+        $this->mockConfigurableParentSku(10, 'conf-parent');
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertArrayNotHasKey('variant_id', $itemData);
+        $this->assertArrayNotHasKey('variant_sku', $itemData);
+        $this->assertSame(10, $itemData['product_id']);
+    }
+
+    public function testGetCartContentsReturnsEmptyArrayForOrderWithNoItems(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+
+        $order = $this->createPassiveDouble(Order::class);
+        $order->method('getAllVisibleItems')->willReturn([]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $this->assertSame([], $this->cart->getCartContents($order));
+    }
+
+    public function testGetConversionPayload(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('9.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $orderItem = $this->createOrderItemStub('simple', [], 1.0, 9.99, 1, 'test-sku', 'test-sku');
+
+        $billingAddress = $this->createConfiguredPassiveDouble(Address::class, [
+            'getStreet'    => ['1 Main St'],
+            'getCity'      => 'Portland',
+            'getRegion'    => 'OR',
+            'getCountryId' => 'US',
+            'getPostcode'  => '97201',
+        ]);
+        $shippingAddress = $this->createConfiguredPassiveDouble(Address::class, [
+            'getStreet'    => ['2 Oak Ave'],
+            'getCity'      => 'Salem',
+            'getRegion'    => 'OR',
+            'getCountryId' => 'US',
+            'getPostcode'  => '97301',
+        ]);
+
+        $order = $this->createPartialPassiveDouble(Order::class, [
+            'getId', 'getGrandTotal', 'getCustomerEmail', 'getData',
+            'getBillingAddress', 'getShippingAddress', 'getAllVisibleItems', 'getOrderCurrency',
+        ]);
+        $order->method('getId')->willReturn('55');
+        $order->method('getGrandTotal')->willReturn(49.99);
+        $order->method('getCustomerEmail')->willReturn('test@example.com');
+        $order->method('getData')->willReturnCallback(function ($key) {
+            switch ($key) {
+                case 'total_qty_ordered': return 2.0;
+                case 'entity_id': return '55';
+                case 'base_currency_code': return 'USD';
+                default: return null;
+            }
+        });
+        $order->method('getBillingAddress')->willReturn($billingAddress);
+        $order->method('getShippingAddress')->willReturn($shippingAddress);
+        $order->method('getAllVisibleItems')->willReturn([$orderItem]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $payload = $this->cart->getConversionPayload($order);
+
+        $this->assertSame(49.99, $payload['cart_total']);
+        $this->assertSame('test@example.com', $payload['email']);
+        $this->assertSame('magento_2', $payload['cart_type']);
+        $this->assertSame(2, $payload['cart_total_quantity']);
+        $this->assertSame(55, $payload['order_id']);
+        $this->assertSame('USD', $payload['currency']);
+        $this->assertCount(1, $payload['cart_contents']);
+        $billing = json_decode($payload['billing_address'], true);
+        $this->assertSame('Portland', $billing['city']);
+        $shipping = json_decode($payload['shipping_address'], true);
+        $this->assertSame('Salem', $shipping['city']);
+    }
+
+    public function testGetConversionPayloadWithNullAddresses(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+
+        $order = $this->createPartialPassiveDouble(Order::class, [
+            'getId', 'getGrandTotal', 'getCustomerEmail', 'getData',
+            'getBillingAddress', 'getShippingAddress', 'getAllVisibleItems', 'getOrderCurrency',
+        ]);
+        $order->method('getId')->willReturn('56');
+        $order->method('getGrandTotal')->willReturn(0.0);
+        $order->method('getCustomerEmail')->willReturn('guest@example.com');
+        $order->method('getData')->willReturnCallback(function ($key) {
+            switch ($key) {
+                case 'total_qty_ordered': return 0.0;
+                case 'entity_id': return '56';
+                case 'base_currency_code': return 'EUR';
+                default: return null;
+            }
+        });
+        $order->method('getBillingAddress')->willReturn(null);
+        $order->method('getShippingAddress')->willReturn(null);
+        $order->method('getAllVisibleItems')->willReturn([]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $payload = $this->cart->getConversionPayload($order);
+
+        $this->assertSame('{}', $payload['billing_address']);
+        $this->assertSame('{}', $payload['shipping_address']);
+        $this->assertSame('EUR', $payload['currency']);
+        $this->assertSame([], $payload['cart_contents']);
     }
 
     private function mockConfigurableParentSku(int $productId, string $sku): void
