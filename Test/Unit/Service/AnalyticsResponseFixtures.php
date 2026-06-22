@@ -14,7 +14,7 @@ namespace Pixlee\Pixlee\Test\Unit\Service;
  *
  * Replace or extend these fixtures with captured production responses when available.
  */
-final class AnalyticsResponseFixtures
+class AnalyticsResponseFixtures
 {
     public const HTTP_OK = 200;
 
