@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Model\Export;
 
 use Exception;
+use Magento\Catalog\Model\Product as ProductModel;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\Media\Config;
 use Magento\Catalog\Model\Product\Visibility;
@@ -22,13 +23,14 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\UrlRewrite\Model\UrlFinderInterface;
 use Magento\UrlRewrite\Service\V1\Data\UrlRewrite;
-use Pixlee\Pixlee\Model\Logger\PixleeLogger;
-use Pixlee\Pixlee\Model\Config\Api;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
+use Pixlee\Pixlee\Model\Config\Api;
+use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Pixlee;
 
 class Product
@@ -154,6 +156,8 @@ class Product
     }
 
     /**
+     * Export Products
+     *
      * @param string|int $websiteId
      * @return void
      * @throws LocalizedException
@@ -190,6 +194,8 @@ class Product
     }
 
     /**
+     * Get Categories Map
+     *
      * @return array
      * @throws LocalizedException
      */
@@ -234,20 +240,37 @@ class Product
     }
 
     /**
-     * @param $websiteId
+     * Get Product Collection
+     *
+     * @param array|bool|int|null|string $websiteId
      * @return ProductResource\Collection
      */
     public function getProductCollection($websiteId)
     {
+        $store = $this->storeManager->getWebsite($websiteId)->getDefaultStore();
+
         $collection = $this->productCollection->create();
+        $collection->setStoreId((int) $store->getId());
+        $collection->addAttributeToSelect([
+            'name',
+            'sku',
+            'price',
+            'special_price',
+            'special_from_date',
+            'special_to_date',
+            'image',
+            'url_key',
+            'status',
+            'visibility',
+        ]);
+        $collection->addFinalPrice();
         $collection->addFieldToFilter(
             'visibility',
             [
-                'in' =>
-                    [
-                        Visibility::VISIBILITY_BOTH,
-                        Visibility::VISIBILITY_IN_CATALOG
-                    ]
+                'in' => [
+                    Visibility::VISIBILITY_BOTH,
+                    Visibility::VISIBILITY_IN_CATALOG
+                ]
             ]
         );
         $collection->addFieldToFilter('status', ['neq' => Status::STATUS_DISABLED]);
@@ -257,10 +280,12 @@ class Product
     }
 
     /**
-     * @param $product
-     * @param $categoriesMap
-     * @param $websiteId
-     * @param $store
+     * Export Product to Emplifi
+     *
+     * @param ProductModel $product
+     * @param array $categoriesMap
+     * @param array|bool|int|null|string $websiteId
+     * @param StoreInterface $store
      * @return void
      * @throws LocalizedException
      */
@@ -304,19 +329,20 @@ class Product
     }
 
     /**
-     * @param $product
-     * @param $store
+     * Get Product URL
+     *
+     * @param ProductModel $product
+     * @param StoreInterface $store
      * @return string
      * @throws NoSuchEntityException
      */
-    protected function getProductUrl($product, $store) {
-        // Ported from TurnTo Magento Extension
-        // Due to core bug, it is necessary to retrieve url using this method (see https://github.com/magento/magento2/issues/3074)
+    protected function getProductUrl($product, $store)
+    {
+        // Magento bug workaround to retrieve url (see https://github.com/magento/magento2/issues/3074)
         $urlRewrite = $this->urlFinder->findOneByData(
             [
                 UrlRewrite::ENTITY_ID => $product->getId(),
-                UrlRewrite::ENTITY_TYPE =>
-                    ProductUrlRewriteGenerator::ENTITY_TYPE,
+                UrlRewrite::ENTITY_TYPE => ProductUrlRewriteGenerator::ENTITY_TYPE,
                 UrlRewrite::STORE_ID => $store->getId()
             ]
         );
@@ -329,20 +355,23 @@ class Product
     }
 
     /**
-     * @param $relativeUrl
-     * @param $store
+     * Get absolute URL for a given relative URL and store
+     *
+     * @param string $relativeUrl
+     * @param StoreInterface $store
      * @return string
-     * @throws NoSuchEntityException
      */
-    protected function getAbsoluteUrl($relativeUrl, $store)
+    protected function getAbsoluteUrl($relativeUrl, $store): string
     {
         $storeUrl = $store->getBaseUrl();
         return rtrim($storeUrl, '/') . '/' . ltrim($relativeUrl, '/');
     }
 
     /**
-     * @param $websiteId
-     * @param $product
+     * Get regional information for a product across different stores
+     *
+     * @param int $websiteId
+     * @param ProductModel $product
      * @return array
      * @throws NoSuchEntityException
      * @throws LocalizedException
@@ -380,7 +409,9 @@ class Product
     }
 
     /**
-     * @param $product
+     * Get aggregate stock quantity for a product
+     *
+     * @param ProductModel $product
      * @return float|null
      */
     public function getAggregateStock($product)
@@ -428,7 +459,9 @@ class Product
     }
 
     /**
-     * @param $product
+     * Get aggregate stock quantity for a product
+     *
+     * @param ProductModel $product
      * @return false|string
      */
     public function getVariantsDict($product)
@@ -470,7 +503,9 @@ class Product
             }
         }
 
-        $this->logger->addInfo("Product {$product->getId()} variantsDict: " . $this->serializer->serialize($variantsDict));
+        $this->logger->addInfo(
+            "Product {$product->getId()} variantsDict: {$this->serializer->serialize($variantsDict)}"
+        );
         if (empty($variantsDict)) {
             return '{}';
         } else {
@@ -479,8 +514,10 @@ class Product
     }
 
     /**
-     * @param $product
-     * @param $categoriesMap
+     * Get extra fields for a product
+     *
+     * @param ProductModel $product
+     * @param array $categoriesMap
      * @return false|string
      * @throws NoSuchEntityException
      */
@@ -500,8 +537,10 @@ class Product
     }
 
     /**
-     * @param $product
-     * @param $categoriesMap
+     * Get extra fields for a product
+     *
+     * @param ProductModel $product
+     * @param array $categoriesMap
      * @return array
      */
     public function getCategories($product, $categoriesMap)
@@ -538,7 +577,9 @@ class Product
     }
 
     /**
-     * @param $product
+     * Get extra fields for a product
+     *
+     * @param ProductModel $product
      * @return array
      * @throws NoSuchEntityException
      */

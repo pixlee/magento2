@@ -1,0 +1,996 @@
+<?php
+/**
+ * Copyright © Emplifi, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
+
+namespace Pixlee\Pixlee\Test\Unit\Model;
+
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Directory\Model\Currency;
+use Magento\Framework\Currency\Data\Currency as FrameworkCurrency;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Locale\FormatInterface;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Framework\Serialize\Serializer\Json as MagentoJson;
+use Pixlee\Pixlee\Test\Unit\Helper\ObjectManager;
+use Magento\Quote\Model\Quote\Item as QuoteItem;
+use Magento\Quote\Model\Quote\Item\Compare;
+use Magento\Quote\Model\Quote\Item\Option\Comparator;
+use Magento\Quote\Model\Quote\Item\OptionFactory;
+use Magento\Framework\Serialize\Serializer\Json as SerializerJson;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Address;
+use Magento\Sales\Model\Order\Item as OrderItem;
+use Magento\Sales\Model\OrderFactory as SalesOrderFactory;
+use Magento\Sales\Model\Status\ListFactory;
+use Magento\Sales\Model\Status\ListStatus;
+use PHPUnit\Framework\MockObject\MockObject;
+use Pixlee\Pixlee\Model\Cart;
+use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
+use Pixlee\Pixlee\Model\Logger\PixleeLogger;
+
+class CartTest extends AbstractUnitTestCase
+{
+    /**
+     * @var Cart
+     */
+    protected $cart;
+
+    /** @var ProductRepositoryInterface&MockObject */
+    private $productRepository;
+
+    /** @var ObjectManager */
+    private $objectManagerHelper;
+
+    protected function setUp(): void
+    {
+        $logger = $this->createPassiveDouble(PixleeLogger::class);
+        $this->productRepository = $this->createPassiveDouble(ProductRepositoryInterface::class);
+        $this->cart = new Cart(new Json(), $logger, $this->productRepository);
+        $this->objectManagerHelper = new ObjectManager($this);
+    }
+
+    public function testExtractQuoteItemQuantityIsInteger(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createQuoteItemStub('simple', [], 3.0, 10.0, 1, 'simple', 'simple');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame(1, (int) $item->getProductId());
+        $this->assertSame(3, $itemData['quantity']);
+        $this->assertIsInt($itemData['quantity']);
+        $this->assertSame(1, $itemData['product_id']);
+        $this->assertSame('simple', $itemData['product_sku']);
+    }
+
+    public function testExtractQuoteItemUsesChildVariantForConfigurableItems(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('9.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createQuoteItemChildStub(42, 'simple-red');
+        $item = $this->createQuoteItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            9.99,
+            10,
+            'simple-red',
+            'configurable-parent'
+        );
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame(42, $itemData['variant_id']);
+        $this->assertSame('simple-red', $itemData['variant_sku']);
+        $this->assertSame('configurable-parent', $itemData['product_sku']);
+        $this->assertSame('USD', $itemData['currency']);
+    }
+
+    public function testExtractQuoteItemUsesZeroQuotePriceForFreeOrFullyDiscountedItem(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(0.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('0.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $product->method('getSku')->willReturn('free-simple');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('setFinalPrice')->willReturnSelf();
+        $product->method('getFinalPrice')->willReturn(25.0);
+        $product->method('getPrice')->willReturn(25.0);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('qty', 1.0);
+        $item->setData('price', 0.0);
+        $item->setData('product_id', 1);
+        $item->setSku('free-simple');
+        $item->setData('product', $product);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('0.00', $itemData['price']);
+    }
+
+    public function testExtractQuoteItemUsesZeroChildQuotePriceForFreeConfigurableVariant(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(0.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('0.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $childProduct->method('getSku')->willReturn('simple-red');
+        $childProduct->method('getTypeId')->willReturn('simple');
+        $childProduct->method('setFinalPrice')->willReturnSelf();
+        $childProduct->method('getFinalPrice')->willReturn(49.99);
+        $childProduct->method('getPrice')->willReturn(55.0);
+
+        $parentProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $parentProduct->method('getSku')->willReturn('configurable-parent');
+        $parentProduct->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
+        $parentProduct->method('setFinalPrice')->willReturnSelf();
+        $parentProduct->method('getFinalPrice')->willReturn(0.0);
+        $parentProduct->method('getPrice')->willReturn(0.0);
+
+        $childItem = $this->createQuoteItemChildStub(42, 'simple-red');
+        $childItem->setData('qty', 1.0);
+        $childItem->setData('price', 0.0);
+        $childItem->setData('product', $childProduct);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', Configurable::TYPE_CODE);
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 10);
+        $item->setSku('configurable-parent');
+        $item->setData('product', $parentProduct);
+        $item->addChild($childItem);
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('0.00', $itemData['price']);
+    }
+
+    public function testExtractQuoteItemFallsBackToProductFinalPriceWhenQuotePriceUnset(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(25.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('25.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $product->method('getSku')->willReturn('simple');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('setFinalPrice')->willReturnSelf();
+        $product->method('getFinalPrice')->with(2.0)->willReturn(25.0);
+        $product->method('getPrice')->willReturn(30.0);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('qty', 2.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 1);
+        $item->setSku('simple');
+        $item->setData('product', $product);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('25.00', $itemData['price']);
+        $this->assertSame(2, $itemData['quantity']);
+    }
+
+    public function testExtractQuoteItemUsesZeroCatalogFinalPriceWhenQuotePriceUnset(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(0.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('0.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $product->method('getSku')->willReturn('free-simple');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('setFinalPrice')->willReturnSelf();
+        $product->method('getFinalPrice')->with(1.0)->willReturn(0.0);
+        $product->method('getPrice')->willReturn(25.0);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 1);
+        $item->setSku('free-simple');
+        $item->setData('product', $product);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('0.00', $itemData['price']);
+    }
+
+    public function testExtractQuoteItemFallsBackToBasePriceWhenFinalPriceUnset(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(30.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('30.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $product->method('getSku')->willReturn('simple');
+        $product->method('getTypeId')->willReturn('simple');
+        $product->method('setFinalPrice')->willReturnSelf();
+        $product->method('getFinalPrice')->with(1.0)->willReturn(null);
+        $product->method('getPrice')->willReturn(30.0);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 1);
+        $item->setSku('simple');
+        $item->setData('product', $product);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('30.00', $itemData['price']);
+    }
+
+    public function testExtractQuoteItemUsesZeroChildCatalogFinalPriceForConfigurable(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(0.0, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('0.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $childProduct->method('getSku')->willReturn('simple-red');
+        $childProduct->method('getTypeId')->willReturn('simple');
+        $childProduct->method('setFinalPrice')->willReturnSelf();
+        $childProduct->method('getFinalPrice')->with(1.0)->willReturn(0.0);
+        $childProduct->method('getPrice')->willReturn(55.0);
+
+        $parentProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $parentProduct->method('getSku')->willReturn('configurable-parent');
+        $parentProduct->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
+        $parentProduct->method('setFinalPrice')->willReturnSelf();
+        $parentProduct->method('getFinalPrice')->with(1.0)->willReturn(0.0);
+        $parentProduct->method('getPrice')->willReturn(0.0);
+
+        $childItem = $this->createQuoteItemChildStub(42, 'simple-red');
+        $childItem->setData('qty', 1.0);
+        $childItem->setData('price', null);
+        $childItem->setData('product', $childProduct);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', Configurable::TYPE_CODE);
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 10);
+        $item->setSku('configurable-parent');
+        $item->setData('product', $parentProduct);
+        $item->addChild($childItem);
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('0.00', $itemData['price']);
+    }
+
+    public function testExtractQuoteItemFallsBackToChildProductFinalPriceForConfigurable(): void
+    {
+        $currency = $this->createMock(Currency::class);
+        $currency->expects($this->once())
+            ->method('format')
+            ->with(49.99, ['display' => FrameworkCurrency::NO_SYMBOL], false)
+            ->willReturn('49.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $childProduct->method('getSku')->willReturn('simple-red');
+        $childProduct->method('getTypeId')->willReturn('simple');
+        $childProduct->method('setFinalPrice')->willReturnSelf();
+        $childProduct->method('getFinalPrice')->with(1.0)->willReturn(49.99);
+        $childProduct->method('getPrice')->willReturn(55.0);
+
+        $parentProduct = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice', 'getFinalPrice', 'getPrice']
+        );
+        $parentProduct->method('getSku')->willReturn('configurable-parent');
+        $parentProduct->method('getTypeId')->willReturn(Configurable::TYPE_CODE);
+        $parentProduct->method('setFinalPrice')->willReturnSelf();
+        $parentProduct->method('getFinalPrice')->with(1.0)->willReturn(0.0);
+        $parentProduct->method('getPrice')->willReturn(0.0);
+
+        $childItem = $this->createQuoteItemChildStub(42, 'simple-red');
+        $childItem->setData('qty', 1.0);
+        $childItem->setData('price', null);
+        $childItem->setData('product', $childProduct);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', Configurable::TYPE_CODE);
+        $item->setData('qty', 1.0);
+        $item->setData('price', null);
+        $item->setData('product_id', 10);
+        $item->setSku('configurable-parent');
+        $item->setData('product', $parentProduct);
+        $item->addChild($childItem);
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('49.99', $itemData['price']);
+        $this->assertSame(42, $itemData['variant_id']);
+    }
+
+    public function testExtractQuoteItemUsesParentSkuWhenQuoteProductIsSelectedSimple(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createQuoteItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createQuoteItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+        $this->mockConfigurableParentSku(1396, 'WJ12');
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame(1382, $itemData['variant_id']);
+        $this->assertSame('WJ12-XS-Blue', $itemData['variant_sku']);
+        $this->assertSame('WJ12', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
+    }
+
+    public function testExtractQuoteItemFallsBackToLineSkuForConfigurableWhenCatalogMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createQuoteItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createQuoteItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+
+        $this->productRepository->method('getById')
+            ->with(1396)
+            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('WJ12-XS-Blue', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
+    }
+
+    /**
+     * Build a real QuoteItem with data fields (product_id via magic getter, not a custom stub method).
+     *
+     * @param string $productType
+     * @param QuoteItem[] $children
+     * @param float $qty
+     * @param float $price
+     * @param int $productId
+     * @param string $sku
+     * @param string $productSku
+     * @return QuoteItem
+     */
+    private function createQuoteItemStub(
+        $productType,
+        array $children,
+        $qty,
+        $price,
+        $productId,
+        $sku,
+        $productSku
+    ) {
+        $product = $this->createQuoteItemProductMock($productType, $productSku);
+
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', $productType);
+        $item->setData('qty', $qty);
+        $item->setData('price', $price);
+        $item->setData('product_id', $productId);
+        $item->setSku($sku);
+        $item->setData('product', $product);
+
+        foreach ($children as $child) {
+            $item->addChild($child);
+        }
+
+        return $item;
+    }
+
+    /**
+     * @param int $productId
+     * @param string $sku
+     * @return QuoteItem
+     */
+    private function createQuoteItemChildStub($productId, $sku)
+    {
+        $child = $this->createQuoteItemInstance();
+        $child->setData('product_id', $productId);
+        $child->setSku($sku);
+
+        return $child;
+    }
+
+    /**
+     * Product mock compatible with QuoteItem::getProduct() (calls setFinalPrice).
+     *
+     * @param string $productType
+     * @param string $productSku
+     * @return Product&MockObject
+     */
+    private function createQuoteItemProductMock($productType, $productSku)
+    {
+        /** @var Product&MockObject $product */
+        $product = $this->createPartialPassiveDouble(
+            Product::class,
+            ['getSku', 'getTypeId', 'setFinalPrice']
+        );
+        $product->method('getSku')->willReturn($productSku);
+        $product->method('getTypeId')->willReturn($productType);
+        $product->method('setFinalPrice')->willReturnSelf();
+
+        return $product;
+    }
+
+    /**
+     * @return QuoteItem
+     */
+    private function createQuoteItemInstance()
+    {
+        $modelContext = $this->createPartialPassiveDouble(Context::class, ['getEventDispatcher']);
+        $modelContext->method('getEventDispatcher')->willReturn($this->createPassiveDouble(ManagerInterface::class));
+
+        $errorInfos = $this->createPartialPassiveDouble(
+            ListStatus::class,
+            ['clear', 'addItem', 'getItems', 'removeItemsByParams']
+        );
+
+        $statusListFactory = $this->createPartialPassiveDouble(ListFactory::class, ['create']);
+        $statusListFactory->method('create')->willReturn($errorInfos);
+
+        $itemOptionFactory = $this->createPartialPassiveDouble(OptionFactory::class, ['create']);
+
+        return $this->objectManagerHelper->getObject(
+            QuoteItem::class,
+            [
+                'localeFormat' => $this->createPassiveDouble(FormatInterface::class),
+                'context' => $modelContext,
+                'statusListFactory' => $statusListFactory,
+                'itemOptionFactory' => $itemOptionFactory,
+                'quoteItemCompare' => $this->createPassiveDouble(Compare::class),
+                'serializer' => $this->createPassiveDouble(MagentoJson::class),
+                'itemOptionComparator' => new Comparator(),
+            ]
+        );
+    }
+
+    public function testExtractQuoteItemUsesLineItemSkuWhenCatalogProductIsMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createQuoteItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        $item->setData('product', false);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
+    }
+
+    public function testExtractItemUsesLineItemSkuWhenCatalogProductIsMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createOrderItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        $item->setData('product', null);
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
+    }
+
+    public function testExtractQuoteItemReturnsNullWhenLineItemHasNoProductReference(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $item = $this->createQuoteItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('product_id', 0);
+        $item->setData('product', false);
+
+        $this->assertNull($this->cart->extractQuoteItem($item, $currency));
+    }
+
+    public function testGetCartContentsSkipsItemsWithoutProductReference(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $validItem = $this->createOrderItemStub('simple', [], 1.0, 10.0, 1, 'simple', 'simple');
+
+        $invalidItem = $this->createOrderItemInstance();
+        $invalidItem->setData('product_type', 'simple');
+        $invalidItem->setData('product_id', 0);
+        $invalidItem->setData('product', false);
+        $invalidItem->setData('qty_ordered', 1.0);
+        $invalidItem->setData('price', 10.0);
+
+        $order = $this->createPassiveDouble(Order::class);
+        $order->method('getAllVisibleItems')->willReturn([$validItem, $invalidItem]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $cartContents = $this->cart->getCartContents($order);
+
+        $this->assertCount(1, $cartContents);
+        $this->assertSame(1, $cartContents[0]['product_id']);
+    }
+
+    public function testExtractQuoteItemUsesLineItemSkuWhenProductNotLoaded(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createQuoteItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        // Unloaded product without triggering QuoteItem::getProduct() auto-load.
+        $item->setData('product', false);
+
+        $itemData = $this->cart->extractQuoteItem($item, $currency);
+
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
+    }
+
+    public function testExtractItemUsesLineItemSkuWhenProductNotLoaded(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createOrderItemStub(
+            'simple',
+            [],
+            1.0,
+            10.0,
+            99,
+            'line-item-sku',
+            'catalog-sku'
+        );
+        $item->setData('product', null);
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('line-item-sku', $itemData['product_sku']);
+        $this->assertSame(99, $itemData['product_id']);
+    }
+
+    public function testExtractAddressReturnsEmptyObjectWhenAddressIsNull(): void
+    {
+        $this->assertSame('{}', $this->cart->extractAddress(null));
+    }
+
+    public function testExtractAddressSerializesAddressFields(): void
+    {
+        /** @var Address&MockObject $address */
+        $address = $this->createConfiguredPassiveDouble(Address::class, [
+            'getStreet' => ['123 Main St'],
+            'getCity' => 'Los Angeles',
+            'getRegion' => 'CA',
+            'getCountryId' => 'US',
+            'getPostcode' => '90001',
+        ]);
+
+        $serialized = $this->cart->extractAddress($address);
+        $decoded = json_decode($serialized, true);
+
+        $this->assertSame('Los Angeles', $decoded['city']);
+        $this->assertSame('US', $decoded['country']);
+    }
+
+    public function testExtractItemQuantityIsInteger(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('10.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createOrderItemStub(
+            'simple',
+            [],
+            2.0,
+            10.0,
+            1,
+            'simple',
+            'simple'
+        );
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame(1, (int) $item->getProductId());
+        $this->assertSame(2, $itemData['quantity']);
+        $this->assertIsInt($itemData['quantity']);
+        $this->assertSame(1, $itemData['product_id']);
+    }
+
+    public function testExtractItemUsesChildVariantForConfigurableItems(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('9.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createOrderItemChildStub(42, 'simple-red');
+        $item = $this->createOrderItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            9.99,
+            10,
+            'configurable-parent',
+            'configurable-parent'
+        );
+        $this->mockConfigurableParentSku(10, 'configurable-parent');
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertEquals(42, $itemData['variant_id']);
+        $this->assertSame('simple-red', $itemData['variant_sku']);
+        $this->assertSame('configurable-parent', $itemData['product_sku']);
+        $this->assertSame('USD', $itemData['currency']);
+    }
+
+    public function testExtractItemUsesParentSkuWhenOrderLineSkuIsVariant(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createOrderItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createOrderItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+        $this->mockConfigurableParentSku(1396, 'WJ12');
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('WJ12', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
+        $this->assertEquals(1382, $itemData['variant_id']);
+        $this->assertSame('WJ12-XS-Blue', $itemData['variant_sku']);
+    }
+
+    public function testExtractItemFallsBackToLineSkuForConfigurableWhenCatalogMissing(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('77.00');
+        $currency->method('getCode')->willReturn('USD');
+
+        $childItem = $this->createOrderItemChildStub(1382, 'WJ12-XS-Blue');
+        $item = $this->createOrderItemStub(
+            Configurable::TYPE_CODE,
+            [$childItem],
+            1.0,
+            77.0,
+            1396,
+            'WJ12-XS-Blue',
+            'WJ12'
+        );
+
+        $this->productRepository->method('getById')
+            ->with(1396)
+            ->willThrowException(new \Magento\Framework\Exception\NoSuchEntityException(__('Missing')));
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertSame('WJ12-XS-Blue', $itemData['product_sku']);
+        $this->assertSame(1396, $itemData['product_id']);
+    }
+
+    /**
+     * @param string $productType
+     * @param OrderItem[] $children
+     * @param float $qty
+     * @param float $price
+     * @param int $productId
+     * @param string $sku
+     * @param string $productSku
+     * @return OrderItem
+     */
+    private function createOrderItemStub(
+        $productType,
+        array $children,
+        $qty,
+        $price,
+        $productId,
+        $sku,
+        $productSku
+    ) {
+        $product = $this->createQuoteItemProductMock($productType, $productSku);
+
+        $item = $this->createOrderItemInstance();
+        $item->setData('product_type', $productType);
+        $item->setData('qty_ordered', $qty);
+        $item->setData('price', $price);
+        $item->setData('product_id', $productId);
+        $item->setSku($sku);
+        $item->setData('product', $product);
+
+        foreach ($children as $child) {
+            $item->addChildItem($child);
+        }
+
+        return $item;
+    }
+
+    /**
+     * @param int $productId
+     * @param string $sku
+     * @return OrderItem
+     */
+    private function createOrderItemChildStub($productId, $sku)
+    {
+        $child = $this->createOrderItemInstance();
+        $child->setData('product_id', $productId);
+        $child->setSku($sku);
+
+        return $child;
+    }
+
+    /**
+     * @return OrderItem
+     */
+    private function createOrderItemInstance()
+    {
+        $orderFactory = $this->createPartialPassiveDouble(SalesOrderFactory::class, ['create']);
+
+        return $this->objectManagerHelper->getObject(
+            OrderItem::class,
+            [
+                'orderFactory' => $orderFactory,
+                'serializer' => $this->createPassiveDouble(SerializerJson::class),
+            ]
+        );
+    }
+
+    public function testExtractItemReturnsNullWhenLineItemHasNoProductReference(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $item = $this->createOrderItemInstance();
+        $item->setData('product_type', 'simple');
+        $item->setData('product_id', 0);
+        $item->setData('product', null);
+
+        $this->assertNull($this->cart->extractItem($item, $currency));
+    }
+
+    public function testExtractItemForConfigurableWithNoChildrenHasNoVariantKeys(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('9.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $item = $this->createOrderItemStub(Configurable::TYPE_CODE, [], 1.0, 9.99, 10, 'conf-parent', 'conf-parent');
+        $this->mockConfigurableParentSku(10, 'conf-parent');
+
+        $itemData = $this->cart->extractItem($item, $currency);
+
+        $this->assertArrayNotHasKey('variant_id', $itemData);
+        $this->assertArrayNotHasKey('variant_sku', $itemData);
+        $this->assertSame(10, $itemData['product_id']);
+    }
+
+    public function testGetCartContentsReturnsEmptyArrayForOrderWithNoItems(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+
+        $order = $this->createPassiveDouble(Order::class);
+        $order->method('getAllVisibleItems')->willReturn([]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $this->assertSame([], $this->cart->getCartContents($order));
+    }
+
+    public function testGetConversionPayload(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+        $currency->method('format')->willReturn('9.99');
+        $currency->method('getCode')->willReturn('USD');
+
+        $orderItem = $this->createOrderItemStub('simple', [], 1.0, 9.99, 1, 'test-sku', 'test-sku');
+
+        $billingAddress = $this->createConfiguredPassiveDouble(Address::class, [
+            'getStreet'    => ['1 Main St'],
+            'getCity'      => 'Portland',
+            'getRegion'    => 'OR',
+            'getCountryId' => 'US',
+            'getPostcode'  => '97201',
+        ]);
+        $shippingAddress = $this->createConfiguredPassiveDouble(Address::class, [
+            'getStreet'    => ['2 Oak Ave'],
+            'getCity'      => 'Salem',
+            'getRegion'    => 'OR',
+            'getCountryId' => 'US',
+            'getPostcode'  => '97301',
+        ]);
+
+        $order = $this->createPartialPassiveDouble(Order::class, [
+            'getId', 'getGrandTotal', 'getCustomerEmail', 'getData',
+            'getBillingAddress', 'getShippingAddress', 'getAllVisibleItems', 'getOrderCurrency',
+        ]);
+        $order->method('getId')->willReturn('55');
+        $order->method('getGrandTotal')->willReturn(49.99);
+        $order->method('getCustomerEmail')->willReturn('test@example.com');
+        $order->method('getData')->willReturnCallback(function ($key) {
+            switch ($key) {
+                case 'total_qty_ordered': return 2.0;
+                case 'entity_id': return '55';
+                case 'base_currency_code': return 'USD';
+                default: return null;
+            }
+        });
+        $order->method('getBillingAddress')->willReturn($billingAddress);
+        $order->method('getShippingAddress')->willReturn($shippingAddress);
+        $order->method('getAllVisibleItems')->willReturn([$orderItem]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $payload = $this->cart->getConversionPayload($order);
+
+        $this->assertSame(49.99, $payload['cart_total']);
+        $this->assertSame('test@example.com', $payload['email']);
+        $this->assertSame('magento_2', $payload['cart_type']);
+        $this->assertSame(2, $payload['cart_total_quantity']);
+        $this->assertSame(55, $payload['order_id']);
+        $this->assertSame('USD', $payload['currency']);
+        $this->assertCount(1, $payload['cart_contents']);
+        $billing = json_decode($payload['billing_address'], true);
+        $this->assertSame('Portland', $billing['city']);
+        $shipping = json_decode($payload['shipping_address'], true);
+        $this->assertSame('Salem', $shipping['city']);
+    }
+
+    public function testGetConversionPayloadWithNullAddresses(): void
+    {
+        $currency = $this->createPassiveDouble(Currency::class);
+
+        $order = $this->createPartialPassiveDouble(Order::class, [
+            'getId', 'getGrandTotal', 'getCustomerEmail', 'getData',
+            'getBillingAddress', 'getShippingAddress', 'getAllVisibleItems', 'getOrderCurrency',
+        ]);
+        $order->method('getId')->willReturn('56');
+        $order->method('getGrandTotal')->willReturn(0.0);
+        $order->method('getCustomerEmail')->willReturn('guest@example.com');
+        $order->method('getData')->willReturnCallback(function ($key) {
+            switch ($key) {
+                case 'total_qty_ordered': return 0.0;
+                case 'entity_id': return '56';
+                case 'base_currency_code': return 'EUR';
+                default: return null;
+            }
+        });
+        $order->method('getBillingAddress')->willReturn(null);
+        $order->method('getShippingAddress')->willReturn(null);
+        $order->method('getAllVisibleItems')->willReturn([]);
+        $order->method('getOrderCurrency')->willReturn($currency);
+
+        $payload = $this->cart->getConversionPayload($order);
+
+        $this->assertSame('{}', $payload['billing_address']);
+        $this->assertSame('{}', $payload['shipping_address']);
+        $this->assertSame('EUR', $payload['currency']);
+        $this->assertSame([], $payload['cart_contents']);
+    }
+
+    private function mockConfigurableParentSku(int $productId, string $sku): void
+    {
+        $parentProduct = $this->createConfiguredPassiveDouble(ProductInterface::class, [
+            'getSku' => $sku,
+        ]);
+        $this->productRepository->method('getById')
+            ->with($productId)
+            ->willReturn($parentProduct);
+    }
+
+}

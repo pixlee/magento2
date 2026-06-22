@@ -1,4 +1,9 @@
 <?php
+/**
+ * Copyright © Emplifi, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Model\Config;
 
@@ -30,6 +35,8 @@ class Product
     }
 
     /**
+     * Check if cron is enabled
+     *
      * @param null|string $scopeType
      * @param int|null|string $scopeCode
      * @return bool
