@@ -31,6 +31,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
 use Pixlee\Pixlee\Model\Config\Api;
+use Pixlee\Pixlee\Model\Export\ExportPricingCacheResetInterface;
 use Pixlee\Pixlee\Model\Export\Product;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 use Pixlee\Pixlee\Model\Pixlee;
@@ -219,6 +220,52 @@ class ProductTest extends AbstractUnitTestCase
 
         $this->assertSame(['started', 0], $statuses[0]);
         $this->assertSame(['finished', 0], $statuses[1]);
+    }
+
+    public function testExportProductsResetsPricingCacheBeforeExportAndAfterEveryPage(): void
+    {
+        $this->apiConfig->method('isActive')->willReturn(true);
+
+        $page = $this->countableIterable([$this->fakeChild(1, 'a')]);
+        $collection = $this->paginatedCollection($page, $lastPage = 3, $size = 3);
+
+        $store = $this->createPassiveDouble(Store::class);
+        $website = $this->createPassiveDouble(Website::class);
+        $website->method('getDefaultStore')->willReturn($store);
+        $this->storeManager->method('getWebsite')->willReturn($website);
+
+        $events = [];
+        $pricingCacheReset = $this->createMock(ExportPricingCacheResetInterface::class);
+        $pricingCacheReset->expects($this->exactly(4))->method('reset')
+            ->willReturnCallback(function () use (&$events) {
+                $events[] = 'reset';
+            });
+
+        $export = $this->getMockBuilder(Product::class)
+            ->setConstructorArgs(array_merge($this->constructorArgs(), [$pricingCacheReset]))
+            ->onlyMethods(['getProductCollection', 'getCategoriesMap', 'exportProductToPixlee'])
+            ->getMock();
+        $export->method('getProductCollection')->willReturn($collection);
+        $export->method('getCategoriesMap')->willReturn([]);
+        $export->expects($this->exactly(3))->method('exportProductToPixlee')
+            ->willReturnCallback(function () use (&$events) {
+                $events[] = 'export';
+            });
+
+        $export->exportProducts(self::WEBSITE_ID);
+
+        $this->assertSame(['reset', 'export', 'reset', 'export', 'reset', 'export', 'reset'], $events);
+    }
+
+    public function testExportProductsDoesNotResetPricingCacheWhenAccountInactive(): void
+    {
+        $this->apiConfig->method('isActive')->willReturn(false);
+
+        $pricingCacheReset = $this->createMock(ExportPricingCacheResetInterface::class);
+        $pricingCacheReset->expects($this->never())->method('reset');
+
+        $export = new Product(...array_merge($this->constructorArgs(), [$pricingCacheReset]));
+        $export->exportProducts(self::WEBSITE_ID);
     }
 
     // ----------------------------------------------------------------------

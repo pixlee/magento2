@@ -7,95 +7,154 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Test\Unit\Model\Export;
 
-use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\ResourceModel\Product\Collection;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
-use Magento\Catalog\Model\ResourceModel\Product\LinkedProductSelectBuilderInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsProvider;
+use Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsProviderInterface;
 use Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProvider;
 use Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProviderInterface;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Store\Model\Store;
-use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Export\MagentoExportPricingCacheReset;
 use Pixlee\Pixlee\Test\Unit\AbstractUnitTestCase;
+use ReflectionClass;
 use ReflectionProperty;
 
 class MagentoExportPricingCacheResetTest extends AbstractUnitTestCase
 {
     public function testResetClearsLowestPriceOptionsProviderLinkedProductMap(): void
     {
-        $connection = $this->createMock(AdapterInterface::class);
-        $resourceConnection = $this->createPartialMock(ResourceConnection::class, ['getConnection']);
-        $resourceConnection->method('getConnection')->willReturn($connection);
-
-        $linkedProductSelectBuilder = $this->createPartialMock(
-            LinkedProductSelectBuilderInterface::class,
-            ['build']
-        );
-        $linkedProductSelectBuilder->method('build')->willReturn([]);
-
-        $productCollection = $this->createPartialMock(
-            Collection::class,
-            ['addAttributeToSelect', 'addIdFilter', 'getItems']
-        );
-        $productCollection->method('addAttributeToSelect')->willReturnSelf();
-        $productCollection->method('addIdFilter')->willReturnSelf();
-        $productCollection->method('getItems')->willReturn(['child-product']);
-
-        $collectionFactory = $this->createPartialMock(CollectionFactory::class, ['create']);
-        $collectionFactory->method('create')->willReturn($productCollection);
-
-        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
-        $store = $this->createConfiguredPassiveDouble(Store::class, ['getId' => 1]);
-        $storeManager->method('getStore')->willReturn($store);
-
-        $lowestPriceOptionsProvider = new LowestPriceOptionsProvider(
-            $resourceConnection,
-            $linkedProductSelectBuilder,
-            $collectionFactory,
-            $storeManager
-        );
-
-        $product = $this->createConfiguredPassiveDouble(Product::class, [
-            'getId' => 42,
-            'getStoreId' => 1,
+        $lowestPriceOptionsProvider = $this->instantiateWithoutConstructor(LowestPriceOptionsProvider::class);
+        $this->writeProperty($lowestPriceOptionsProvider, LowestPriceOptionsProvider::class, 'linkedProductMap', [
+            '1-42' => ['child-product'],
         ]);
-        $lowestPriceOptionsProvider->getProducts($product);
-
-        $mapProperty = new ReflectionProperty(LowestPriceOptionsProvider::class, 'linkedProductMap');
-        $this->assertNotEmpty($mapProperty->getValue($lowestPriceOptionsProvider));
-
-        $configurableOptionsProvider = $this->createMock(ConfigurableOptionsProvider::class);
-        $configurableOptionsProvider->expects($this->once())->method('_resetState');
 
         $subject = new MagentoExportPricingCacheReset(
             $lowestPriceOptionsProvider,
+            $this->customConfigurableOptionsProvider()
+        );
+        $subject->reset();
+
+        $this->assertSame(
+            [],
+            $this->readProperty($lowestPriceOptionsProvider, LowestPriceOptionsProvider::class, 'linkedProductMap')
+        );
+    }
+
+    public function testResetClearsConfigurableOptionsProviderProducts(): void
+    {
+        $configurableOptionsProvider = $this->instantiateWithoutConstructor(ConfigurableOptionsProvider::class);
+        $this->writeProperty($configurableOptionsProvider, ConfigurableOptionsProvider::class, 'products', [
+            42 => ['child-product'],
+        ]);
+
+        $subject = new MagentoExportPricingCacheReset(
+            $this->customLowestPriceOptionsProvider(),
             $configurableOptionsProvider
         );
         $subject->reset();
 
-        $this->assertSame([], $mapProperty->getValue($lowestPriceOptionsProvider));
+        $this->assertNull(
+            $this->readProperty($configurableOptionsProvider, ConfigurableOptionsProvider::class, 'products')
+        );
     }
 
-    public function testResetStillResetsConfigurableOptionsWhenLowestPriceProviderIsCustom(): void
+    public function testResetIsSafeForCustomProviderImplementations(): void
     {
-        $customLowestPriceProvider = new class implements LowestPriceOptionsProviderInterface {
-            public function getProducts(ProductInterface $product): array
+        $subject = new MagentoExportPricingCacheReset(
+            $this->customLowestPriceOptionsProvider(),
+            $this->customConfigurableOptionsProvider()
+        );
+        $subject->reset();
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * Instantiate a core class without its constructor, whose signature differs across Magento versions.
+     *
+     * @param string $class
+     * @return object
+     */
+    private function instantiateWithoutConstructor(string $class)
+    {
+        return (new ReflectionClass($class))->newInstanceWithoutConstructor();
+    }
+
+    /**
+     * Write a private property.
+     *
+     * @param object $object
+     * @param string $class
+     * @param string $property
+     * @param mixed $value
+     * @return void
+     */
+    private function writeProperty($object, string $class, string $property, $value): void
+    {
+        $this->accessibleProperty($class, $property)->setValue($object, $value);
+    }
+
+    /**
+     * Read a private property.
+     *
+     * @param object $object
+     * @param string $class
+     * @param string $property
+     * @return mixed
+     */
+    private function readProperty($object, string $class, string $property)
+    {
+        return $this->accessibleProperty($class, $property)->getValue($object);
+    }
+
+    /**
+     * Build a reflection property usable on every supported PHP version.
+     *
+     * @param string $class
+     * @param string $property
+     * @return ReflectionProperty
+     */
+    private function accessibleProperty(string $class, string $property): ReflectionProperty
+    {
+        $reflection = new ReflectionProperty($class, $property);
+        if (PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+
+        return $reflection;
+    }
+
+    /**
+     * Lowest price provider that is not the core implementation.
+     *
+     * @return LowestPriceOptionsProviderInterface
+     */
+    private function customLowestPriceOptionsProvider(): LowestPriceOptionsProviderInterface
+    {
+        return new class() implements LowestPriceOptionsProviderInterface {
+            /**
+             * @inheritdoc
+             */
+            public function getProducts(ProductInterface $product)
             {
                 return [];
             }
         };
+    }
 
-        $configurableOptionsProvider = $this->createMock(ConfigurableOptionsProvider::class);
-        $configurableOptionsProvider->expects($this->once())->method('_resetState');
-
-        $subject = new MagentoExportPricingCacheReset(
-            $customLowestPriceProvider,
-            $configurableOptionsProvider
-        );
-        $subject->reset();
+    /**
+     * Configurable options provider that is not the core implementation.
+     *
+     * @return ConfigurableOptionsProviderInterface
+     */
+    private function customConfigurableOptionsProvider(): ConfigurableOptionsProviderInterface
+    {
+        return new class() implements ConfigurableOptionsProviderInterface {
+            /**
+             * @inheritdoc
+             */
+            public function getProducts(ProductInterface $product)
+            {
+                return [];
+            }
+        };
     }
 }

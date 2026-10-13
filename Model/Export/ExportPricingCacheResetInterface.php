@@ -13,7 +13,7 @@ namespace Pixlee\Pixlee\Model\Export;
 interface ExportPricingCacheResetInterface
 {
     /**
-     * Clear shared configurable-product pricing caches after one website export.
+     * Clear shared configurable-product pricing caches between export batches.
      *
      * @return void
      */

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Pixlee\Pixlee\Model\Export;
 
+use Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsProvider;
 use Magento\ConfigurableProduct\Pricing\Price\ConfigurableOptionsProviderInterface;
 use Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProvider;
 use Magento\ConfigurableProduct\Pricing\Price\LowestPriceOptionsProviderInterface;
@@ -14,20 +15,23 @@ use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
 use ReflectionProperty;
 
 /**
- * Magento keeps configurable child products in a request-scoped singleton cache.
- * Long-running cron exports for multiple websites must clear that cache between websites.
+ * Magento keeps configurable child products in request-scoped singleton caches that never expire.
+ * Long-running exports must clear them periodically or memory grows with every configurable product.
+ *
+ * Core exposes no public reset for LowestPriceOptionsProvider, and ResetAfterRequestInterface only
+ * exists on Magento 2.4.7+, so private properties are cleared via reflection when necessary.
  */
 class MagentoExportPricingCacheReset implements ExportPricingCacheResetInterface
 {
     /**
      * @var LowestPriceOptionsProviderInterface
      */
-    private $lowestPriceOptionsProvider;
+    protected $lowestPriceOptionsProvider;
 
     /**
      * @var ConfigurableOptionsProviderInterface
      */
-    private $configurableOptionsProvider;
+    protected $configurableOptionsProvider;
 
     /**
      * @param LowestPriceOptionsProviderInterface $lowestPriceOptionsProvider
@@ -46,16 +50,46 @@ class MagentoExportPricingCacheReset implements ExportPricingCacheResetInterface
      */
     public function reset(): void
     {
-        if ($this->lowestPriceOptionsProvider instanceof LowestPriceOptionsProvider) {
-            $linkedProductMap = new ReflectionProperty(
-                LowestPriceOptionsProvider::class,
-                'linkedProductMap'
-            );
-            $linkedProductMap->setValue($this->lowestPriceOptionsProvider, []);
+        $this->resetProvider(
+            $this->lowestPriceOptionsProvider,
+            LowestPriceOptionsProvider::class,
+            'linkedProductMap',
+            []
+        );
+        $this->resetProvider(
+            $this->configurableOptionsProvider,
+            ConfigurableOptionsProvider::class,
+            'products',
+            null
+        );
+    }
+
+    /**
+     * Reset a core provider through its public reset hook, or by clearing its private cache property.
+     *
+     * Custom implementations and core versions without the expected property are left untouched.
+     *
+     * @param object $provider
+     * @param string $coreClass
+     * @param string $property
+     * @param array|null $emptyValue
+     * @return void
+     */
+    protected function resetProvider($provider, string $coreClass, string $property, ?array $emptyValue): void
+    {
+        if ($provider instanceof ResetAfterRequestInterface) {
+            $provider->_resetState();
+            return;
         }
 
-        if ($this->configurableOptionsProvider instanceof ResetAfterRequestInterface) {
-            $this->configurableOptionsProvider->_resetState();
+        if (!$provider instanceof $coreClass || !property_exists($coreClass, $property)) {
+            return;
         }
+
+        $reflection = new ReflectionProperty($coreClass, $property);
+        if (PHP_VERSION_ID < 80100) {
+            $reflection->setAccessible(true);
+        }
+        $reflection->setValue($provider, $emptyValue);
     }
 }

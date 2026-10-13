@@ -12,7 +12,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Config\Product as ProductConfig;
-use Pixlee\Pixlee\Model\Export\ExportPricingCacheResetInterface;
 use Pixlee\Pixlee\Model\Export\Product;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
 
@@ -36,29 +35,21 @@ class ExportCron
     protected $productConfig;
 
     /**
-     * @var ExportPricingCacheResetInterface
-     */
-    protected $exportPricingCacheReset;
-
-    /**
      * @param PixleeLogger $logger
      * @param Product $product
      * @param StoreManagerInterface $storeManager
      * @param ProductConfig $productConfig
-     * @param ExportPricingCacheResetInterface $exportPricingCacheReset
      */
     public function __construct(
         PixleeLogger $logger,
         Product $product,
         StoreManagerInterface $storeManager,
-        ProductConfig $productConfig,
-        ExportPricingCacheResetInterface $exportPricingCacheReset
+        ProductConfig $productConfig
     ) {
         $this->logger = $logger;
         $this->product = $product;
         $this->storeManager = $storeManager;
         $this->productConfig = $productConfig;
-        $this->exportPricingCacheReset = $exportPricingCacheReset;
     }
 
     /**
@@ -76,7 +67,6 @@ class ExportCron
             if ($this->productConfig->isCronEnabled(ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
                 $this->logger->info("Cron product export for website $websiteId started");
                 $this->product->exportProducts($websiteId);
-                $this->exportPricingCacheReset->reset();
                 $this->logger->info("Cron product export for website $websiteId complete");
             }
         }
