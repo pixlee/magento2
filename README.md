@@ -50,11 +50,12 @@ Composer Package [pixlee/magento2](https://packagist.org/packages/pixlee/magento
 
 Select **Stores** > **Configuration** on the main menu. Then select **Emplifi (Pixlee)** > **UGC** in the left navigation menu.
 
-The Emplifi UGC account settings can be configured at the Website, Store, or Store view depending on account setup. For
-each UGC account, select the desired cope in the scope (store view) dropdown menu and enter the account configurations.
+The API keys, widget settings, and product export settings can be configured at the Default or Website scope. The
+**Enabled** setting can also be overridden per Store View. For each UGC account, select the desired website in the scope
+dropdown menu and enter the account configuration.
 
-1. Set **Enable** to *Yes*
-2. Fill in **API Key**, **Private API Key**, and **Secret Key** with the API keys from your Emplifi Account. [Getting you API Keys](https://developers.pixlee.com/docs/getting-your-api-keys)
+1. Set **Enabled** to *Yes*
+2. Fill in **API Key**, **Private API Key**, and **Secret Key** with the API keys from your Emplifi Account. [Getting your API Keys](https://developers.pixlee.com/docs/getting-your-api-keys)
 3. Click **Save Config** in the top right corner of the page to save your Account Settings.
 
 ### Exporting Products from Magento to Emplifi
@@ -71,19 +72,22 @@ configuration option to *No*.
 
 #### Change Product Export Run Time
 
-By default, products will be exported daily at 3am UTC. If this time causes an issue, you can change the time that the
-product export runs by updating the cron schedule in Magento.
+By default, products are exported daily at 3:01am in the timezone configured for the Magento admin (default scope). If
+this time causes an issue, override the cron schedule from a custom module instead of editing the extension's files.
 
-1.  Create a copy of the extension's crontab.xml in your Magento 2 directory on the server in the app/code/Pixlee/Pixlee/etc directory.
+1.  In a custom module that loads after `Pixlee_Pixlee` (add `Pixlee_Pixlee` to the `<sequence>` in its `etc/module.xml`),
+    create an `etc/crontab.xml` file with the same group and job name.
 
-2.  Update the <schedule> time to the time you want the export to run. To change the hour in the day at which the 
-products are exported, change the `3` in the schedule tag to the hour you want the export to run. The example below will 
-run the export at one minute after 5am UTC.
+2.  Set the `<schedule>` to the time you want the export to run. The example below runs the export at one minute after 5am.
 
     ```xml
-    <job name="pixlee_product_export" instance="Pixlee\Pixlee\Cron\ExportCron" method="execute">
-        <schedule>1 5 * * *</schedule>
-    </job>
+    <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+        <group id="default">
+            <job name="pixlee_product_export" instance="Pixlee\Pixlee\Cron\ExportCron" method="execute">
+                <schedule>1 5 * * *</schedule>
+            </job>
+        </group>
+    </config>
     ```
 
 #### Manually Run Product Export
@@ -94,7 +98,7 @@ products for the currently selected configuration scope to your Emplifi account.
 
 > ### 🚧 Note
 > If the export times out, ensure the **max_execution_time** configuration for Magento is set to at least 3600 seconds (1 hour).
-Magento sets the value to 5 hours by default.
+> Magento's bundled `.user.ini` and `.htaccess` set it to 18000 seconds (5 hours), but your server configuration may override them.
 
 ### Embedding PDP Widget on Product Pages
 
@@ -120,11 +124,11 @@ in the Magento store configuration and click **Save Config**.
 
 ### Embedding a CDP Widget on your Category Pages
 
-The first three steps are exactly the same as embedding a PDP widget as they only involve getting a **widgetId** from the Control Panel.
+The first three steps are the same as embedding a PDP widget, as they only involve getting a **widgetId** from the Publish Center.
 
 1. Log in to [your account](https://app.pixlee.com) and navigate to the [Publish Center](https://app.pixlee.com/app#publish).
 
-2. Click the "Publish New PDP Display" button and configure the display per the [documentation](https://docs.emplifi.io/platform/latest/home/publish-a-product-description-page-display-pdp-).
+2. Click the "Publish New CDP Display" button and configure the display.
    > It is recommended that you leave the "Load Priority" setting to "Low priority" when customizing.
 
 3. After customizing, click the "Generate Embed Code" button and copy the value for **widgetId** from the snippet or get the ID from the Publish Center.
@@ -132,7 +136,7 @@ The first three steps are exactly the same as embedding a PDP widget as they onl
 4. To enable the CDP widget, enter the **widgetId** from the previous step in the **CDP Widget ID** field under **Widget Settings**
    in the Magento store configuration and click **Save Config**.
 
-5. To **customize the placement** of the CDP widget, modify _catalog_product_view.xml_. And use the move tag to move the widget block.
+5. To **customize the placement** of the CDP widget, modify _catalog_category_view.xml_. And use the move tag to move the widget block.
 
    For example, you can create a new `view/frontend/layout/catalog_category_view.xml` file in a custom module in the
    app/code directory and use the move tag to move the widget block.
@@ -159,7 +163,7 @@ These tests can be executed using PHPUnit and the Magento 2 test framework.
 Run unit tests with:
 
 ```bash
-vendor/bin/phpunit -c phpunit.xml.dist vendor/pixlee/magento2/Test/Unit
+vendor/bin/phpunit -c dev/tests/unit/phpunit.xml.dist vendor/pixlee/magento2/Test/Unit
 ```
 
 ---
@@ -189,21 +193,10 @@ To run Pixlee tests as part of your existing Magento integration test suite, add
 
 ---
 
-### Optional: Enable module for integration tests
+### Enable module for integration tests
 
-Ensure the module is enabled in your integration test environment by adding it to:
-
-`dev/tests/integration/etc/config-global.php`
-
-```php
-<?php
-
-return [
-    'TESTS_MODULES_ENABLED' => [
-        'Pixlee_Pixlee' => true,
-    ],
-];
-```
+The integration test framework installs the modules enabled in `app/etc/config.php`. Ensure `Pixlee_Pixlee` is enabled
+there (`bin/magento module:enable Pixlee_Pixlee`) before running integration tests.
 
 ---
 
@@ -260,17 +253,18 @@ API calls are made to Emplifi UGC API when a customer adds something to their ca
 
 2.  Open the **pixlee.log** file located in **var/log** using your favorite text editor and scroll down to the very end.
 
-3.  There should be an entry beginning with **AddToCart**
+3.  There should be an entry containing **Pixlee Analytics: Event sent** with `"event":"addToCart"`.
 
-4.  If you found the **AddToCart** calls, then your analytics were integrated correctly. If not, contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
+4.  If you found the **addToCart** entry, then your analytics were integrated correctly. If you see
+    **Pixlee Analytics: Event not sent** or no entry, contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
 
 5.  Switch back to the browser and proceed to checkout to buy the product that you added to the cart previously. Use a test payment method for the checkout.
 
-6.  When you reach the order confirmation page switch open the **pixlee.log** file again and ensure that you are viewing the latest copy of the file.
+6.  When you reach the order confirmation page, open the **pixlee.log** file again and ensure that you are viewing the latest copy of the file.
 
-7.  This time look for log entries beginning with **CheckoutSuccess**
+7.  This time look for an entry containing **Pixlee Analytics: Event sent** with `"event":"checkoutSuccess"`.
 
-8.  If you do not see the **CheckoutSuccess** calls like in the screenshot, please contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
+8.  If you do not see the **checkoutSuccess** entry, please contact us at support@emplifi.io and attach the **pixlee.log** file with the email.
 
 > ### 🚧 Disclaimer: Mobile Analytics
 >
@@ -287,7 +281,7 @@ the page without using RequireJS.
 - Refer to the documentation for [Embedding Widgets on your site](https://developers.pixlee.com/docs/magento-2#embedding-widgets-on-your-site)
 
 To manually add a widget, use the **require()** function to add the widget embed code:
-*   Add the **asset.pixlee.com** url to the array as the first parameter.
+*   Add the widget script URL (for example `https://assets.pxlecdn.com/assets/pixlee_widget_1_0_0.js`) to the array as the first parameter.
 *   Move the JavaScript code from the **window.PixleeAsyncInit** as the **require** callback function.
 *   Call the **Pixlee.resizeWidget()** at the end of the callback.
 *   The new code should look similar to this:

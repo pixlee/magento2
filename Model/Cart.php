@@ -74,7 +74,7 @@ class Cart
             $identity['product_sku'],
             $currency
         );
-        $this->logger->info('Cart extractQuoteItem completed', $this->getLineItemLogContext($item));
+        $this->logger->addDebug('Cart extractQuoteItem completed', $this->getLineItemLogContext($item));
 
         return $itemData;
     }
@@ -88,7 +88,7 @@ class Cart
     public function getConversionPayload($order)
     {
         $orderId = (int) $order->getData('entity_id');
-        $this->logger->info('Cart getConversionPayload started', ['order_id' => $orderId]);
+        $this->logger->addDebug('Cart getConversionPayload started', ['order_id' => $orderId]);
         $cartData['cart_contents'] = $this->getCartContents($order);
         $cartData['cart_total'] = $order->getGrandTotal();
         $cartData['email'] = $order->getCustomerEmail();

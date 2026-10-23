@@ -130,7 +130,7 @@ class Distillery implements PixleeServiceInterface
     public function createProduct(
         array $productInfo
     ) {
-        $this->logger->addInfo("* In createProduct");
+        $this->logger->addDebug("* In createProduct");
         $product = [
             'name' => $productInfo['name'],
             'sku' => $productInfo['sku'],

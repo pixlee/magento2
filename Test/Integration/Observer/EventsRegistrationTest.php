@@ -21,6 +21,7 @@ class EventsRegistrationTest extends TestCase
      * @magentoAppIsolation enabled
      * @dataProvider expectedObserversDataProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('expectedObserversDataProvider')]
     public function testObserverIsRegisteredForEvent($eventName, $observerName, $instance)
     {
         /** @var ConfigInterface $eventConfig */
@@ -34,7 +35,7 @@ class EventsRegistrationTest extends TestCase
     /**
      * @return array
      */
-    public function expectedObserversDataProvider()
+    public static function expectedObserversDataProvider()
     {
         return [
             'add to cart' => [
