@@ -100,6 +100,10 @@ class Product
      * @var Pixlee
      */
     protected $pixlee;
+    /**
+     * @var ExportPricingCacheResetInterface|null
+     */
+    protected $pricingCacheReset;
 
     /**
      * @param Config $mediaConfig
@@ -118,6 +122,7 @@ class Product
      * @param PixleeLogger $logger
      * @param ProductMetadataInterface $productMetadata
      * @param Pixlee $pixlee
+     * @param ExportPricingCacheResetInterface|null $pricingCacheReset
      */
     public function __construct(
         Config $mediaConfig,
@@ -135,7 +140,8 @@ class Product
         PixleeServiceInterface $pixleeService,
         PixleeLogger $logger,
         ProductMetadataInterface $productMetadata,
-        Pixlee $pixlee
+        Pixlee $pixlee,
+        ?ExportPricingCacheResetInterface $pricingCacheReset = null
     ) {
         $this->mediaConfig = $mediaConfig;
         $this->configurableProduct = $configurableProduct;
@@ -153,6 +159,7 @@ class Product
         $this->logger = $logger;
         $this->productMetadata = $productMetadata;
         $this->pixlee = $pixlee;
+        $this->pricingCacheReset = $pricingCacheReset;
     }
 
     /**
@@ -176,6 +183,7 @@ class Product
             $this->pixleeService->notifyExportStatus('started', $job_id, $collection->getSize());
             $categoriesMap = $this->getCategoriesMap();
             $store = $this->storeManager->getWebsite($websiteId)->getDefaultStore();
+            $this->resetPricingCache();
             while (!$break) {
                 $collection->clear()
                     ->setCurPage($curPage);
@@ -187,9 +195,22 @@ class Product
                     $this->exportProductToPixlee($product, $categoriesMap, $websiteId, $store);
                     $count++;
                 }
+                $this->resetPricingCache();
             }
 
             $this->pixleeService->notifyExportStatus('finished', $job_id, $count);
+        }
+    }
+
+    /**
+     * Release configurable pricing objects Magento caches for the lifetime of the PHP process
+     *
+     * @return void
+     */
+    protected function resetPricingCache(): void
+    {
+        if ($this->pricingCacheReset !== null) {
+            $this->pricingCacheReset->reset();
         }
     }
 
