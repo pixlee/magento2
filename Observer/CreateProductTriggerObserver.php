@@ -65,7 +65,7 @@ class CreateProductTriggerObserver implements ObserverInterface
     {
         /** @var CatalogProduct $product */
         $product = $observer->getEvent()->getProduct();
-        if ($product->getStatus() !== Status::STATUS_ENABLED) {
+        if ((int) $product->getStatus() !== Status::STATUS_ENABLED) {
             return;
         }
 
