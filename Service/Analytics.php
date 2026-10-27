@@ -97,12 +97,12 @@ class Analytics implements AnalyticsServiceInterface
             $response = $this->post($path, $payload);
 
             if ($response) {
-                $this->logger->addInfo("Pixlee Analytics: Event sent");
+                $this->logger->addInfo("Pixlee Analytics: Event sent", ['event' => $event]);
                 return true;
             }
         }
 
-        $this->logger->addInfo("Pixlee Analytics: Event not sent - " . $this->serializer->serialize($payload));
+        $this->logger->addInfo("Pixlee Analytics: Event not sent", ['event' => $event]);
         return false;
     }
 
@@ -133,10 +133,8 @@ class Analytics implements AnalyticsServiceInterface
             $payload['ecommerce_platform_version'] = $this->productMetadata->getVersion();
             $payload['version_hash'] = $this->pixlee->getExtensionVersion();
             $payload['region_code'] = $store->getCode();
-            $serializedPayload = $this->serializer->serialize($payload);
-
-            $this->logger->addInfo("Sending payload: " . $serializedPayload);
-            return $serializedPayload;
+            $this->logger->addDebug("Pixlee Analytics: Payload prepared", ['region_code' => $store->getCode()]);
+            return $this->serializer->serialize($payload);
         }
 
         $this->logger->addInfo("Analytics event not sent because the cookie wasn't found");

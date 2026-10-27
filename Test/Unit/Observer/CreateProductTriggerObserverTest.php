@@ -103,6 +103,35 @@ class CreateProductTriggerObserverTest extends AbstractUnitTestCase
         $subject->execute(new Observer(['event' => $event]));
     }
 
+    public function testExecuteLoadsCategoriesMapOnceForMultipleActiveWebsites(): void
+    {
+        $categoriesMap = ['1' => ['category_id' => 1]];
+        $store = $this->createConfiguredPassiveDouble(Store::class, ['getId' => 1]);
+        $website = $this->createConfiguredPassiveDouble(Website::class, ['getDefaultStore' => $store]);
+
+        $product = $this->createProduct([1, 2], Status::STATUS_ENABLED);
+
+        $productExport = $this->createMock(ProductExport::class);
+        $productExport->expects($this->once())->method('getCategoriesMap')->willReturn($categoriesMap);
+        $productExport->expects($this->exactly(2))->method('exportProductToPixlee');
+
+        $apiConfig = $this->createPassiveDouble(Api::class);
+        $apiConfig->method('isActive')->willReturn(true);
+
+        $storeManager = $this->createPassiveDouble(StoreManagerInterface::class);
+        $storeManager->method('getWebsite')->willReturn($website);
+
+        $subject = new CreateProductTriggerObserver(
+            $productExport,
+            $apiConfig,
+            $this->createPassiveDouble(PixleeLogger::class),
+            $storeManager
+        );
+
+        $event = new Event(['product' => $product]);
+        $subject->execute(new Observer(['event' => $event]));
+    }
+
     public function testExecuteSkipsDisabledProduct(): void
     {
         $product = $this->createProduct([1], Status::STATUS_DISABLED);

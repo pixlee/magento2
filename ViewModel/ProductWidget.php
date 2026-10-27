@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 declare(strict_types=1);
@@ -48,6 +48,8 @@ class ProductWidget implements ArgumentInterface
     }
 
     /**
+     * Whether the extension is enabled for the current website
+     *
      * @return bool
      */
     public function isActive()
@@ -57,6 +59,8 @@ class ProductWidget implements ArgumentInterface
     }
 
     /**
+     * Get the public API key for the current website
+     *
      * @return mixed
      */
     public function getApiKey()
@@ -66,33 +70,41 @@ class ProductWidget implements ArgumentInterface
     }
 
     /**
-     * @return mixed
+     * Get the numeric account ID, or null when it is not configured
+     *
+     * @return int|null
      */
     public function getAccountId()
     {
         $scope = $this->getScope();
-        return $this->widgetConfig->getAccountId($scope['scopeType'], $scope['scopeCode']);
+        return $this->toNumericId($this->widgetConfig->getAccountId($scope['scopeType'], $scope['scopeCode']));
     }
 
     /**
-     * @return mixed
+     * Get the numeric CDP widget ID, or null when it is not configured
+     *
+     * @return int|null
      */
     public function getCDPWidgetId()
     {
         $scope = $this->getScope();
-        return $this->widgetConfig->getCDPWidgetId($scope['scopeType'], $scope['scopeCode']);
+        return $this->toNumericId($this->widgetConfig->getCDPWidgetId($scope['scopeType'], $scope['scopeCode']));
     }
 
     /**
-     * @return mixed
+     * Get the numeric PDP widget ID, or null when it is not configured
+     *
+     * @return int|null
      */
     public function getPDPWidgetId()
     {
         $scope = $this->getScope();
-        return $this->widgetConfig->getPDPWidgetId($scope['scopeType'], $scope['scopeCode']);
+        return $this->toNumericId($this->widgetConfig->getPDPWidgetId($scope['scopeType'], $scope['scopeCode']));
     }
 
     /**
+     * Get the website scope used for configuration lookups
+     *
      * @return array
      */
     protected function getScope()
@@ -107,5 +119,21 @@ class ProductWidget implements ArgumentInterface
         }
 
         return $this->scope;
+    }
+
+    /**
+     * Normalize an admin-entered ID so templates can output it as a JSON number
+     *
+     * @param mixed $value
+     * @return int|null
+     */
+    protected function toNumericId($value)
+    {
+        $value = trim((string) $value);
+        if ($value === '' || !ctype_digit($value)) {
+            return null;
+        }
+
+        return (int) $value;
     }
 }

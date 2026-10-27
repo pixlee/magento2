@@ -11,8 +11,11 @@ use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
 use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 use Pixlee\Pixlee\Api\PixleeServiceInterface;
+use Pixlee\Pixlee\Model\Export\MagentoExportPricingCacheReset;
+use Pixlee\Pixlee\Model\Export\Product as ProductExport;
 use Pixlee\Pixlee\Service\Analytics;
 use Pixlee\Pixlee\Service\Distillery;
+use ReflectionProperty;
 
 class ServicePreferencesTest extends TestCase
 {
@@ -34,5 +37,17 @@ class ServicePreferencesTest extends TestCase
             Analytics::class,
             $objectManager->get(AnalyticsServiceInterface::class)
         );
+    }
+
+    public function testProductExportReceivesPricingCacheReset(): void
+    {
+        $export = Bootstrap::getObjectManager()->create(ProductExport::class);
+
+        $property = new ReflectionProperty(ProductExport::class, 'pricingCacheReset');
+        if (PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
+
+        $this->assertInstanceOf(MagentoExportPricingCacheReset::class, $property->getValue($export));
     }
 }

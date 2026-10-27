@@ -48,20 +48,56 @@ class ProductWidgetTest extends AbstractUnitTestCase
         $widgetConfig = $this->createPassiveDouble(Widget::class);
         $widgetConfig->method('getAccountId')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
-            ->willReturn('acct-1');
+            ->willReturn('1001');
         $widgetConfig->method('getCDPWidgetId')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
-            ->willReturn('cdp-1');
+            ->willReturn(' 2002 ');
         $widgetConfig->method('getPDPWidgetId')
             ->with(ScopeInterface::SCOPE_WEBSITES, 1)
-            ->willReturn('pdp-1');
+            ->willReturn('3003');
 
         $subject = $this->createSubject($apiConfig, $widgetConfig);
 
         $this->assertSame('api-key', $subject->getApiKey());
-        $this->assertSame('acct-1', $subject->getAccountId());
-        $this->assertSame('cdp-1', $subject->getCDPWidgetId());
-        $this->assertSame('pdp-1', $subject->getPDPWidgetId());
+        $this->assertSame(1001, $subject->getAccountId());
+        $this->assertSame(2002, $subject->getCDPWidgetId());
+        $this->assertSame(3003, $subject->getPDPWidgetId());
+    }
+
+    /**
+     * @dataProvider invalidIdProvider
+     * @param mixed $configValue
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidIdProvider')]
+    public function testWidgetIdsAreNullWhenNotNumeric($configValue): void
+    {
+        $apiConfig = $this->createPassiveDouble(Api::class);
+        $apiConfig->method('getScope')->willReturn(self::SCOPE);
+
+        $widgetConfig = $this->createPassiveDouble(Widget::class);
+        $widgetConfig->method('getAccountId')->willReturn($configValue);
+        $widgetConfig->method('getCDPWidgetId')->willReturn($configValue);
+        $widgetConfig->method('getPDPWidgetId')->willReturn($configValue);
+
+        $subject = $this->createSubject($apiConfig, $widgetConfig);
+
+        $this->assertNull($subject->getAccountId());
+        $this->assertNull($subject->getCDPWidgetId());
+        $this->assertNull($subject->getPDPWidgetId());
+    }
+
+    /**
+     * @return array<string, array<int, mixed>>
+     */
+    public static function invalidIdProvider(): array
+    {
+        return [
+            'null' => [null],
+            'empty' => [''],
+            'whitespace' => ['   '],
+            'letters' => ['abc123'],
+            'negative' => ['-5'],
+        ];
     }
 
     public function testGetScopeFallsBackToDefaultStoreWebsiteWhenGetWebsiteThrows(): void
