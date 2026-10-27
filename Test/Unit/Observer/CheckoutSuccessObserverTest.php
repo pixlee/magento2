@@ -12,6 +12,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
@@ -41,25 +42,38 @@ class CheckoutSuccessObserverTest extends AbstractUnitTestCase
         $this->assertSame([$order], $orders);
     }
 
-    public function testGetOrdersLoadsOrdersFromCollectionWhenOrderIdsPresent(): void
+    public function testGetOrdersLoadsOrdersFromNewCollectionWhenOrderIdsPresent(): void
     {
-        $collection = $this->createMock(Collection::class);
-        $collection->expects($this->once())
+        $firstCollection = $this->createMock(Collection::class);
+        $firstCollection->expects($this->once())
             ->method('addFieldToFilter')
             ->with('entity_id', ['in' => [10, 11]])
             ->willReturnSelf();
+        $secondCollection = $this->createMock(Collection::class);
+        $secondCollection->expects($this->once())
+            ->method('addFieldToFilter')
+            ->with('entity_id', ['in' => [12]])
+            ->willReturnSelf();
 
-        $subject = new CheckoutSuccessObserver(
-            $collection,
-            $this->createPassiveDouble(PixleeLogger::class),
-            $this->createPassiveDouble(StoreManagerInterface::class),
-            $this->createPassiveDouble(Cart::class),
-            $this->createPassiveDouble(Api::class),
-            $this->createPassiveDouble(AnalyticsServiceInterface::class)
-        );
+        $collectionFactory = $this->createPartialMock(CollectionFactory::class, ['create']);
+        $collectionFactory->expects($this->exactly(2))
+            ->method('create')
+            ->willReturnOnConsecutiveCalls($firstCollection, $secondCollection);
 
-        $event = new Event(['order_ids' => [10, 11]]);
-        $this->assertSame($collection, $subject->getOrders($event));
+        $subject = $this->createSubjectWithCollectionFactory($collectionFactory);
+
+        $this->assertSame($firstCollection, $subject->getOrders(new Event(['order_ids' => [10, 11]])));
+        $this->assertSame($secondCollection, $subject->getOrders(new Event(['order_ids' => [12]])));
+    }
+
+    public function testGetOrdersReturnsEmptyArrayWithoutOrderOrOrderIds(): void
+    {
+        $collectionFactory = $this->createPartialMock(CollectionFactory::class, ['create']);
+        $collectionFactory->expects($this->never())->method('create');
+
+        $subject = $this->createSubjectWithCollectionFactory($collectionFactory);
+
+        $this->assertSame([], $subject->getOrders(new Event([])));
     }
 
     public function testExecuteSendsConversionEventForEachOrder(): void
@@ -92,7 +106,7 @@ class CheckoutSuccessObserverTest extends AbstractUnitTestCase
         $storeManager->method('getStore')->willReturn($store);
 
         $subject = new CheckoutSuccessObserver(
-            $this->createPassiveDouble(Collection::class),
+            $this->createPartialPassiveDouble(CollectionFactory::class, ['create']),
             $this->createPassiveDouble(PixleeLogger::class),
             $storeManager,
             $cart,
@@ -136,12 +150,24 @@ class CheckoutSuccessObserverTest extends AbstractUnitTestCase
         );
 
         return new CheckoutSuccessObserver(
-            $this->createPassiveDouble(Collection::class),
+            $this->createPartialPassiveDouble(CollectionFactory::class, ['create']),
             $this->createPassiveDouble(PixleeLogger::class),
             $storeManager,
             $cart,
             $apiConfig,
             $analytics
+        );
+    }
+
+    private function createSubjectWithCollectionFactory(CollectionFactory $collectionFactory): CheckoutSuccessObserver
+    {
+        return new CheckoutSuccessObserver(
+            $collectionFactory,
+            $this->createPassiveDouble(PixleeLogger::class),
+            $this->createPassiveDouble(StoreManagerInterface::class),
+            $this->createPassiveDouble(Cart::class),
+            $this->createPassiveDouble(Api::class),
+            $this->createPassiveDouble(AnalyticsServiceInterface::class)
         );
     }
 }

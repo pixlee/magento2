@@ -1,24 +1,30 @@
 <?php
 /**
- * Copyright © Pixlee TurnTo, Inc. All rights reserved.
+ * Copyright © Emplifi, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
-/* @var \Magento\Catalog\Block\Category\View $block */
-/* @var \Pixlee\Pixlee\ViewModel\ProductWidget $viewModel */
+
+use Magento\Catalog\Block\Category\View;
+use Pixlee\Pixlee\ViewModel\ProductWidget;
+
+/**
+ * @var View $block
+ * @var ProductWidget $viewModel
+ */
 $viewModel = $block->getViewModel();
-$nativeCategoryId = $block->getCurrentCategory()->getId();
+$nativeCategoryId = (int) $block->getCurrentCategory()->getId();
+$widgetId = $viewModel->getCDPWidgetId();
 ?>
-<?php if ($viewModel->isActive() && !empty($viewModel->getCDPWidgetId())) : ?>
+<?php if ($viewModel->isActive() && $widgetId !== null): ?>
     <div id="pixlee_container"></div>
     <div id="pixlee_widget_master_container"></div>
-
     <script type="text/x-magento-init">
         {
             "*": {
                 "Pixlee_Pixlee/js/cdp-widget":{
                     "apiKey": "<?= $block->escapeJs($viewModel->getApiKey()) ?>",
-                    "widgetId": <?= $block->escapeJs($viewModel->getCDPWidgetId()) ?>,
-                    "nativeCategoryId": <?= $block->escapeJs($nativeCategoryId) ?>
+                    "widgetId": <?= /* @noEscape */ $widgetId ?>,
+                    "nativeCategoryId": <?= /* @noEscape */ $nativeCategoryId ?>
                 }
             }
         }

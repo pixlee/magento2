@@ -325,7 +325,7 @@ class Product
         $this->pixleeService->setScope(ScopeInterface::SCOPE_WEBSITES, $websiteId);
         $this->pixleeService->createProduct($productInfo);
 
-        $this->logger->addInfo("Product Exported to Pixlee");
+        $this->logger->addDebug("Product Exported to Pixlee");
     }
 
     /**
@@ -430,12 +430,12 @@ class Product
 
         // For some reason !empty() doesn't work here
         if (count($childProducts) > 0) {
-            $this->logger->addInfo("This product has children");
+            $this->logger->addDebug("This product has children");
 
             // Get aggregate stock of children
             foreach ($childProducts as $child) {
-                $this->logger->addInfo("Child ID: {$child->getId()}");
-                $this->logger->addInfo("Child SKU: {$child->getSku()}");
+                $this->logger->addDebug("Child ID: {$child->getId()}");
+                $this->logger->addDebug("Child SKU: {$child->getSku()}");
                 // Then, try to actually get the stock count
                 $stockItem = $this->stockRegistry->getStockItem($child->getId(), $product->getStore()->getWebsiteId());
 
@@ -447,14 +447,14 @@ class Product
                     }
                 }
 
-                $this->logger->addInfo("Aggregate stock after {$child->getId()}: $aggregateStock");
+                $this->logger->addDebug("Aggregate stock after {$child->getId()}: $aggregateStock");
             }
         } else {
             $stockItem = $this->stockRegistry->getStockItem($product->getId(), $product->getStore()->getWebsiteId());
             $aggregateStock = $stockItem->getQty();
         }
 
-        $this->logger->addInfo("Product {$product->getId()} aggregate stock: $aggregateStock");
+        $this->logger->addDebug("Product {$product->getId()} aggregate stock: $aggregateStock");
         return $aggregateStock;
     }
 
@@ -477,11 +477,11 @@ class Product
         // If we have no children products, just skip to the bottom where we'll
         // return variantsDict, untouched
         if (count($childProducts) > 0) {
-            $this->logger->addInfo("This product has children");
+            $this->logger->addDebug("This product has children");
 
             foreach ($childProducts as $child) {
-                $this->logger->addInfo("Child ID: {$child->getId()}");
-                $this->logger->addInfo("Child SKU: {$child->getSku()}");
+                $this->logger->addDebug("Child ID: {$child->getId()}");
+                $this->logger->addDebug("Child SKU: {$child->getSku()}");
 
                 if ($variantsDict === null) {
                     $variantsDict = [];
@@ -494,7 +494,7 @@ class Product
                 } else {
                     $variantStock = max(0, $stockItem->getQty());
                 }
-                $this->logger->addInfo("Child Stock: $variantStock");
+                $this->logger->addDebug("Child Stock: $variantStock");
 
                 $variantsDict[$child->getId()] = [
                     'variant_stock' => $variantStock,
@@ -503,14 +503,10 @@ class Product
             }
         }
 
-        $this->logger->addInfo(
-            "Product {$product->getId()} variantsDict: {$this->serializer->serialize($variantsDict)}"
-        );
-        if (empty($variantsDict)) {
-            return '{}';
-        } else {
-            return $this->serializer->serialize($variantsDict);
-        }
+        $serializedVariants = empty($variantsDict) ? '{}' : $this->serializer->serialize($variantsDict);
+        $this->logger->addDebug("Product {$product->getId()} variantsDict: $serializedVariants");
+
+        return $serializedVariants;
     }
 
     /**

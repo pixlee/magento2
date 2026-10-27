@@ -9,6 +9,8 @@ namespace Pixlee\Pixlee\Test\Unit\Controller\Adminhtml\Product;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Website;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -64,17 +66,52 @@ class ExportTest extends AbstractUnitTestCase
         $this->assertSame([1, 2], $exportedWebsiteIds);
     }
 
+    public function testExecuteReturnsJsonSuccessResult(): void
+    {
+        $request = $this->createPassiveDouble(RequestInterface::class);
+        $request->method('getParam')->with('website_id')->willReturn('3');
+
+        $jsonResult = $this->createMock(Json::class);
+        $jsonResult->expects($this->once())
+            ->method('setData')
+            ->with(['success' => true])
+            ->willReturnSelf();
+
+        $subject = $this->createSubject(
+            $this->createPassiveDouble(Product::class),
+            $request,
+            $this->createPassiveDouble(StoreManagerInterface::class),
+            $jsonResult
+        );
+
+        $this->assertSame($jsonResult, $subject->execute());
+    }
+
+    public function testControllerIsProtectedByConfigAclResource(): void
+    {
+        $this->assertSame('Pixlee_Pixlee::config_pixlee_pixlee', Export::ADMIN_RESOURCE);
+    }
+
     /**
      * @param Product&MockObject $productExport
      * @param RequestInterface&MockObject $request
+     * @param StoreManagerInterface $storeManager
+     * @param Json|null $jsonResult
      */
     private function createSubject(
         Product $productExport,
         RequestInterface $request,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        ?Json $jsonResult = null
     ): Export {
+        $resultFactory = $this->createPassiveDouble(ResultFactory::class);
+        $resultFactory->method('create')
+            ->with(ResultFactory::TYPE_JSON)
+            ->willReturn($jsonResult ?? $this->createConfiguredPassiveDouble(Json::class, []));
+
         $context = $this->createPassiveDouble(Context::class);
         $context->method('getRequest')->willReturn($request);
+        $context->method('getResultFactory')->willReturn($resultFactory);
 
         return new Export($context, $productExport, $storeManager);
     }

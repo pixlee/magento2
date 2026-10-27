@@ -13,6 +13,7 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Pixlee\Pixlee\Model\Logger\PixleeLogger;
@@ -23,9 +24,9 @@ use Pixlee\Pixlee\Api\AnalyticsServiceInterface;
 class CheckoutSuccessObserver implements ObserverInterface
 {
     /**
-     * @var Collection
+     * @var CollectionFactory
      */
-    protected $orderCollection;
+    protected $orderCollectionFactory;
     /**
      * @var Cart
      */
@@ -48,7 +49,7 @@ class CheckoutSuccessObserver implements ObserverInterface
     protected $analytics;
 
     /**
-     * @param Collection $orderCollection
+     * @param CollectionFactory $orderCollectionFactory
      * @param PixleeLogger $logger
      * @param StoreManagerInterface $storeManager
      * @param Cart $pixleeCart
@@ -56,14 +57,14 @@ class CheckoutSuccessObserver implements ObserverInterface
      * @param AnalyticsServiceInterface $analytics
      */
     public function __construct(
-        Collection $orderCollection,
+        CollectionFactory $orderCollectionFactory,
         PixleeLogger $logger,
         StoreManagerInterface $storeManager,
         Cart $pixleeCart,
         Api $apiConfig,
         AnalyticsServiceInterface $analytics
     ) {
-        $this->orderCollection = $orderCollection;
+        $this->orderCollectionFactory = $orderCollectionFactory;
         $this->logger = $logger;
         $this->storeManager = $storeManager;
         $this->pixleeCart = $pixleeCart;
@@ -102,6 +103,11 @@ class CheckoutSuccessObserver implements ObserverInterface
             return [$order];
         }
 
-        return $this->orderCollection->addFieldToFilter('entity_id', ['in' => $event->getOrderIds()]);
+        $orderIds = $event->getOrderIds();
+        if (empty($orderIds)) {
+            return [];
+        }
+
+        return $this->orderCollectionFactory->create()->addFieldToFilter('entity_id', ['in' => $orderIds]);
     }
 }

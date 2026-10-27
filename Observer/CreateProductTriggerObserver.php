@@ -8,8 +8,8 @@ declare(strict_types=1);
 namespace Pixlee\Pixlee\Observer;
 
 use Exception;
+use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
-use Magento\Catalog\Model\Product\Interceptor;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -63,18 +63,24 @@ class CreateProductTriggerObserver implements ObserverInterface
      */
     public function execute(EventObserver $observer)
     {
-        /** @var Interceptor $product */
+        /** @var CatalogProduct $product */
         $product = $observer->getEvent()->getProduct();
-        $websiteIds = $product->getWebsiteIds();
-        foreach ($websiteIds as $websiteId) {
-            try {
-                $pixleeEnabled = $this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        if ((int) $product->getStatus() !== Status::STATUS_ENABLED) {
+            return;
+        }
 
-                if ($pixleeEnabled && (int) $product->getStatus() === Status::STATUS_ENABLED) {
-                    $categoriesMap = $this->productExport->getCategoriesMap();
-                    $store = $this->storeManager->getWebsite($websiteId)->getDefaultStore();
-                    $this->productExport->exportProductToPixlee($product, $categoriesMap, $websiteId, $store);
+        $categoriesMap = null;
+        foreach ($product->getWebsiteIds() as $websiteId) {
+            try {
+                if (!$this->apiConfig->isActive(ScopeInterface::SCOPE_WEBSITES, $websiteId)) {
+                    continue;
                 }
+
+                if ($categoriesMap === null) {
+                    $categoriesMap = $this->productExport->getCategoriesMap();
+                }
+                $store = $this->storeManager->getWebsite($websiteId)->getDefaultStore();
+                $this->productExport->exportProductToPixlee($product, $categoriesMap, $websiteId, $store);
             } catch (Exception $e) {
                 $this->logger->error($e->getMessage(), ['exception' => $e]);
             }
